@@ -6,7 +6,9 @@
 //! See [book](https://ncbi.github.io/cxx-toolkit/pages/ch_datamod#ch_datamod._ASN1_Specification_s_8)
 //! for more information on.
 
-use crate::asn::{Date, FeatId, IdPat, IntFuzz, ObjectId};
+use crate::biblio::IdPat;
+use crate::general::{Date, IntFuzz, ObjectId};
+use crate::seqfeat::FeatId;
 use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]

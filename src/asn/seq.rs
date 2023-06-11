@@ -4,11 +4,17 @@
 //!
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
-use crate::asn::{
-    BioSource, Date, DbTag, EMBLBlock, GBBlock, IntFuzz, ModelEvidenceSupport, ObjectId, OrgRef,
-    PDBBlock, PIRBlock, PRFBlock, PubEquiv, SPBlock, SeqAlign, SeqFeat, SeqGraph, SeqId, SeqLoc,
-    SeqTable, UserObject,
+use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
+use crate::r#pub::PubEquiv;
+use crate::seqalign::SeqAlign;
+use crate::seqblock::{EMBLBlock, GBBlock, PDBBlock, PIRBlock, PRFBlock, SPBlock};
+use crate::seqfeat::{
+    BioSource, ModelEvidenceSupport, OrgRef,
+    SeqFeat,
 };
+use crate::seqloc::{SeqId, SeqLoc};
+use crate::seqres::SeqGraph;
+use crate::seqtable::SeqTable;
 use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]

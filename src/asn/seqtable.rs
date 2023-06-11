@@ -1,7 +1,8 @@
 //! Interface to table readers
 //!
 //! Adapted from ["seqtable.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/C_DOC/lxr/source/asn/seqtable.asn)
-use crate::asn::{SeqId, SeqInterval, SeqLoc};
+use crate::seq::{SeqId, SeqLoc};
+use crate::seqloc::SeqInterval;
 
 #[derive(PartialEq, Debug)]
 /// known column data types

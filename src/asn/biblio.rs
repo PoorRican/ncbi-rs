@@ -1,7 +1,7 @@
 //! Bibliographic data elements
 //! Adapted from ["biblio.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/biblio/biblio.asn)
 
-use crate::asn::{Date, DbTag, PersonId};
+use crate::general::{Date, DbTag, PersonId};
 use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]

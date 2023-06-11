@@ -3,7 +3,8 @@
 //! Adapted from ["seqblock.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqblock/seqblock.asn)
 //! from the NCBI C++ Toolkit.
 
-use crate::asn::{Date, DbTag, ObjectId, SeqId};
+use crate::general::{Date, DbTag, ObjectId};
+use crate::seqloc::{SeqId};
 use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]

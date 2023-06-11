@@ -3,7 +3,8 @@
 //! Adapted from ["seqset.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqset/seqset.asn)
 //! from the NCBI C++ Toolkit
 
-use crate::asn::{BioSeq, Date, DbTag, ObjectId, SeqAnnot, SeqDescr};
+use crate::general::{Date, DbTag, ObjectId};
+use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
 use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug, Default)]

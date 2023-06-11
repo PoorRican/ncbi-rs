@@ -4,10 +4,11 @@
 //!
 //! Adapted from ["pub.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/pub/pub.asn)
 
-use crate::asn::{
-    CitArt, CitBook, CitGen, CitJour, CitLet, CitPat, CitProc, CitSub, IdPat, MedlineEntry,
+use crate::biblio::{
+    CitArt, CitBook, CitGen, CitJour, CitLet, CitPat, CitProc, CitSub, IdPat,
     PubMedId,
 };
+use crate::medline::MedlineEntry;
 use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]

@@ -52,7 +52,10 @@
 /// cases, the [`SeqFeat`] can be marked with an "exception" flag to indicate
 /// that the data is correct but may not behave as expected.
 
-use crate::asn::{DbTag, GiimportId, Heterogen, IntFuzz, ObjectId, PubDesc, PubMedId, PubSet, SeqId, SeqLiteral, SeqLoc, UserObject, DOI, Numbering};
+use crate::biblio::{DOI, PubMedId};
+use crate::r#pub::PubSet;
+use crate::seq::{DbTag, Heterogen, IntFuzz, ObjectId, PubDesc, SeqId, SeqLiteral, SeqLoc, UserObject, Numbering};
+use crate::seqloc::GiimportId;
 use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]

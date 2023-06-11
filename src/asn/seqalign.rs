@@ -2,7 +2,9 @@
 //!
 //! Adapted from ["seqalign.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqalign/seqalign.asn)
 
-use crate::asn::{NaStrand, ObjectId, SeqId, SeqLoc, UserObject};
+use crate::seq::{ObjectId, SeqId, SeqLoc, UserObject};
+use crate::seqloc::NaStrand;
+
 use std::collections::BTreeSet;
 
 pub type SeqAlignSet = BTreeSet<SeqAlign>;
