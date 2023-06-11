@@ -7,7 +7,7 @@
 //! for more information on.
 
 use crate::asn::{Date, FeatId, IdPat, IntFuzz, ObjectId};
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]
 pub enum SeqId {
@@ -23,7 +23,7 @@ pub enum SeqId {
     Other(TextseqId),
 }
 
-pub type SeqIdSet = HashSet<SeqId>;
+pub type SeqIdSet = BTreeSet<SeqId>;
 
 #[derive(PartialEq, Debug)]
 pub struct PatentSeqId {
@@ -105,7 +105,7 @@ pub struct SeqInterval {
     pub fuzz_to: Option<IntFuzz>,
 }
 
-pub type PackedSeqInt = HashSet<SeqInterval>;
+pub type PackedSeqInt = BTreeSet<SeqInterval>;
 
 #[derive(PartialEq, Debug)]
 pub struct SeqPoint {
@@ -149,4 +149,4 @@ pub struct SeqBond {
 /// this will hold anything
 pub type SeqLocMix = Vec<SeqLoc>;
 /// set of equivalent locations
-pub type SeqLocEquiv = HashSet<SeqLoc>;
+pub type SeqLocEquiv = BTreeSet<SeqLoc>;

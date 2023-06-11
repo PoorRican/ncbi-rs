@@ -3,9 +3,9 @@
 //! Adapted from ["seqalign.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqalign/seqalign.asn)
 
 use crate::asn::{NaStrand, ObjectId, SeqId, SeqLoc, UserObject};
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
-pub type SeqAlignSet = HashSet<SeqAlign>;
+pub type SeqAlignSet = BTreeSet<SeqAlign>;
 
 #[derive(PartialEq, Debug)]
 pub enum SeqAlignType {
@@ -37,12 +37,12 @@ pub struct SeqAlign {
     /// dimensionality
     pub dim: Option<u64>,
     /// for whole alignment
-    pub score: Option<HashSet<Score>>,
+    pub score: Option<BTreeSet<Score>>,
     /// alignment data
     pub segs: SeqAlignSegs,
     /// regions of sequence over which
     /// alignment was computed
-    pub bounds: Option<HashSet<SeqLoc>>,
+    pub bounds: Option<BTreeSet<SeqLoc>>,
     /// alignment id
     pub id: Option<Vec<ObjectId>>,
     /// extra info
@@ -62,7 +62,7 @@ pub struct DenseDiag {
     /// len of aligned segments
     pub len: u64,
     pub strands: Option<Vec<NaStrand>>,
-    pub scores: Option<HashSet<Score>>,
+    pub scores: Option<BTreeSet<Score>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -185,7 +185,7 @@ pub struct SplicedSeg {
     /// alignment descriptors / modifiers
     ///
     /// this provides a set for extension
-    pub modifiers: Option<HashSet<SplicedSegModifier>>,
+    pub modifiers: Option<BTreeSet<SplicedSegModifier>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -296,13 +296,13 @@ pub struct SpliceSite {
 pub struct SparseSeg {
     pub master_id: Option<SeqId>,
     /// pairwise alignments constituting this multiple alignment
-    pub rows: HashSet<SparseAlign>,
+    pub rows: BTreeSet<SparseAlign>,
 
     /// per-row scores
-    pub row_scores: Option<HashSet<Score>>,
+    pub row_scores: Option<BTreeSet<Score>>,
 
     /// index of extra items
-    pub ext: Option<HashSet<SparseSegExt>>,
+    pub ext: Option<BTreeSet<SparseSegExt>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -325,7 +325,7 @@ pub struct SparseAlign {
     pub second_strands: Option<Vec<NaStrand>>,
 
     /// per-segment scores
-    pub seg_scores: Option<HashSet<Score>>,
+    pub seg_scores: Option<BTreeSet<Score>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -346,4 +346,4 @@ pub struct Score {
     pub value: ScoreValue,
 }
 
-pub type ScoreSet = HashSet<Score>;
+pub type ScoreSet = BTreeSet<Score>;

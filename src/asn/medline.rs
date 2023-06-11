@@ -3,7 +3,7 @@
 //! Adapted from ["medline.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/C_DOC/lxr/source/asn/medline.asn)
 
 use crate::asn::{CitArt, Date, PubMedId};
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug, Default)]
 pub enum MedlineEntryStatus {
@@ -31,23 +31,23 @@ pub struct MedlineEntry {
     pub cit: CitArt,
 
     pub r#abstract: Option<String>,
-    pub mesh: Option<HashSet<MedlineMesh>>,
-    pub substance: Option<HashSet<MedlineRn>>,
-    pub xref: Option<HashSet<MedlineSi>>,
+    pub mesh: Option<BTreeSet<MedlineMesh>>,
+    pub substance: Option<BTreeSet<MedlineRn>>,
+    pub xref: Option<BTreeSet<MedlineSi>>,
 
     /// ID Number (grants, contracts)
-    pub idnum: Option<HashSet<String>>,
+    pub idnum: Option<BTreeSet<String>>,
 
-    pub gene: Option<HashSet<String>>,
+    pub gene: Option<BTreeSet<String>>,
 
     /// MEDLINE records may include the PubMedId
     pub pmid: Option<PubMedId>,
 
     /// may show publication types (review, etc)
-    pub pub_type: Option<HashSet<String>>,
+    pub pub_type: Option<BTreeSet<String>>,
 
     /// additional Medline field types
-    pub mlfield: Option<HashSet<MedlineField>>,
+    pub mlfield: Option<BTreeSet<MedlineField>>,
 
     pub status: MedlineEntryStatus,
 }
@@ -62,7 +62,7 @@ pub struct MedlineMesh {
     pub term: String,
 
     /// qualifiers
-    pub qual: Option<HashSet<MedlineQual>>,
+    pub qual: Option<BTreeSet<MedlineQual>>,
 }
 
 #[derive(PartialEq, Debug)]

@@ -4,7 +4,7 @@
 //! from the NCBI C++ Toolkit
 
 use crate::asn::{BioSeq, Date, DbTag, ObjectId, SeqAnnot, SeqDescr};
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug, Default)]
 /// internal representation of `class` field for [`BioSeqSet`]
@@ -76,7 +76,7 @@ pub struct BioSeqSet {
     pub date: Option<Date>,
     pub descr: Option<SeqDescr>,
     pub seq_set: Vec<SeqEntry>,
-    pub annot: Option<HashSet<SeqAnnot>>,
+    pub annot: Option<BTreeSet<SeqAnnot>>,
 }
 
 #[derive(PartialEq, Debug)]

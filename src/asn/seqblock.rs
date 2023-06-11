@@ -4,7 +4,7 @@
 //! from the NCBI C++ Toolkit.
 
 use crate::asn::{Date, DbTag, ObjectId, SeqId};
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]
 pub enum EMBLDbNameCode {
@@ -97,23 +97,23 @@ pub struct SPBlock {
     pub class: SPBlockClass,
 
     /// old SWISSPROT id's
-    pub extra_acc: Option<HashSet<String>>,
+    pub extra_acc: Option<BTreeSet<String>>,
 
     /// seq known to start with Met
     /// Should default to false
     pub imeth: bool,
 
     /// plasmid names carrying gene
-    pub plasnm: Option<HashSet<String>>,
+    pub plasnm: Option<BTreeSet<String>>,
 
     /// xref to other sequences
-    pub seqref: Option<HashSet<SeqId>>,
+    pub seqref: Option<BTreeSet<SeqId>>,
 
     /// xref to non-sequence db's
-    pub dbref: Option<HashSet<DbTag>>,
+    pub dbref: Option<BTreeSet<DbTag>>,
 
     /// keywords
-    pub keywords: Option<HashSet<String>>,
+    pub keywords: Option<BTreeSet<String>>,
 
     /// creation date
     pub created: Option<Date>,
@@ -149,7 +149,7 @@ pub struct PIRBlock {
     pub seq_raw: Option<String>,
 
     /// xref to other sequences
-    pub seqref: Option<HashSet<SeqId>>,
+    pub seqref: Option<BTreeSet<SeqId>>,
 }
 
 #[derive(PartialEq, Debug)]

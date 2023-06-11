@@ -8,34 +8,51 @@ use crate::asn::{
     CitArt, CitBook, CitGen, CitJour, CitLet, CitPat, CitProc, CitSub, IdPat, MedlineEntry,
     PubMedId,
 };
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]
 pub enum Pub {
+    /// general or generic unparsed
     Gen(CitGen),
+
+    /// submission
     Sub(CitSub),
+
     Medline(MedlineEntry),
+
+    /// medline uid
     Muid(u64),
     Article(CitArt),
     Journal(CitJour),
     Book(CitBook),
+
+    /// proceedings of a meeting
     Proc(CitProc),
+
     Patent(CitPat),
+
+    /// identify a patent
     PatId(IdPat),
+
+    /// manuscript, thesis, or letter
     Man(CitLet),
+
+    /// to cite a variety of ways
     Equiv(PubEquiv),
+
+    /// PubMedId
     PmId(PubMedId),
 }
 
-pub type PubEquiv = HashSet<Pub>;
+pub type PubEquiv = BTreeSet<Pub>;
 
 #[derive(PartialEq, Debug)]
 pub enum PubSet {
-    Pub(HashSet<Pub>),
-    Medline(HashSet<MedlineEntry>),
-    Article(HashSet<CitArt>),
-    Journal(HashSet<CitJour>),
-    Book(HashSet<CitBook>),
-    Proc(HashSet<CitProc>),
-    Patent(HashSet<CitPat>),
+    Pub(BTreeSet<Pub>),
+    Medline(BTreeSet<MedlineEntry>),
+    Article(BTreeSet<CitArt>),
+    Journal(BTreeSet<CitJour>),
+    Book(BTreeSet<CitBook>),
+    Proc(BTreeSet<CitProc>),
+    Patent(BTreeSet<CitPat>),
 }
