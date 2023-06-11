@@ -1,7 +1,7 @@
 //! Interface to table readers
 //!
 //! Adapted from ["seqtable.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/C_DOC/lxr/source/asn/seqtable.asn)
-use crate::seqloc::{SeqId, SeqInterval, SeqLoc};
+use crate::asn::{SeqId, SeqInterval, SeqLoc};
 
 /// known column data types
 pub enum ColumnInfoFieldId {

@@ -7,9 +7,7 @@
 //! for more information on.
 
 use std::collections::HashSet;
-use crate::biblio::IdPat;
-use crate::general::{Date, IntFuzz, ObjectId};
-use crate::seqfeat::FeatId;
+use crate::asn::{IdPat, Date, IntFuzz, ObjectId, FeatId};
 
 pub enum SeqId {
     Local(ObjectId),

@@ -3,8 +3,7 @@
 //! Adapted from ["seqalign.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqalign/seqalign.asn)
 
 use std::collections::HashSet;
-use crate::general::{ObjectId, UserObject};
-use crate::seqloc::{NaStrand, SeqId, SeqLoc};
+use crate::asn::{ObjectId, UserObject, NaStrand, SeqId, SeqLoc};
 
 pub type SeqAlignSet = HashSet<SeqAlign>;
 

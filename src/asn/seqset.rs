@@ -4,8 +4,7 @@
 //! from the NCBI C++ Toolkit
 
 use std::collections::HashSet;
-use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
-use crate::general::{Date, DbTag, ObjectId};
+use crate::asn::{BioSeq, SeqAnnot, SeqDescr, Date, DbTag, ObjectId};
 
 #[derive(Default)]
 /// internal representation of `class` field for [`BioSeqSet`]

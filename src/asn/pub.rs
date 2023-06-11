@@ -5,8 +5,7 @@
 //! Adapted from ["pub.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/pub/pub.asn)
 
 use std::collections::HashSet;
-use crate::biblio::{CitArt, CitBook, CitGen, CitJour, CitLet, CitPat, CitProc, CitSub, IdPat, PubMedId};
-use crate::medline::MedlineEntry;
+use crate::asn::{CitArt, CitBook, CitGen, CitJour, CitLet, CitPat, CitProc, CitSub, IdPat, PubMedId, MedlineEntry};
 
 pub enum Pub {
     Gen(CitGen),

@@ -2,7 +2,7 @@
 //! Adapted from ["biblio.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/biblio/biblio.asn)
 
 use std::collections::HashSet;
-use crate::general::{Date, DbTag, PersonId};
+use crate::asn::{Date, DbTag, PersonId};
 
 pub enum ArticleId {
     PubMed(PubMedId),

@@ -3,8 +3,7 @@
 //! Adapted from ["medline.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/C_DOC/lxr/source/asn/medline.asn)
 
 use std::collections::HashSet;
-use crate::biblio::{CitArt, PubMedId};
-use crate::general::Date;
+use crate::asn::{CitArt, PubMedId, Date};
 
 #[derive(Default)]
 pub enum MedlineEntryStatus {

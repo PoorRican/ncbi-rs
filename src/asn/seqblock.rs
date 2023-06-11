@@ -4,8 +4,7 @@
 //! from the NCBI C++ Toolkit.
 
 use std::collections::HashSet;
-use crate::general::{ObjectId, Date, DbTag};
-use crate::seqloc::SeqId;
+use crate::asn::{ObjectId, Date, DbTag, SeqId};
 
 pub enum EMBLDbNameCode {
     EMBL,

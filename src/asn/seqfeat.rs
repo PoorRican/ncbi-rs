@@ -4,11 +4,9 @@
 //! and documented by [NCBI C++ Toolkit Book](https://ncbi.github.io/cxx-toolkit/pages/ch_datamod#ch_datamod.datamodel.seqfeat)
 
 use std::collections::HashSet;
-use crate::biblio::{DOI, PubMedId};
-use crate::seq::{Heterogen, PubDesc, SeqLiteral};
-use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
-use crate::r#pub::{Pub, PubSet};
-use crate::seqloc::{GiimportId, SeqId, SeqLoc};
+use crate::asn::{DOI, PubMedId, Heterogen, PubDesc, SeqLiteral, DbTag,
+                 IntFuzz, ObjectId, UserObject, Pub, PubSet,
+                 GiimportId, SeqId, SeqLoc};
 
 /// Feature identifiers
 pub enum FeatId {

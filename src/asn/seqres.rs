@@ -2,7 +2,7 @@
 //!
 //! Adapted from ["seqres.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqres/seqres.asn)
 
-use crate::seqloc::SeqLoc;
+use crate::asn::SeqLoc;
 
 pub enum SeqGraphChoice {
     Real(RealGraph),
