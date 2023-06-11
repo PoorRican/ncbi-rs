@@ -75,7 +75,7 @@ pub struct SeqTableColumnInfo {
     ///        --    - SeqFeat.qual is SEQUENCE so several columns are allowed
     ///        --   "D.xxx" - dbxref.id = xxx, dbxref.tag = data
     ///        --    - SeqFeat.dbxref is SET so several columns are allowed
-    pub field_name: Option<String>
+    pub field_name: Option<String>,
 }
 
 pub struct CommonStringTable {
@@ -83,7 +83,7 @@ pub struct CommonStringTable {
     pub strings: Vec<String>,
 
     /// indexes of values in array 'strings' for each data row
-    pub indexes: Vec<usize>
+    pub indexes: Vec<usize>,
 }
 
 pub struct CommonBytesTable {
@@ -91,7 +91,7 @@ pub struct CommonBytesTable {
     pub bytes: Vec<Vec<u8>>,
 
     /// indexes of values in array 'bytes' for each data row
-    pub indexes: Vec<usize>
+    pub indexes: Vec<usize>,
 }
 
 /// Not to sure what the purpose of this class is.
@@ -109,7 +109,7 @@ pub struct ScaledIntMultiData {
     ///     min/max scaled value
     ///     should be set if scaled values may not fit in 32-bit signed integer
     pub min: Option<i32>,
-    pub max: Option<i32>
+    pub max: Option<i32>,
 }
 
 /// Pretty sure that this class is meant for using double's
@@ -130,7 +130,7 @@ pub struct ScaledRealMultiData {
 ///     Since bvector<> serialization doesn't keep size we have to add it explicitly
 pub struct BVectorData {
     pub size: u64,
-    pub data: Vec<u8>
+    pub data: Vec<u8>,
 }
 
 pub enum SeqTableMultiData {
@@ -178,7 +178,7 @@ pub enum SeqTableMultiData {
     /// a set of signed 2-byte integers
     Int2(Vec<u16>),
     /// a set of signed 8-byte integers
-    Int8(Vec<u64>)
+    Int8(Vec<u64>),
 }
 
 pub enum SeqTableSingleData {
@@ -207,7 +207,7 @@ pub enum SeqTableSparseIndex {
     /// # Original comment:
     ///     Bitset of rows with values, as serialized bvector<>,
     ///     see include/util/bitset/bm.h
-    BitSetBVector(BVectorData)
+    BitSetBVector(BVectorData),
 }
 pub struct SeqTableColumn {
     /// column description or reference to previously defined info
@@ -245,25 +245,5 @@ pub struct SeqTable {
     pub num_rows: u64,
 
     /// data in columns
-    pub columns: Vec<SeqTableColumn>
+    pub columns: Vec<SeqTableColumn>,
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

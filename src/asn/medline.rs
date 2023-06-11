@@ -2,8 +2,8 @@
 //!
 //! Adapted from ["medline.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/C_DOC/lxr/source/asn/medline.asn)
 
+use crate::asn::{CitArt, Date, PubMedId};
 use std::collections::HashSet;
-use crate::asn::{CitArt, PubMedId, Date};
 
 #[derive(Default)]
 pub enum MedlineEntryStatus {
@@ -15,7 +15,7 @@ pub enum MedlineEntryStatus {
 
     #[default]
     /// regular medline record
-    Medline
+    Medline,
 }
 
 /// a MEDLINE or PubMed entry
@@ -48,7 +48,7 @@ pub struct MedlineEntry {
     /// additional Medline field types
     pub mlfield: Option<HashSet<MedlineField>>,
 
-    pub status: MedlineEntryStatus
+    pub status: MedlineEntryStatus,
 }
 
 pub struct MedlineMesh {
@@ -60,7 +60,7 @@ pub struct MedlineMesh {
     pub term: String,
 
     /// qualifiers
-    pub qual: Option<HashSet<MedlineQual>>
+    pub qual: Option<HashSet<MedlineQual>>,
 }
 
 pub struct MedlineQual {
@@ -99,7 +99,7 @@ pub enum MedlineSiType {
     /// SwissProt
     SwissProt,
     /// genome data base
-    GDB
+    GDB,
 }
 
 pub enum MedlineRnType {
@@ -109,7 +109,7 @@ pub enum MedlineRnType {
     CAS,
 
     /// EC number
-    EC
+    EC,
 }
 
 /// Medline substance records
@@ -121,14 +121,14 @@ pub struct MedlineRn {
     pub cit: Option<String>,
 
     /// name (always present)
-    pub name: String
+    pub name: String,
 }
 
 /// medline cross reference records
 pub struct MedlineSi {
     /// type of xref
     pub r#type: MedlineSiType,
-    pub cit: Option<String>
+    pub cit: Option<String>,
 }
 
 pub enum MedlineFieldType {
@@ -139,7 +139,7 @@ pub enum MedlineFieldType {
     Comment,
 
     /// retracted, corrected, etc
-    Erratum
+    Erratum,
 }
 
 pub struct MedlineField {
@@ -150,13 +150,13 @@ pub struct MedlineField {
     pub cit: Option<String>,
 
     /// pointers relevant to this text
-    pub ids: Option<Vec<DocRef>>
+    pub ids: Option<Vec<DocRef>>,
 }
 
 pub enum DocRefType {
     Medline = 1,
     PubMed,
-    NCBIGi
+    NCBIGi,
 }
 
 /// reference to a document
@@ -164,25 +164,3 @@ pub struct DocRef {
     pub r#type: DocRefType,
     pub uid: u64,
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

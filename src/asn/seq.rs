@@ -4,8 +4,12 @@
 //!
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
+use crate::asn::{
+    BioSource, Date, DbTag, EMBLBlock, GBBlock, IntFuzz, ModelEvidenceSupport, ObjectId, OrgRef,
+    PDBBlock, PIRBlock, PRFBlock, PubEquiv, SPBlock, SeqAlign, SeqFeat, SeqGraph, SeqId, SeqLoc,
+    SeqTable, UserObject,
+};
 use std::collections::HashSet;
-use crate::asn::{BioSource, Date, DbTag, EMBLBlock, GBBlock, IntFuzz, ModelEvidenceSupport, ObjectId, OrgRef, PDBBlock, PIRBlock, PRFBlock, PubEquiv, SeqAlign, SeqFeat, SeqGraph, SeqId, SeqLoc, SeqTable, SPBlock, UserObject};
 
 /// Single continuous biological sequence.
 /// It can be nucleic acid or protein. It can be fully instantiated (ie: data
@@ -331,7 +335,7 @@ pub enum NumRefType {
     /// by segmented or const seq sources
     Sources,
     /// by alignments given below
-    Aligns
+    Aligns,
 }
 
 /// Number by reference to other sequences
@@ -339,7 +343,7 @@ pub struct NumRef {
     /// type of reference
     pub r#type: NumRefType,
     /// alignments to pass for [`NumRefType::Aligns`]
-    pub aligns: Option<SeqAlign>
+    pub aligns: Option<SeqAlign>,
 }
 
 /// Mapping to floating point system
@@ -348,7 +352,7 @@ pub struct NumRef {
 pub struct NumReal {
     pub a: f64,
     pub b: f64,
-    pub units: Option<String>
+    pub units: Option<String>,
 }
 
 #[derive(Default)]
@@ -767,7 +771,7 @@ pub enum SeqAnnotDB {
     SP,
     BBone,
     PDB,
-    Other = 255
+    Other = 255,
 }
 
 /// Internal representation for `data` choice in [`SeqAnnot`]

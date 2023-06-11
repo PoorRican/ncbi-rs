@@ -11,7 +11,7 @@ use std::collections::HashSet;
 /// accommodate old data, as it is impossible to compute or index on.
 pub enum Date {
     Str(String),
-    Date(DateStd)
+    Date(DateStd),
 }
 
 /// NOTE: this is NOT a unix tm struct
@@ -35,7 +35,7 @@ pub struct DateStd {
 /// Can tag or name anything
 pub enum ObjectId {
     Id(u64),
-    Str(String)
+    Str(String),
 }
 
 /// Generalized for tagging
@@ -43,7 +43,7 @@ pub struct DbTag {
     /// name of database or system
     pub db: String,
     /// appropriate tag
-    pub tag: ObjectId
+    pub tag: ObjectId,
 }
 
 pub enum PersonId {
@@ -102,7 +102,7 @@ pub enum IntFuzz {
     Range(Range),
     Pct(i64),
     Lim(FuzzLimit),
-    Alt(HashSet<i64>)
+    Alt(HashSet<i64>),
 }
 
 /// a general object for a user defined structured data item
@@ -129,7 +129,7 @@ pub enum UserData {
     Ints(HashSet<i64>),
     Reals(HashSet<f64>),
     Fields(HashSet<UserField>),
-    Objects(HashSet<UserObject>)
+    Objects(HashSet<UserObject>),
 }
 
 pub struct UserField {
@@ -138,5 +138,5 @@ pub struct UserField {
     /// required for strs, ints, reals, oss
     pub num: Option<i64>,
     /// field contents
-    pub data: UserData
+    pub data: UserData,
 }

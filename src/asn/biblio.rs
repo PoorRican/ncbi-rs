@@ -1,8 +1,8 @@
 //! Bibliographic data elements
 //! Adapted from ["biblio.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/biblio/biblio.asn)
 
-use std::collections::HashSet;
 use crate::asn::{Date, DbTag, PersonId};
+use std::collections::HashSet;
 
 pub enum ArticleId {
     PubMed(PubMedId),
@@ -126,7 +126,7 @@ pub struct CitBook {
     /// authors
     pub authors: AuthList,
 
-    pub imp: Imprint
+    pub imp: Imprint,
 }
 
 /// meeting proceedings
@@ -186,7 +186,7 @@ pub struct PatentPriority {
     pub number: String,
 
     /// date of application
-    pub date: Date
+    pub date: Date,
 }
 
 pub enum IdPatChoice {
@@ -209,7 +209,7 @@ pub struct IdPat {
 }
 
 pub enum LetType {
-    Manuscript=1,
+    Manuscript = 1,
     Letter,
     Thesis,
 }
@@ -307,7 +307,7 @@ pub enum AuthorRole {
     Compiler = 1,
     Editor,
     PatentAssignee,
-    Translator
+    Translator,
 }
 
 pub struct Author {
@@ -321,7 +321,7 @@ pub struct Author {
     pub affil: Option<Affil>,
 
     /// true if [corresponding author](https://scientific-publishing.webshop.elsevier.com/publication-recognition/what-corresponding-author/)
-    pub is_corr: Option<bool>
+    pub is_corr: Option<bool>,
 }
 
 /// std representation for affiliations
@@ -355,7 +355,7 @@ pub enum Affil {
     Str(String),
 
     /// std representation
-    Std(AffilStd)
+    Std(AffilStd),
 }
 
 /// title group
@@ -405,7 +405,7 @@ pub enum TitleItem {
 
     /// ISBN
     /// Valid:  B
-    ISBN(String)
+    ISBN(String),
 }
 
 pub type Title = HashSet<TitleItem>;
@@ -418,7 +418,7 @@ pub enum ImprintPrePub {
     /// accepted, not published
     InPress,
 
-    Other = 255
+    Other = 255,
 }
 
 pub struct Imprint {
@@ -471,7 +471,7 @@ pub enum CitRetractType {
     InError,
 
     /// citation and/or explanation
-    Erratum
+    Erratum,
 }
 
 pub struct CitRetract {
@@ -485,24 +485,5 @@ pub struct CitRetract {
 pub struct Meeting {
     pub number: String,
     pub date: Date,
-    pub place: Option<Affil>
+    pub place: Option<Affil>,
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -3,8 +3,8 @@
 //! Adapted from ["seqset.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqset/seqset.asn)
 //! from the NCBI C++ Toolkit
 
+use crate::asn::{BioSeq, Date, DbTag, ObjectId, SeqAnnot, SeqDescr};
 use std::collections::HashSet;
-use crate::asn::{BioSeq, SeqAnnot, SeqDescr, Date, DbTag, ObjectId};
 
 #[derive(Default)]
 /// internal representation of `class` field for [`BioSeqSet`]
@@ -75,7 +75,7 @@ pub struct BioSeqSet {
     pub date: Option<Date>,
     pub descr: Option<SeqDescr>,
     pub seq_set: Vec<SeqEntry>,
-    pub annot: Option<HashSet<SeqAnnot>>
+    pub annot: Option<HashSet<SeqAnnot>>,
 }
 
 pub enum SeqEntry {

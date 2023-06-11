@@ -3,10 +3,11 @@
 //! Adapted from ["seqfeat.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqfeat/seqfeat.asn)
 //! and documented by [NCBI C++ Toolkit Book](https://ncbi.github.io/cxx-toolkit/pages/ch_datamod#ch_datamod.datamodel.seqfeat)
 
+use crate::asn::{
+    DbTag, GiimportId, Heterogen, IntFuzz, ObjectId, Pub, PubDesc, PubMedId, PubSet, SeqId,
+    SeqLiteral, SeqLoc, UserObject, DOI,
+};
 use std::collections::HashSet;
-use crate::asn::{DOI, PubMedId, Heterogen, PubDesc, SeqLiteral, DbTag,
-                 IntFuzz, ObjectId, UserObject, Pub, PubSet,
-                 GiimportId, SeqId, SeqLoc};
 
 /// Feature identifiers
 pub enum FeatId {
@@ -200,9 +201,8 @@ pub struct ModelEvidenceSupport {
     pub dbxref: Option<HashSet<DbTag>>,
     pub exon_count: Option<u64>,
     pub exon_length: Option<u64>,
-    pub full_length: bool,                  // TODO: default false
-    pub supports_all_exon_combo: bool,      // TODO: default false
-
+    pub full_length: bool,             // TODO: default false
+    pub supports_all_exon_combo: bool, // TODO: default false
 }
 
 #[derive(Default)]
@@ -378,7 +378,7 @@ pub enum FrequencyBasedValidation {
     Above5Pct1Plus,
     Validated,
     Above1PctAll,
-    Above1Pct1Plus
+    Above1Pct1Plus,
 }
 
 pub enum VariantGenotype {
@@ -600,7 +600,7 @@ pub enum DeltaAction {
     Morph,
     Offset,
     DelAt,
-    InsBefore
+    InsBefore,
 }
 
 pub struct DeltaItem {
@@ -670,7 +670,7 @@ pub enum RnaRefType {
 pub enum RnaRefExt {
     Name(String),
     tRNA(TRnaExt),
-    Gen(RnaGen,)
+    Gen(RnaGen),
 }
 
 pub struct RnaRef {
@@ -710,7 +710,7 @@ pub struct GeneRef {
     pub allele: Option<String>,
     pub desc: Option<String>,
     pub maploc: Option<String>,
-    pub pseudo: bool,                   // TODO: default false
+    pub pseudo: bool, // TODO: default false
     pub db: Option<HashSet<DbTag>>,
     pub syn: Option<HashSet<String>>,
     pub locus_tag: Option<String>,
@@ -856,7 +856,7 @@ pub enum BioSourceGenome {
     Hydrogenosome,
     Chromosome,
     PlasmidInMitochondrion,
-    PlasmidInPlastid
+    PlasmidInPlastid,
 }
 
 #[derive(Default)]
@@ -983,7 +983,7 @@ pub enum InitType {
     Unknown,
     Single,
     Multiple,
-    Region
+    Region,
 }
 
 pub struct Txinit {
@@ -995,8 +995,8 @@ pub struct Txinit {
     pub expression: Option<String>,
     pub txdescr: Option<String>,
     pub txorg: Option<OrgRef>,
-    pub mapping_precise: bool,          // TODO: default false
-    pub location_accurate: bool,        // TODO: default false
+    pub mapping_precise: bool,   // TODO: default false
+    pub location_accurate: bool, // TODO: default false
     pub inittype: InitType,
     pub evidence: Option<HashSet<TxEvidence>>,
 }
@@ -1031,30 +1031,6 @@ pub enum TxEvidenceExpressionSystem {
 pub struct TxEvidence {
     pub exp_code: TxEvidenceExpCode,
     pub expression_system: TxEvidenceExpressionSystem,
-    pub low_prec_data: bool,            // TODO: default false
-    pub from_homolog: bool,             // TODO: default false
+    pub low_prec_data: bool, // TODO: default false
+    pub from_homolog: bool,  // TODO: default false
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

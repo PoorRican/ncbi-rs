@@ -74,7 +74,5 @@ pub struct SeqCodeTable {
 /// for distribution
 pub struct SeqCodeSet {
     pub codes: Option<HashSet<SeqCodeTable>>,
-    pub maps: Option<HashSet<SeqMapTable>>
+    pub maps: Option<HashSet<SeqMapTable>>,
 }
-
-

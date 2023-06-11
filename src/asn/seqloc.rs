@@ -6,8 +6,8 @@
 //! See [book](https://ncbi.github.io/cxx-toolkit/pages/ch_datamod#ch_datamod._ASN1_Specification_s_8)
 //! for more information on.
 
+use crate::asn::{Date, FeatId, IdPat, IntFuzz, ObjectId};
 use std::collections::HashSet;
-use crate::asn::{IdPat, Date, IntFuzz, ObjectId, FeatId};
 
 pub enum SeqId {
     Local(ObjectId),
@@ -19,7 +19,7 @@ pub enum SeqId {
     Pir(TextseqId),
     Swissprot(TextseqId),
     Patent(PatentSeqId),
-    Other(TextseqId)
+    Other(TextseqId),
 }
 
 pub type SeqIdSet = HashSet<SeqId>;
@@ -29,7 +29,7 @@ pub struct PatentSeqId {
     pub seqid: u64,
 
     /// patent citation
-    pub cit: IdPat
+    pub cit: IdPat,
 }
 
 pub struct TextseqId {
@@ -86,7 +86,7 @@ pub enum SeqLoc {
     Equiv(SeqLocEquiv),
     Bond(SeqBond),
     /// indirect, through a [`SeqFeat`]
-    Feat(FeatId)
+    Feat(FeatId),
 }
 
 pub struct SeqInterval {
@@ -132,7 +132,7 @@ pub struct SeqBond {
     pub a: SeqPoint,
 
     /// other end may not be available
-    pub b: Option<SeqPoint>
+    pub b: Option<SeqPoint>,
 }
 
 /// this will hold anything

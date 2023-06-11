@@ -2,8 +2,8 @@
 //!
 //! Adapted from ["seqalign.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqalign/seqalign.asn)
 
+use crate::asn::{NaStrand, ObjectId, SeqId, SeqLoc, UserObject};
 use std::collections::HashSet;
-use crate::asn::{ObjectId, UserObject, NaStrand, SeqId, SeqLoc};
 
 pub type SeqAlignSet = HashSet<SeqAlign>;
 
@@ -176,7 +176,7 @@ pub struct SplicedSeg {
     /// alignment descriptors / modifiers
     ///
     /// this provides a set for extension
-    pub modifiers: Option<HashSet<SplicedSegModifier>>
+    pub modifiers: Option<HashSet<SplicedSegModifier>>,
 }
 
 pub enum SplicedSegModifier {
@@ -272,7 +272,7 @@ pub enum SplicedExonChunk {
 pub struct SpliceSite {
     /// typically two bases in the introgenic region,
     /// always in IUPAC format
-    pub bases: String
+    pub bases: String,
 }
 
 /// [`SparseSeg`] follows the semantics of [`DenseSeg`] and is optimized
@@ -286,7 +286,7 @@ pub struct SparseSeg {
     pub row_scores: Option<HashSet<Score>>,
 
     /// index of extra items
-    pub ext: Option<HashSet<SparseSegExt>>
+    pub ext: Option<HashSet<SparseSegExt>>,
 }
 
 pub struct SparseAlign {
@@ -327,24 +327,3 @@ pub struct Score {
 }
 
 pub type ScoreSet = HashSet<Score>;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

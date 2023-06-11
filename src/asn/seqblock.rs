@@ -3,8 +3,8 @@
 //! Adapted from ["seqblock.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqblock/seqblock.asn)
 //! from the NCBI C++ Toolkit.
 
+use crate::asn::{Date, DbTag, ObjectId, SeqId};
 use std::collections::HashSet;
-use crate::asn::{ObjectId, Date, DbTag, SeqId};
 
 pub enum EMBLDbNameCode {
     EMBL,

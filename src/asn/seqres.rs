@@ -43,7 +43,7 @@ pub struct Graph<T> {
     /// value to draw axis on
     pub axis: T,
 
-    pub values: Vec<T>
+    pub values: Vec<T>,
 }
 
 pub type RealGraph = Graph<f64>;
