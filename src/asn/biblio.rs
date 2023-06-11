@@ -2,15 +2,17 @@
 //! Adapted from ["biblio.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/biblio/biblio.asn)
 
 use crate::asn::{Date, DbTag, PersonId};
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]
+/// represents multiple ways to id an article
 pub enum ArticleId {
     PubMed(PubMedId),
     Medline(MedlineUID),
     DOI(DOI),
     PmcId(PmcID),
     PmPid(PmPid),
+
     /// generic catch all
     Other(DbTag),
 }
@@ -36,7 +38,7 @@ pub type PmcPid = String;
 /// Publisher Id supplied to PubMed
 pub type PmPid = String;
 
-pub type ArticleIdSet = HashSet<ArticleId>;
+pub type ArticleIdSet = BTreeSet<ArticleId>;
 
 #[derive(PartialEq, Debug)]
 /// points of publication
@@ -88,7 +90,7 @@ pub struct PubStatusDate {
     pub date: Date,
 }
 
-pub type PubStatusDateSet = HashSet<PubStatusDate>;
+pub type PubStatusDateSet = BTreeSet<PubStatusDate>;
 
 #[derive(PartialEq, Debug)]
 /// journal or book
@@ -433,7 +435,7 @@ pub enum TitleItem {
     ISBN(String),
 }
 
-pub type Title = HashSet<TitleItem>;
+pub type Title = BTreeSet<TitleItem>;
 
 #[derive(PartialEq, Debug)]
 /// For pre-publication citations

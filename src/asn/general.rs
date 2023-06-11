@@ -2,7 +2,7 @@
 //!
 //! As per [general.asn](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/asn_spec/general.asn.html)
 
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]
 /// Model precise timestamp or an un-parsed string
@@ -51,6 +51,7 @@ pub struct DbTag {
 }
 
 #[derive(PartialEq, Debug)]
+/// define a std element for people
 pub enum PersonId {
     /// any defined database tag
     DbTag(DbTag),
@@ -65,16 +66,22 @@ pub enum PersonId {
 }
 
 #[derive(PartialEq, Debug)]
+/// structured names
 pub struct NameStd {
     pub last: String,
     pub first: Option<String>,
     pub middle: Option<String>,
+    
     /// full name (eg: "J. John Smith, Esq")
     pub full: Option<String>,
+    
     /// first + middle initials
     pub initials: Option<String>,
-    /// Dr., Sister, etc
+    
+    /// Jr, Sr, III
     pub suffix: Option<String>,
+    
+    /// Dr., Sister, etc
     pub title: Option<String>,
 }
 
@@ -88,16 +95,22 @@ pub struct Range {
 pub enum FuzzLimit {
     /// unknown
     Unk,
+    
     /// greater than
     GT,
+    
     /// less than
     LT,
+    
     /// space to right of position
     TR,
+    
     /// space to left of position
     TL,
+    
     /// artificial break at origin of circle
     Circle,
+    
     /// something else
     Other = 255,
 }
@@ -107,11 +120,12 @@ pub enum FuzzLimit {
 /// Communicate uncertainties in integer values
 pub enum IntFuzz {
     /// plus or minus fixed amount
-    P_M(i64),
+    PM(i64),
+    
     Range(Range),
     Pct(i64),
     Lim(FuzzLimit),
-    Alt(HashSet<i64>),
+    Alt(BTreeSet<i64>),
 }
 
 #[derive(PartialEq, Debug)]
@@ -124,7 +138,7 @@ pub struct UserObject {
     /// type of object within class
     pub r#type: ObjectId,
     /// the object itself
-    pub data: HashSet<UserField>,
+    pub data: BTreeSet<UserField>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -136,11 +150,11 @@ pub enum UserData {
     // OS(`octal string`),
     /// for using other definitions
     Object(UserObject),
-    Strs(HashSet<String>),
-    Ints(HashSet<i64>),
-    Reals(HashSet<f64>),
-    Fields(HashSet<UserField>),
-    Objects(HashSet<UserObject>),
+    Strs(BTreeSet<String>),
+    Ints(BTreeSet<i64>),
+    Reals(BTreeSet<f64>),
+    Fields(BTreeSet<UserField>),
+    Objects(BTreeSet<UserObject>),
 }
 
 #[derive(PartialEq, Debug)]
