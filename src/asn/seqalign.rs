@@ -7,6 +7,7 @@ use std::collections::HashSet;
 
 pub type SeqAlignSet = HashSet<SeqAlign>;
 
+#[derive(PartialEq, Debug)]
 pub enum SeqAlignType {
     NotSet,
     Global,
@@ -19,6 +20,7 @@ pub enum SeqAlignType {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum SeqAlignSegs {
     DenDiag(Vec<DenseDiag>),
     DenSeg(DenseSeg),
@@ -29,6 +31,7 @@ pub enum SeqAlignSegs {
     Sparse(SparseSeg),
 }
 
+#[derive(PartialEq, Debug)]
 pub struct SeqAlign {
     pub r#type: SeqAlignType,
     /// dimensionality
@@ -46,6 +49,7 @@ pub struct SeqAlign {
     pub ext: Option<Vec<UserObject>>,
 }
 
+#[derive(PartialEq, Debug)]
 /// for (multiway) diagonals
 pub struct DenseDiag {
     /// dimensionality
@@ -61,6 +65,7 @@ pub struct DenseDiag {
     pub scores: Option<HashSet<Score>>,
 }
 
+#[derive(PartialEq, Debug)]
 /// The densest packing for sequence alignments only.
 ///
 ///
@@ -93,6 +98,7 @@ pub struct DenseSeg {
     pub scores: Option<Vec<Score>>,
 }
 
+#[derive(PartialEq, Debug)]
 /// for (multiway) global or partial alignments
 pub struct PackedSeg {
     // TODO: default 2
@@ -120,6 +126,7 @@ pub struct PackedSeg {
     pub scores: Option<Vec<Score>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct StdSeg {
     // TODO: default 2
     /// dimensionality
@@ -134,11 +141,13 @@ pub struct StdSeg {
     pub scores: Option<Vec<Score>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum SplicedSegProduct {
     Transcript,
     Protein,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct SplicedSeg {
     /// product is either protein or transcript (cDNA)
     pub product_id: Option<SeqId>,
@@ -179,6 +188,7 @@ pub struct SplicedSeg {
     pub modifiers: Option<HashSet<SplicedSegModifier>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum SplicedSegModifier {
     /// start found for protein/product or genomic alignment
     StartCodonFound(bool),
@@ -187,6 +197,7 @@ pub enum SplicedSegModifier {
     StopCodonFound(bool),
 }
 
+#[derive(PartialEq, Debug)]
 /// Complete or partial exon
 ///
 /// Two consecutive [`SplicedExon`]'s may belong to one exon
@@ -226,11 +237,13 @@ pub struct SplicedExon {
     pub ext: Option<Vec<UserObject>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum ProductPos {
     NucPos(u64),
     ProtPos(ProtPos),
 }
 
+#[derive(PartialEq, Debug)]
 /// codon based position on protein (1/3 of aminoacid)
 pub struct ProtPos {
     /// standard protein position
@@ -242,6 +255,7 @@ pub struct ProtPos {
     pub frame: usize,
 }
 
+#[derive(PartialEq, Debug)]
 /// Piece of an exon
 ///
 /// Each variant contains lengths given in nucleotide bases
@@ -268,6 +282,7 @@ pub enum SplicedExonChunk {
     GenomicIns(u64),
 }
 
+#[derive(PartialEq, Debug)]
 /// site involved in splice
 pub struct SpliceSite {
     /// typically two bases in the introgenic region,
@@ -275,6 +290,7 @@ pub struct SpliceSite {
     pub bases: String,
 }
 
+#[derive(PartialEq, Debug)]
 /// [`SparseSeg`] follows the semantics of [`DenseSeg`] and is optimized
 /// for representing sparse multiple alignments.
 pub struct SparseSeg {
@@ -289,6 +305,7 @@ pub struct SparseSeg {
     pub ext: Option<HashSet<SparseSegExt>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct SparseAlign {
     pub first_id: SeqId,
     pub second_id: SeqId,
@@ -311,15 +328,18 @@ pub struct SparseAlign {
     pub seg_scores: Option<HashSet<Score>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct SparseSegExt {
     pub index: u64,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum ScoreValue {
     Real(f64),
     Int(i64),
 }
 
+#[derive(PartialEq, Debug)]
 /// Use of [`Score`] is discouraged for external ASN.1 specifications
 pub struct Score {
     pub id: Option<ObjectId>,

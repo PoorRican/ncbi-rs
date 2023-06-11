@@ -5,7 +5,7 @@
 use crate::asn::{CitArt, Date, PubMedId};
 use std::collections::HashSet;
 
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 pub enum MedlineEntryStatus {
     /// record as supplied by publisher
     Publisher = 1,
@@ -18,6 +18,7 @@ pub enum MedlineEntryStatus {
     Medline,
 }
 
+#[derive(PartialEq, Debug)]
 /// a MEDLINE or PubMed entry
 pub struct MedlineEntry {
     /// MEDLINE UID, sometimes not yet available from PubMed
@@ -51,6 +52,7 @@ pub struct MedlineEntry {
     pub status: MedlineEntryStatus,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct MedlineMesh {
     // TODO: default false
     /// true if main point (*)
@@ -63,6 +65,7 @@ pub struct MedlineMesh {
     pub qual: Option<HashSet<MedlineQual>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct MedlineQual {
     // TODO: default false
     /// true if main point
@@ -72,6 +75,7 @@ pub struct MedlineQual {
     pub subh: String,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum MedlineSiType {
     DDBJ = 1,
     /// Carbohydrate Structure Database
@@ -102,6 +106,7 @@ pub enum MedlineSiType {
     GDB,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum MedlineRnType {
     NameOnly,
 
@@ -112,6 +117,7 @@ pub enum MedlineRnType {
     EC,
 }
 
+#[derive(PartialEq, Debug)]
 /// Medline substance records
 pub struct MedlineRn {
     /// type of record
@@ -124,6 +130,7 @@ pub struct MedlineRn {
     pub name: String,
 }
 
+#[derive(PartialEq, Debug)]
 /// medline cross reference records
 pub struct MedlineSi {
     /// type of xref
@@ -131,6 +138,7 @@ pub struct MedlineSi {
     pub cit: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum MedlineFieldType {
     /// look in line code
     Other,
@@ -142,6 +150,7 @@ pub enum MedlineFieldType {
     Erratum,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct MedlineField {
     /// keyed type
     pub r#type: MedlineFieldType,
@@ -153,12 +162,14 @@ pub struct MedlineField {
     pub ids: Option<Vec<DocRef>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum DocRefType {
     Medline = 1,
     PubMed,
     NCBIGi,
 }
 
+#[derive(PartialEq, Debug)]
 /// reference to a document
 pub struct DocRef {
     pub r#type: DocRefType,

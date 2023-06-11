@@ -4,6 +4,7 @@
 
 use std::collections::HashSet;
 
+#[derive(PartialEq, Debug)]
 /// Model precise timestamp or an un-parsed string
 ///
 /// The string form is a fall-back for when the input data cannot be parsed
@@ -14,6 +15,7 @@ pub enum Date {
     Date(DateStd),
 }
 
+#[derive(PartialEq, Debug)]
 /// NOTE: this is NOT a unix tm struct
 pub struct DateStd {
     /// full year
@@ -32,12 +34,14 @@ pub struct DateStd {
     pub second: Option<u8>,
 }
 
+#[derive(PartialEq, Debug)]
 /// Can tag or name anything
 pub enum ObjectId {
     Id(u64),
     Str(String),
 }
 
+#[derive(PartialEq, Debug)]
 /// Generalized for tagging
 pub struct DbTag {
     /// name of database or system
@@ -46,6 +50,7 @@ pub struct DbTag {
     pub tag: ObjectId,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum PersonId {
     /// any defined database tag
     DbTag(DbTag),
@@ -59,6 +64,7 @@ pub enum PersonId {
     Consortium(String),
 }
 
+#[derive(PartialEq, Debug)]
 pub struct NameStd {
     pub last: String,
     pub first: Option<String>,
@@ -72,11 +78,13 @@ pub struct NameStd {
     pub title: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct Range {
     pub max: i64,
     pub min: i64,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum FuzzLimit {
     /// unknown
     Unk,
@@ -95,6 +103,7 @@ pub enum FuzzLimit {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(PartialEq, Debug)]
 /// Communicate uncertainties in integer values
 pub enum IntFuzz {
     /// plus or minus fixed amount
@@ -105,6 +114,7 @@ pub enum IntFuzz {
     Alt(HashSet<i64>),
 }
 
+#[derive(PartialEq, Debug)]
 /// a general object for a user defined structured data item
 ///
 /// used by [`SeqFeat`] and [`SeqDescr`]
@@ -117,6 +127,7 @@ pub struct UserObject {
     pub data: HashSet<UserField>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum UserData {
     Str(String),
     Int(i64),
@@ -132,6 +143,7 @@ pub enum UserData {
     Objects(HashSet<UserObject>),
 }
 
+#[derive(PartialEq, Debug)]
 pub struct UserField {
     /// field label
     pub label: ObjectId,

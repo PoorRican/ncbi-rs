@@ -6,7 +6,7 @@
 use crate::asn::{BioSeq, Date, DbTag, ObjectId, SeqAnnot, SeqDescr};
 use std::collections::HashSet;
 
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 /// internal representation of `class` field for [`BioSeqSet`]
 pub enum BioSeqSetClass {
     #[default]
@@ -60,6 +60,7 @@ pub enum BioSeqSetClass {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 /// just a collection
 pub struct BioSeqSet {
     pub id: Option<ObjectId>,
@@ -78,6 +79,7 @@ pub struct BioSeqSet {
     pub annot: Option<HashSet<SeqAnnot>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum SeqEntry {
     Seq(BioSeq),
     Set(BioSeqSet),

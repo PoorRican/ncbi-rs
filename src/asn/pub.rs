@@ -10,6 +10,7 @@ use crate::asn::{
 };
 use std::collections::HashSet;
 
+#[derive(PartialEq, Debug)]
 pub enum Pub {
     Gen(CitGen),
     Sub(CitSub),
@@ -28,6 +29,7 @@ pub enum Pub {
 
 pub type PubEquiv = HashSet<Pub>;
 
+#[derive(PartialEq, Debug)]
 pub enum PubSet {
     Pub(HashSet<Pub>),
     Medline(HashSet<MedlineEntry>),

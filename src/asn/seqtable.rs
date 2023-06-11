@@ -3,6 +3,7 @@
 //! Adapted from ["seqtable.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/C_DOC/lxr/source/asn/seqtable.asn)
 use crate::asn::{SeqId, SeqInterval, SeqLoc};
 
+#[derive(PartialEq, Debug)]
 /// known column data types
 pub enum ColumnInfoFieldId {
     // position types
@@ -47,6 +48,7 @@ pub enum ColumnInfoFieldId {
     DbXrefTag,
 }
 
+#[derive(PartialEq, Debug)]
 /// Unsure on how this object is used
 ///
 /// Nor do I know of any examples of the use of `field_name`. It *could*
@@ -78,6 +80,7 @@ pub struct SeqTableColumnInfo {
     pub field_name: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct CommonStringTable {
     /// set of possible values
     pub strings: Vec<String>,
@@ -86,6 +89,7 @@ pub struct CommonStringTable {
     pub indexes: Vec<usize>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct CommonBytesTable {
     /// set of possible values
     pub bytes: Vec<Vec<u8>>,
@@ -94,6 +98,7 @@ pub struct CommonBytesTable {
     pub indexes: Vec<usize>,
 }
 
+#[derive(PartialEq, Debug)]
 /// Not to sure what the purpose of this class is.
 ///
 /// Also unsure about original comments on scaling.
@@ -112,6 +117,7 @@ pub struct ScaledIntMultiData {
     pub max: Option<i32>,
 }
 
+#[derive(PartialEq, Debug)]
 /// Pretty sure that this class is meant for using double's
 pub struct ScaledRealMultiData {
     // output data[i] = data[i] * mul + add
@@ -120,6 +126,7 @@ pub struct ScaledRealMultiData {
     pub data: Box<SeqTableMultiData>,
 }
 
+#[derive(PartialEq, Debug)]
 /// Seems to be an artifact from C++ implementation in ASN.1 spec
 ///
 /// Unsure on utility.
@@ -133,6 +140,7 @@ pub struct BVectorData {
     pub data: Vec<u8>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum SeqTableMultiData {
     /// a set of 4-byte integers, one per row
     Int(Vec<u32>),
@@ -181,6 +189,7 @@ pub enum SeqTableMultiData {
     Int8(Vec<u64>),
 }
 
+#[derive(PartialEq, Debug)]
 pub enum SeqTableSingleData {
     Int(u64),
     Real(f64),
@@ -193,6 +202,7 @@ pub enum SeqTableSingleData {
     Int8(u8),
 }
 
+#[derive(PartialEq, Debug)]
 pub enum SeqTableSparseIndex {
     /// Indexes of rows with values
     Indexes(Vec<u64>),
@@ -209,6 +219,8 @@ pub enum SeqTableSparseIndex {
     ///     see include/util/bitset/bm.h
     BitSetBVector(BVectorData),
 }
+
+#[derive(PartialEq, Debug)]
 pub struct SeqTableColumn {
     /// column description or reference to previously defined info
     pub header: SeqTableColumnInfo,
@@ -226,6 +238,7 @@ pub struct SeqTableColumn {
     pub sparse_other: Option<SeqTableSingleData>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct SeqTable {
     /// type of features in this table
     ///

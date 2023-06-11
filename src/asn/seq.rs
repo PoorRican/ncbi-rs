@@ -11,6 +11,7 @@ use crate::asn::{
 };
 use std::collections::HashSet;
 
+#[derive(PartialEq, Debug)]
 /// Single continuous biological sequence.
 /// It can be nucleic acid or protein. It can be fully instantiated (ie: data
 /// for every residue) or only partially instantiated (eg: we know a frag is
@@ -27,6 +28,7 @@ pub struct BioSeq {
 
 pub type SeqDescr = HashSet<SeqDesc>;
 
+#[derive(PartialEq, Debug)]
 /// # Note
 /// `MolType`, `Modif`, `Method`, and `Org` are consolidated and expanded
 /// in [`OrgRef`]`, [`BioSource`], and [`MolInfo`] in this specification.
@@ -94,7 +96,7 @@ pub enum SeqDesc {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 /// Represents type of biomolecule
 ///
 /// # Notes
@@ -127,7 +129,7 @@ pub enum BioMol {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 pub enum MolTech {
     #[default]
     Unknown,
@@ -183,7 +185,7 @@ pub enum MolTech {
     Other = 255,
 }
 
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 /// Capture sequence completeness.
 ///
 /// Completeness is not indicated in most records. For genomes, assume
@@ -203,6 +205,7 @@ pub enum MolCompleteness {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct MolInfo {
     pub bio_mol: BioMol,
     pub tech: MolTech,
@@ -213,6 +216,7 @@ pub struct MolInfo {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(PartialEq, Debug)]
 /// GenInfo Backbone molecule types
 ///
 /// Captures type of molecule represented
@@ -234,6 +238,7 @@ pub enum GIBBMol {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 /// GenInfo Backbone Modifiers
 pub enum GIBBMod {
     DNA,
@@ -276,6 +281,7 @@ pub enum GIBBMod {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 /// Sequencing method
 pub enum GIBBMethod {
     /// Conceptual translation
@@ -293,6 +299,7 @@ pub enum GIBBMethod {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 /// Any display numbering system
 pub enum Numbering {
     /// continuous numbering
@@ -305,7 +312,7 @@ pub enum Numbering {
     Real(NumReal),
 }
 
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 /// continuous display numbering system
 pub struct NumCont {
     /// number assigned to first residue
@@ -321,6 +328,7 @@ pub struct NumCont {
     pub ascending: bool,
 }
 
+#[derive(PartialEq, Debug)]
 /// any tags to residues
 pub struct NumEnum {
     /// number of tags to follow
@@ -329,6 +337,7 @@ pub struct NumEnum {
     pub names: Vec<String>,
 }
 
+#[derive(PartialEq, Debug)]
 /// type of reference
 pub enum NumRefType {
     NotSet,
@@ -338,6 +347,7 @@ pub enum NumRefType {
     Aligns,
 }
 
+#[derive(PartialEq, Debug)]
 /// Number by reference to other sequences
 pub struct NumRef {
     /// type of reference
@@ -346,6 +356,7 @@ pub struct NumRef {
     pub aligns: Option<SeqAlign>,
 }
 
+#[derive(PartialEq, Debug)]
 /// Mapping to floating point system
 /// from an integer system used by [`BioSeq`]
 /// `position = (a * int_position) + b`
@@ -355,7 +366,7 @@ pub struct NumReal {
     pub units: Option<String>,
 }
 
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 /// type of reference in a GenBank record
 pub enum PubDescRefType {
     #[default]
@@ -369,6 +380,7 @@ pub enum PubDescRefType {
     NoTarget,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct PubDesc {
     pub r#pub: PubEquiv,
     pub name: Option<String>,
@@ -394,6 +406,7 @@ pub struct PubDesc {
 /// Cofactor, prosthetic group, inhibitor, etc
 pub type Heterogen = String;
 
+#[derive(PartialEq, Debug)]
 /// Representation class for [`SeqInst`]
 ///
 /// Stored by [`SeqInst`] and is independent of [`Mol`]
@@ -453,6 +466,7 @@ pub enum Repr {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 /// molecule class in living organism
 ///  > cdna = rna
 pub enum Mol {
@@ -465,7 +479,7 @@ pub enum Mol {
     Other = 255,
 }
 
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 /// Topology of biomolecule
 pub enum Topology {
     NotSet,
@@ -476,6 +490,7 @@ pub enum Topology {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 /// Strandedness in living organism
 pub enum Strand {
     NotSet,
@@ -487,6 +502,7 @@ pub enum Strand {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 /// Instances of sequences
 ///
 /// Represents things like: is DNA, RNA, or protein? Is it circular or linear?
@@ -522,6 +538,7 @@ pub struct SeqInst {
 
 // Sequence extensions for representing more complex types
 
+#[derive(PartialEq, Debug)]
 pub enum SeqExt {
     /// segmented sequences
     Seg(SegExt),
@@ -540,6 +557,7 @@ pub type RefExt = SeqLoc;
 pub type MapExt = Vec<SeqFeat>;
 pub type DeltaExt = Vec<DeltaSeq>;
 
+#[derive(PartialEq, Debug)]
 pub enum DeltaSeq {
     /// point to a sequence
     Loc(SeqLoc),
@@ -548,6 +566,7 @@ pub enum DeltaSeq {
     Literal(SeqLiteral),
 }
 
+#[derive(PartialEq, Debug)]
 pub struct SeqLiteral {
     /// must give a length in residues
     pub length: u64,
@@ -559,12 +578,14 @@ pub struct SeqLiteral {
     pub seq_data: Option<SeqData>,
 }
 
+#[derive(PartialEq, Debug)]
 /// internal structure for storing sequence history deletion status
 pub enum SeqHistDeleted {
     Bool(bool),
     Date(Date),
 }
 
+#[derive(PartialEq, Debug)]
 /// Sequence history record
 /// assembly: records how seq was assembled from others
 pub struct SeqHist {
@@ -574,11 +595,13 @@ pub struct SeqHist {
     pub deleted: Option<SeqHistDeleted>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct SeqHistRec {
     pub date: Option<Date>,
     pub ids: HashSet<SeqId>,
 }
 
+#[derive(PartialEq, Debug)]
 /// Sequence representations
 pub enum SeqData {
     /// IUPAC 1 letter nuc acid code
@@ -615,6 +638,7 @@ pub enum SeqData {
     Gap(SeqGap),
 }
 
+#[derive(PartialEq, Debug)]
 /// internal structure for `type` field in [`SeqGap`]
 pub enum SeqGapType {
     Unknown,
@@ -635,18 +659,21 @@ pub enum SeqGapType {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum SeqGapLinkage {
     Unlinked,
     Linked,
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct SeqGap {
     pub r#type: SeqGapType,
     pub linkage: Option<SeqGapLinkage>,
     pub linkage_evidence: Option<HashSet<LinkageEvidence>>,
 }
 
+#[derive(PartialEq, Debug)]
 /// internal representation for `type` in [`LinkageEvidence`]
 pub enum LinkageEvidenceType {
     PairedEnds,
@@ -663,6 +690,7 @@ pub enum LinkageEvidenceType {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct LinkageEvidence {
     pub r#type: LinkageEvidenceType,
 }
@@ -704,6 +732,7 @@ pub type NCBIpaa = Vec<u8>;
 /// Codes 0-25, 1 per byte
 pub type NCBIstdaa = Vec<u8>;
 
+#[derive(PartialEq, Debug)]
 /// This is a replica of [`TextSeqId`]
 /// This is specific for annotations, and exists to maintain a semantic difference
 /// between ID's assigned to annotations and ID's assigned to sequences.
@@ -713,7 +742,9 @@ pub struct TextAnnotId {
     pub release: Option<String>,
     pub version: Option<u64>,
 }
+#[derive(PartialEq, Debug)]
 
+#[derive(PartialEq, Debug)]
 pub enum AnnotId {
     Local(ObjectId),
     NCBI(u64),
@@ -723,6 +754,7 @@ pub enum AnnotId {
 
 pub type AnnotDescr = Vec<AnnotDesc>;
 
+#[derive(PartialEq, Debug)]
 pub enum AnnotDesc {
     /// a short name for this collection
     Name(String),
@@ -746,6 +778,7 @@ pub enum AnnotDesc {
     Region(SeqLoc),
 }
 
+#[derive(PartialEq, Debug)]
 /// Class of align [`SeqAnnot`]
 pub enum AlignType {
     /// set of alignments to the same sequence
@@ -757,12 +790,14 @@ pub enum AlignType {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct AlignDef {
     pub align_type: AlignType,
     /// used for the one ref [`SeqId`] for now
     pub ids: Option<HashSet<SeqId>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum SeqAnnotDB {
     GenBank,
     EMBL,
@@ -774,6 +809,7 @@ pub enum SeqAnnotDB {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 /// Internal representation for `data` choice in [`SeqAnnot`]
 pub enum SeqAnnotData {
     FTable(HashSet<SeqFeat>),
@@ -787,6 +823,7 @@ pub enum SeqAnnotData {
     SeqTable(SeqTable),
 }
 
+#[derive(PartialEq, Debug)]
 pub struct SeqAnnot {
     pub id: Option<HashSet<AnnotId>>,
     pub db: Option<SeqAnnotDB>,

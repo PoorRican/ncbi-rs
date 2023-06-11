@@ -9,6 +9,7 @@ use crate::asn::{
 };
 use std::collections::HashSet;
 
+#[derive(PartialEq, Debug)]
 /// Feature identifiers
 pub enum FeatId {
     /// GenInfo backbone
@@ -21,12 +22,14 @@ pub enum FeatId {
     General(DbTag),
 }
 
+#[derive(PartialEq, Debug)]
 /// Evidence for existence of feature
 pub enum SeqFeatExpEvidence {
     Experimental,
     NotExperimental,
 }
 
+#[derive(PartialEq, Debug)]
 /// Sequence feature generalization
 pub struct SeqFeat {
     pub id: Option<FeatId>,
@@ -50,6 +53,7 @@ pub struct SeqFeat {
     pub support: Option<SeqFeatSupport>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum SeqFeatBond {
     Disulfide,
     Thiolester,
@@ -58,6 +62,7 @@ pub enum SeqFeatBond {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum SeqFeatSite {
     Active,
     Binding,
@@ -88,6 +93,7 @@ pub enum SeqFeatSite {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 /// Protein secondary structure
 pub enum PSecStr {
     /// any helix
@@ -98,6 +104,7 @@ pub enum PSecStr {
     Turn,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum SeqFeatData {
     Gene(GeneRef),
     Org(OrgRef),
@@ -117,17 +124,20 @@ pub enum SeqFeatData {
     Variation(VariationRef),
 }
 
+#[derive(PartialEq, Debug)]
 pub struct SeqFeatXref {
     pub id: Option<FeatId>,
     pub data: Option<SeqFeatData>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct SeqFeatSupport {
     pub experiment: Option<HashSet<ExperimentSupport>>,
     pub inference: Option<HashSet<InferenceSupport>>,
     pub model_evidence: Option<HashSet<ModelEvidenceSupport>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum EvidenceCategory {
     NotSet,
     Coordinates,
@@ -135,6 +145,7 @@ pub enum EvidenceCategory {
     Existence,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct ExperimentSupport {
     pub category: Option<EvidenceCategory>,
     pub explanation: String,
@@ -142,17 +153,19 @@ pub struct ExperimentSupport {
     pub dois: Option<HashSet<DOI>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct ProgramId {
     pub name: String,
     pub version: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct EvidenceBasis {
     pub programs: Option<HashSet<ProgramId>>,
     pub accessions: Option<HashSet<SeqId>>,
 }
 
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 pub enum InferenceSupportType {
     #[default]
     NotSet,
@@ -171,6 +184,7 @@ pub enum InferenceSupportType {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct InferenceSupport {
     pub category: Option<EvidenceCategory>,
     pub r#type: InferenceSupportType,
@@ -182,6 +196,7 @@ pub struct InferenceSupport {
     pub soids: Option<HashSet<DOI>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct ModelEvidenceItem {
     pub id: SeqId,
     pub exon_count: Option<u64>,
@@ -192,6 +207,7 @@ pub struct ModelEvidenceItem {
     pub supports_all_exon_combo: bool,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct ModelEvidenceSupport {
     pub method: Option<String>,
     pub mrna: Option<HashSet<ModelEvidenceItem>>,
@@ -205,7 +221,7 @@ pub struct ModelEvidenceSupport {
     pub supports_all_exon_combo: bool, // TODO: default false
 }
 
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 pub enum CdRegionFrame {
     #[default]
     NotSet,
@@ -214,6 +230,7 @@ pub enum CdRegionFrame {
     Three,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct CdRegion {
     pub orf: Option<bool>,
     pub frame: CdRegionFrame,
@@ -225,6 +242,7 @@ pub struct CdRegion {
     pub stops: Option<u64>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum GeneticCodeOpt {
     Name(String),
     Id(u64),
@@ -238,12 +256,14 @@ pub enum GeneticCodeOpt {
 
 pub type GeneticCode = HashSet<GeneticCodeOpt>;
 
+#[derive(PartialEq, Debug)]
 pub enum CodeBreakAA {
     NcbiAa(u64),
     Ncbi8aa(u64),
     NcbiStdAa(u64),
 }
 
+#[derive(PartialEq, Debug)]
 pub struct CodeBreak {
     pub loc: SeqLoc,
     pub aa: CodeBreakAA,
@@ -251,17 +271,20 @@ pub struct CodeBreak {
 
 pub type GeneticCodeTable = HashSet<GeneticCode>;
 
+#[derive(PartialEq, Debug)]
 pub struct ImpFeat {
     pub bkey: String,
     pub bloc: Option<String>,
     pub bdescr: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct GbQual {
     pub qual: String,
     pub val: String,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum CloneRefPlacementMethod {
     EndSeq,
     InsertAlignment,
@@ -274,6 +297,7 @@ pub enum CloneRefPlacementMethod {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct CloneRef {
     pub name: String,
     pub library: Option<String>,
@@ -287,12 +311,14 @@ pub struct CloneRef {
 
 pub type CloneSeqSet = HashSet<CloneSeq>;
 
+#[derive(PartialEq, Debug)]
 pub enum CloneSeqType {
     Insert,
     End,
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum CloneSeqConfidence {
     Multiple,
     NA,
@@ -307,6 +333,7 @@ pub enum CloneSeqConfidence {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum CloneSeqSupport {
     Prototype,
     Supporting,
@@ -314,6 +341,7 @@ pub enum CloneSeqSupport {
     NonSupporting,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct CloneSeq {
     pub r#type: CloneSeqType,
     pub confidence: Option<CloneSeqConfidence>,
@@ -323,6 +351,7 @@ pub struct CloneSeq {
     pub support: Option<CloneSeqSupport>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariantResourceLink {
     Preserved = 1,
     Provisional = 2,
@@ -332,6 +361,7 @@ pub enum VariantResourceLink {
     GenotypeKit = 32,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariantGeneLocation {
     InGene = 1,
     NearGene5 = 2,
@@ -347,6 +377,7 @@ pub enum VariantGeneLocation {
     ConservedNonCoding = 2048,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariantEffect {
     NoChange = 0,
     Synonymous = 1,
@@ -360,12 +391,14 @@ pub enum VariantEffect {
     StopLose = 256,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariantMapping {
     HasOtherSNP = 1,
     HasAssemblyConflict = 2,
     IsAssemblySpecific = 4,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariantMapWeight {
     IsUniquelyPlaced = 1,
     PlacedTwiceOnSameChrom = 2,
@@ -373,6 +406,7 @@ pub enum VariantMapWeight {
     ManyPlacements = 10,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum FrequencyBasedValidation {
     IsMutation,
     Above5Pct1Plus,
@@ -381,11 +415,13 @@ pub enum FrequencyBasedValidation {
     Above1Pct1Plus,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariantGenotype {
     InHaplotypeSet,
     HasGenotypes,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariantQualityCheck {
     ContigAlleleMissing,
     WithdrawnBySubmitter,
@@ -394,12 +430,14 @@ pub enum VariantQualityCheck {
     GenotypeConflict,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariantConfidence {
     Unknown,
     LikelyArtifact,
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariantAlleleOrigin {
     Unknown = 0,
     Germline = 1,
@@ -416,6 +454,7 @@ pub enum VariantAlleleOrigin {
     Other = 10732741824,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariantAlleleState {
     Unknown,
     Homosygous,
@@ -425,6 +464,7 @@ pub enum VariantAlleleState {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct VariantProperties {
     pub version: u64,
     pub resource_link: Option<VariantResourceLink>,
@@ -444,6 +484,7 @@ pub struct VariantProperties {
     pub is_ancestral_allele: Option<bool>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum PhenotypeClinicalSignificance {
     Unknown,
     Untested,
@@ -456,6 +497,7 @@ pub enum PhenotypeClinicalSignificance {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct Phenotype {
     pub source: Option<String>,
     pub term: Option<String>,
@@ -463,12 +505,14 @@ pub struct Phenotype {
     pub clinical_significance: Option<PhenotypeClinicalSignificance>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum PopulationDataFlags {
     IsDefaultPopulation = 1,
     IsMinorAllele = 2,
     IsRareAllele = 4,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct PopulationData {
     pub population: String,
     pub genotype_frequency: Option<f64>,
@@ -478,11 +522,13 @@ pub struct PopulationData {
     pub flags: Option<PopulationDataFlags>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct ExtLoc {
     pub id: ObjectId,
     pub location: SeqLoc,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariantRefMethod {
     Unknown,
     BacAcgh,
@@ -513,6 +559,7 @@ pub enum VariantRefMethod {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariationRefDataSetType {
     Unknown,
     Compound,
@@ -527,12 +574,14 @@ pub enum VariationRefDataSetType {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct VariationRefDataSet {
     pub r#type: VariationRefDataSetType,
     pub variations: HashSet<VariationRef>,
     pub name: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariationRefData {
     Unknown,
     Note(String),
@@ -542,16 +591,19 @@ pub enum VariationRefData {
     Complex,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct VariationFrameshift {
     pub phase: Option<i64>,
     pub x_length: Option<i64>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct VariationLossOfHeterozygosity {
     pub reference: Option<String>,
     pub test: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariationConsequence {
     Unknown,
     Splicing,
@@ -561,16 +613,19 @@ pub enum VariationConsequence {
     LossOfHeterozygosity(VariationLossOfHeterozygosity),
 }
 
+#[derive(PartialEq, Debug)]
 pub struct SomaticOriginCondition {
     pub description: Option<String>,
     pub object_id: Option<HashSet<DbTag>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct VariationSomaticOrigin {
     pub source: Option<SubSource>,
     pub condition: Option<SomaticOriginCondition>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct VariationRef {
     pub id: Option<DbTag>,
     pub parent_id: Option<DbTag>,
@@ -588,13 +643,14 @@ pub struct VariationRef {
     pub somatic_origin: Option<HashSet<VariationSomaticOrigin>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum DeltaSeq {
     Literal(SeqLiteral),
     Loc(SeqLoc),
     This,
 }
 
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 pub enum DeltaAction {
     #[default]
     Morph,
@@ -603,6 +659,7 @@ pub enum DeltaAction {
     InsBefore,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct DeltaItem {
     pub seq: Option<DeltaSeq>,
     pub multiplier: Option<i64>,
@@ -610,6 +667,7 @@ pub struct DeltaItem {
     pub action: DeltaAction,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariationInstType {
     Unknown,
     Identity,
@@ -633,24 +691,28 @@ pub enum VariationInstType {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum VariationInstObservation {
     Asserted,
     Reference,
     Variant,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct VariationInst {
     pub r#type: VariationInstType,
     pub delta: Vec<DeltaItem>,
     pub observation: Option<VariationInstObservation>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum RSiteRef {
     Str(String),
     DB(DbTag),
 }
 
 #[allow(non_camel_case_types)]
+#[derive(PartialEq, Debug)]
 pub enum RnaRefType {
     Unknown,
     PreMsg,
@@ -667,18 +729,21 @@ pub enum RnaRefType {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(PartialEq, Debug)]
 pub enum RnaRefExt {
     Name(String),
     tRNA(TRnaExt),
     Gen(RnaGen),
 }
 
+#[derive(PartialEq, Debug)]
 pub struct RnaRef {
     pub r#type: RnaRefType,
     pub pseudo: Option<bool>,
     pub ext: Option<RnaRefExt>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum TRnaExtAa {
     IUPACAa(u64),
     NCBIEaa(u64),
@@ -686,18 +751,21 @@ pub enum TRnaExtAa {
     NCBIStdAa(u64),
 }
 
+#[derive(PartialEq, Debug)]
 pub struct TRnaExt {
     pub aa: TRnaExtAa,
     pub codon: Option<HashSet<u64>>,
     pub anticodon: Option<SeqLoc>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct RnaGen {
     pub class: Option<String>,
     pub product: Option<String>,
     pub quals: Option<RnaQualSet>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct RnaQual {
     pub qual: String,
     pub val: String,
@@ -705,6 +773,7 @@ pub struct RnaQual {
 
 pub type RnaQualSet = Vec<RnaQual>;
 
+#[derive(PartialEq, Debug)]
 pub struct GeneRef {
     pub locus: Option<String>,
     pub allele: Option<String>,
@@ -717,12 +786,14 @@ pub struct GeneRef {
     pub formal_name: Option<GeneNomenclature>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum GeneNomenclatureStatus {
     Unknown,
     Official,
     Interim,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct GeneNomenclature {
     pub status: GeneNomenclatureStatus,
     pub symbol: Option<String>,
@@ -730,6 +801,7 @@ pub struct GeneNomenclature {
     pub source: Option<DbTag>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct OrgRef {
     pub taxname: Option<String>,
     pub common: Option<String>,
@@ -739,6 +811,7 @@ pub struct OrgRef {
     pub orgname: Option<OrgName>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum OrgNameChoice {
     Binomial(BinomialOrgName),
     Virus(String),
@@ -747,6 +820,7 @@ pub enum OrgNameChoice {
     Partial(PartialOrgName),
 }
 
+#[derive(PartialEq, Debug)]
 pub struct OrgName {
     pub name: Option<OrgNameChoice>,
     pub attrib: Option<String>,
@@ -758,6 +832,7 @@ pub struct OrgName {
     pub pgcode: Option<u64>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum OrgModSubType {
     Strain = 2,
     SubStrain,
@@ -801,12 +876,14 @@ pub enum OrgModSubType {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct OrgMod {
     pub subtype: OrgModSubType,
     pub subname: String,
     pub attrib: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct BinomialOrgName {
     pub genus: String,
     pub species: Option<String>,
@@ -817,6 +894,7 @@ pub type MultiOrgName = Vec<OrgName>;
 
 pub type PartialOrgName = Vec<TaxElement>;
 
+#[derive(PartialEq, Debug)]
 pub enum TaxElementFixedLevel {
     Other,
     Family,
@@ -824,13 +902,14 @@ pub enum TaxElementFixedLevel {
     Class,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct TaxElement {
     pub fixed_level: TaxElementFixedLevel,
     pub level: Option<String>,
     pub name: String,
 }
 
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 pub enum BioSourceGenome {
     #[default]
     Unknown,
@@ -859,7 +938,7 @@ pub enum BioSourceGenome {
     PlasmidInPlastid,
 }
 
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 pub enum BioSourceOrigin {
     #[default]
     Unknown,
@@ -871,6 +950,7 @@ pub enum BioSourceOrigin {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct BioSource {
     pub genome: BioSourceGenome,
     pub origin: BioSourceOrigin,
@@ -881,12 +961,14 @@ pub struct BioSource {
 }
 
 pub type PCRReationSet = HashSet<PCRReaction>;
+#[derive(PartialEq, Debug)]
 pub struct PCRReaction {
     pub forward: Option<PCRPrimerSet>,
     pub reverse: Option<PCRPrimerSet>,
 }
 
 pub type PCRPrimerSet = HashSet<PCRPrimer>;
+#[derive(PartialEq, Debug)]
 pub struct PCRPrimer {
     pub seq: Option<PCRPrimerSeq>,
     pub name: Option<PCRPrimerName>,
@@ -894,6 +976,7 @@ pub struct PCRPrimer {
 pub type PCRPrimerSeq = String;
 pub type PCRPrimerName = String;
 
+#[derive(PartialEq, Debug)]
 pub enum SubSourceSubType {
     Chromosome = 1,
     Map,
@@ -941,13 +1024,14 @@ pub enum SubSourceSubType {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct SubSource {
     pub subtype: SubSourceSubType,
     pub name: String,
     pub attrib: Option<String>,
 }
 
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 pub enum ProtRefProcessingStatus {
     #[default]
     NotSet,
@@ -958,6 +1042,7 @@ pub enum ProtRefProcessingStatus {
     ProPeptide,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct ProtRef {
     pub name: Option<HashSet<String>>,
     pub desc: Option<String>,
@@ -967,6 +1052,7 @@ pub struct ProtRef {
     pub processed: ProtRefProcessingStatus,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum Txsystem {
     Unknown,
     Pol1,
@@ -979,6 +1065,7 @@ pub enum Txsystem {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum InitType {
     Unknown,
     Single,
@@ -986,6 +1073,7 @@ pub enum InitType {
     Region,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct Txinit {
     pub name: String,
     pub syn: Option<Vec<String>>,
@@ -1001,6 +1089,7 @@ pub struct Txinit {
     pub evidence: Option<HashSet<TxEvidence>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum TxEvidenceExpCode {
     Unknown,
     RnaSeq,
@@ -1016,7 +1105,7 @@ pub enum TxEvidenceExpCode {
     Other = 255,
 }
 
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 pub enum TxEvidenceExpressionSystem {
     Unknown,
     #[default]
@@ -1028,9 +1117,22 @@ pub enum TxEvidenceExpressionSystem {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct TxEvidence {
     pub exp_code: TxEvidenceExpCode,
     pub expression_system: TxEvidenceExpressionSystem,
     pub low_prec_data: bool, // TODO: default false
     pub from_homolog: bool,  // TODO: default false
 }
+
+
+
+
+
+
+
+
+
+
+
+

@@ -4,6 +4,7 @@
 use crate::asn::{Date, DbTag, PersonId};
 use std::collections::HashSet;
 
+#[derive(PartialEq, Debug)]
 pub enum ArticleId {
     PubMed(PubMedId),
     Medline(MedlineUID),
@@ -37,6 +38,7 @@ pub type PmPid = String;
 
 pub type ArticleIdSet = HashSet<ArticleId>;
 
+#[derive(PartialEq, Debug)]
 /// points of publication
 pub enum PubStatus {
     /// date manuscript received for review
@@ -78,6 +80,7 @@ pub enum PubStatus {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 /// done as a struct so fields can be added
 pub struct PubStatusDate {
     pub pubstatus: PubStatus,
@@ -87,6 +90,7 @@ pub struct PubStatusDate {
 
 pub type PubStatusDateSet = HashSet<PubStatusDate>;
 
+#[derive(PartialEq, Debug)]
 /// journal or book
 pub enum CitArtFrom {
     Journal(CitJour),
@@ -94,6 +98,7 @@ pub enum CitArtFrom {
     Proc(CitProc),
 }
 
+#[derive(PartialEq, Debug)]
 /// Article in journal or book
 pub struct CitArt {
     /// title or paper (ANSI requires)
@@ -108,6 +113,7 @@ pub struct CitArt {
     pub ids: Option<ArticleIdSet>,
 }
 
+#[derive(PartialEq, Debug)]
 /// journal citation
 pub struct CitJour {
     /// title of journal
@@ -115,6 +121,7 @@ pub struct CitJour {
     pub imp: Imprint,
 }
 
+#[derive(PartialEq, Debug)]
 /// book citation
 pub struct CitBook {
     /// title of book
@@ -129,6 +136,7 @@ pub struct CitBook {
     pub imp: Imprint,
 }
 
+#[derive(PartialEq, Debug)]
 /// meeting proceedings
 pub struct CitProc {
     /// citation to meeting
@@ -137,6 +145,7 @@ pub struct CitProc {
     pub meet: Meeting,
 }
 
+#[derive(PartialEq, Debug)]
 /// Patent citation
 pub struct CitPat {
     pub title: String,
@@ -178,6 +187,7 @@ pub struct CitPat {
     pub r#abstract: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct PatentPriority {
     /// patent country code
     pub country: String,
@@ -189,6 +199,7 @@ pub struct PatentPriority {
     pub date: Date,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum IdPatChoice {
     /// patent document number
     Number(String),
@@ -197,6 +208,7 @@ pub enum IdPatChoice {
     AppNumber(String),
 }
 
+#[derive(PartialEq, Debug)]
 /// identifies a patent
 pub struct IdPat {
     /// patent document country
@@ -208,12 +220,14 @@ pub struct IdPat {
     pub doc_type: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum LetType {
     Manuscript = 1,
     Letter,
     Thesis,
 }
 
+#[derive(PartialEq, Debug)]
 /// cite a letter, thesis, or manuscript
 pub struct CitLet {
     /// same fields as a book
@@ -225,6 +239,7 @@ pub struct CitLet {
     pub r#type: LetType,
 }
 
+#[derive(PartialEq, Debug)]
 /// represents medium of submission
 pub enum SubMedium {
     Paper = 1,
@@ -234,6 +249,7 @@ pub enum SubMedium {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct CitSub {
     /// not necessarily authors of the paper
     pub authors: AuthList,
@@ -253,6 +269,7 @@ pub struct CitSub {
     pub descr: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 /// NOT from ANSI, this is a catchall
 pub struct CitGen {
     /// anything, not parsable
@@ -279,6 +296,7 @@ pub struct CitGen {
     pub pmid: Option<PubMedId>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum AuthListNames {
     /// full citations
     Std(Vec<Author>),
@@ -290,6 +308,7 @@ pub enum AuthListNames {
     Str(Vec<String>),
 }
 
+#[derive(PartialEq, Debug)]
 /// authorship group
 pub struct AuthList {
     pub names: AuthListNames,
@@ -298,11 +317,13 @@ pub struct AuthList {
     pub affil: Option<Affil>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum AuthorLevel {
     Primary = 1,
     Secondary,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum AuthorRole {
     Compiler = 1,
     Editor,
@@ -310,6 +331,7 @@ pub enum AuthorRole {
     Translator,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct Author {
     /// author, primary, or secondary
     pub name: PersonId,
@@ -324,6 +346,7 @@ pub struct Author {
     pub is_corr: Option<bool>,
 }
 
+#[derive(PartialEq, Debug)]
 /// std representation for affiliations
 pub struct AffilStd {
     /// Author Affiliation, Name
@@ -350,6 +373,7 @@ pub struct AffilStd {
     pub postal_code: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum Affil {
     /// unparsed string
     Str(String),
@@ -358,6 +382,7 @@ pub enum Affil {
     Std(AffilStd),
 }
 
+#[derive(PartialEq, Debug)]
 /// title group
 ///
 /// # Variants
@@ -410,6 +435,7 @@ pub enum TitleItem {
 
 pub type Title = HashSet<TitleItem>;
 
+#[derive(PartialEq, Debug)]
 /// For pre-publication citations
 pub enum ImprintPrePub {
     /// submitted, not accepted
@@ -421,6 +447,7 @@ pub enum ImprintPrePub {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct Imprint {
     /// date of publication
     pub date: Date,
@@ -459,6 +486,7 @@ pub struct Imprint {
     pub history: Option<PubStatusDateSet>,
 }
 
+#[derive(PartialEq, Debug)]
 /// represents type of entry retraction
 pub enum CitRetractType {
     /// this citation is retracted
@@ -474,6 +502,7 @@ pub enum CitRetractType {
     Erratum,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct CitRetract {
     /// retraction of an entry
     pub r#type: CitRetractType,
@@ -482,6 +511,7 @@ pub struct CitRetract {
     pub exp: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct Meeting {
     pub number: String,
     pub date: Date,

@@ -6,6 +6,7 @@
 use crate::asn::{Date, DbTag, ObjectId, SeqId};
 use std::collections::HashSet;
 
+#[derive(PartialEq, Debug)]
 pub enum EMBLDbNameCode {
     EMBL,
     GenBank,
@@ -27,17 +28,19 @@ pub enum EMBLDbNameCode {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum EMBLDbName {
     Code(EMBLDbNameCode),
     Name(String),
 }
 
+#[derive(PartialEq, Debug)]
 pub struct EMBLXref {
     pub db_name: EMBLDbName,
     pub id: Vec<ObjectId>,
 }
 
-#[derive(Default)]
+#[derive(PartialEq, Debug, Default)]
 pub enum EMBLBlockClass {
     NotSet,
     #[default]
@@ -46,6 +49,7 @@ pub enum EMBLBlockClass {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum EMBLBlockDiv {
     Fun,
     Inv,
@@ -65,6 +69,7 @@ pub enum EMBLBlockDiv {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct EMBLBlock {
     pub class: EMBLBlockClass,
     pub div: EMBLBlockDiv,
@@ -75,6 +80,7 @@ pub struct EMBLBlock {
     pub xref: Option<Vec<EMBLXref>>,
 }
 
+#[derive(PartialEq, Debug)]
 /// internal representation of `class` field for [`SPBlock`]
 pub enum SPBlockClass {
     NotSet,
@@ -85,6 +91,7 @@ pub enum SPBlockClass {
     Other = 255,
 }
 
+#[derive(PartialEq, Debug)]
 /// SWISSPROT specific descriptions
 pub struct SPBlock {
     pub class: SPBlockClass,
@@ -118,6 +125,7 @@ pub struct SPBlock {
     pub annotupd: Option<Date>,
 }
 
+#[derive(PartialEq, Debug)]
 /// PIR specific descriptions
 pub struct PIRBlock {
     /// had punctuation in sequence?
@@ -144,6 +152,7 @@ pub struct PIRBlock {
     pub seqref: Option<HashSet<SeqId>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct GBBlock {
     pub extra_accessions: Option<Vec<String>>,
     /// source line
@@ -164,12 +173,14 @@ pub struct GBBlock {
     pub taxonomy: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 /// Protein Research Foundation specific definition
 pub struct PRFBlock {
     pub extra_src: Option<PRFExtraSrc>,
     pub keywords: Option<Vec<String>>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct PRFExtraSrc {
     pub host: Option<String>,
     pub part: Option<String>,
@@ -178,6 +189,7 @@ pub struct PRFExtraSrc {
     pub taxon: Option<String>,
 }
 
+#[derive(PartialEq, Debug)]
 /// PDB specific descriptions
 pub struct PDBBlock {
     /// deposition date: month,year
@@ -194,6 +206,7 @@ pub struct PDBBlock {
     pub replace: Option<PDBReplace>,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct PDBReplace {
     pub date: Date,
 

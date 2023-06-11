@@ -4,12 +4,14 @@
 
 use crate::asn::SeqLoc;
 
+#[derive(PartialEq, Debug)]
 pub enum SeqGraphChoice {
     Real(RealGraph),
     Int(IntGraph),
     Byte(ByteGraph),
 }
 
+#[derive(PartialEq, Debug)]
 /// For values mapped by residue or range to sequence
 pub struct SeqGraph {
     pub title: Option<String>,
@@ -33,6 +35,7 @@ pub struct SeqGraph {
     pub graph: SeqGraphChoice,
 }
 
+#[derive(PartialEq, Debug)]
 pub struct Graph<T> {
     /// top of graph
     pub max: T,
