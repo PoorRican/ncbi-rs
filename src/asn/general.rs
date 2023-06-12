@@ -5,6 +5,7 @@
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// Model precise timestamp or an un-parsed string
 ///
 /// The string form is a fall-back for when the input data cannot be parsed
@@ -35,6 +36,7 @@ pub struct DateStd {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// Can tag or name anything
 pub enum ObjectId {
     Id(u64),
@@ -51,6 +53,7 @@ pub struct DbTag {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// define a std element for people
 pub enum PersonId {
     /// any defined database tag
@@ -92,6 +95,7 @@ pub struct Range {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum FuzzLimit {
     /// unknown
     Unk,
@@ -115,10 +119,11 @@ pub enum FuzzLimit {
     Other = 255,
 }
 
-#[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// Communicate uncertainties in integer values
 pub enum IntFuzz {
+    #[serde(rename="p-m")]
     /// plus or minus fixed amount
     PM(i64),
     
@@ -135,13 +140,17 @@ pub enum IntFuzz {
 pub struct UserObject {
     /// endeavor which designed this object
     pub class: Option<String>,
+
+    #[serde(rename="type")]
     /// type of object within class
     pub r#type: ObjectId,
+
     /// the object itself
     pub data: Vec<UserField>,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum UserData {
     Str(String),
     Int(i64),

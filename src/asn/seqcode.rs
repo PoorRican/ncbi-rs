@@ -9,6 +9,7 @@
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// Sequence representations
 pub enum SeqCodeType {
     /// IUPAC 1 letter nuc acid code
@@ -36,6 +37,7 @@ pub enum SeqCodeType {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// for tables of sequence mappings
 pub struct SeqMapTable {
     /// code to map from
@@ -51,6 +53,7 @@ pub struct SeqMapTable {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// internal representation of map index
 pub struct SeqCodeTableCell {
     /// the printed symbol or letter
@@ -60,6 +63,7 @@ pub struct SeqCodeTableCell {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// for names of coded values
 pub struct SeqCodeTable {
     /// name of code

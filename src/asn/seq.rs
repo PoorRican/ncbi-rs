@@ -18,6 +18,7 @@ use crate::seqtable::SeqTable;
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Single continuous biological sequence.
 ///
 /// It can be nucleic acid or protein. It can be fully instantiated (ie: data
@@ -51,6 +52,7 @@ pub struct BioSeq {
 pub type SeqDescr = Vec<SeqDesc>;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// # Note
 /// `MolType`, `Modif`, `Method`, and `Org` are consolidated and expanded
 /// in [`OrgRef`]`, [`BioSource`], and [`MolInfo`] in this specification.
@@ -119,6 +121,7 @@ pub enum SeqDesc {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 /// Represents type of biomolecule
 ///
 /// # Notes
@@ -152,6 +155,7 @@ pub enum BioMol {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 pub enum MolTech {
     #[default]
     Unknown,
@@ -168,6 +172,7 @@ pub enum MolTech {
     /// from physical mapping techniques
     PhysMap,
     /// derived from other data, not a primary entity
+    #[serde(rename_all="kebab-case")]
     Derived,
     /// conceptual translation
     ConceptTrans,
@@ -208,6 +213,7 @@ pub enum MolTech {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 /// Capture sequence completeness.
 ///
 /// Completeness is not indicated in most records. For genomes, assume
@@ -228,6 +234,7 @@ pub enum MolCompleteness {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct MolInfo {
     pub bio_mol: BioMol,
     pub tech: MolTech,
@@ -239,6 +246,7 @@ pub struct MolInfo {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// GenInfo Backbone molecule types
 ///
 /// Captures type of molecule represented
@@ -261,6 +269,7 @@ pub enum GIBBMol {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// GenInfo Backbone Modifiers
 pub enum GIBBMod {
     DNA,
@@ -304,6 +313,7 @@ pub enum GIBBMod {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Sequencing method
 pub enum GIBBMethod {
     /// Conceptual translation
@@ -322,6 +332,7 @@ pub enum GIBBMethod {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Any display numbering system
 pub enum Numbering {
     /// continuous numbering
@@ -335,6 +346,7 @@ pub enum Numbering {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 /// continuous display numbering system
 pub struct NumCont {
     /// number assigned to first residue
@@ -351,6 +363,7 @@ pub struct NumCont {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// any tags to residues
 pub struct NumEnum {
     /// number of tags to follow
@@ -360,6 +373,7 @@ pub struct NumEnum {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// type of reference
 pub enum NumRefType {
     NotSet,
@@ -370,6 +384,7 @@ pub enum NumRefType {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Number by reference to other sequences
 pub struct NumRef {
     /// type of reference
@@ -379,6 +394,7 @@ pub struct NumRef {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Mapping to floating point system
 /// from an integer system used by [`BioSeq`]
 /// `position = (a * int_position) + b`
@@ -389,6 +405,7 @@ pub struct NumReal {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 /// type of reference in a GenBank record
 pub enum PubDescRefType {
     #[default]
@@ -403,6 +420,7 @@ pub enum PubDescRefType {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct PubDesc {
     pub r#pub: PubEquiv,
     pub name: Option<String>,
@@ -429,6 +447,7 @@ pub struct PubDesc {
 pub type Heterogen = String;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Representation class for [`SeqInst`]
 ///
 /// Stored by [`SeqInst`] and is independent of [`Mol`]
@@ -489,6 +508,7 @@ pub enum Repr {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// molecule class in living organism
 ///  > cdna = rna
 pub enum Mol {
@@ -502,6 +522,7 @@ pub enum Mol {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 /// Topology of biomolecule
 pub enum Topology {
     NotSet,
@@ -513,6 +534,7 @@ pub enum Topology {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Strandedness in living organism
 pub enum Strand {
     NotSet,
@@ -525,6 +547,7 @@ pub enum Strand {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Instances of sequences
 ///
 /// Represents things like: is DNA, RNA, or protein? Is it circular or linear?
@@ -561,6 +584,7 @@ pub struct SeqInst {
 // Sequence extensions for representing more complex types
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum SeqExt {
     /// segmented sequences
     Seg(SegExt),
@@ -580,6 +604,7 @@ pub type MapExt = Vec<SeqFeat>;
 pub type DeltaExt = Vec<DeltaSeq>;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum DeltaSeq {
     /// point to a sequence
     Loc(SeqLoc),
@@ -589,6 +614,7 @@ pub enum DeltaSeq {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SeqLiteral {
     /// must give a length in residues
     pub length: u64,
@@ -601,6 +627,7 @@ pub struct SeqLiteral {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// internal structure for storing sequence history deletion status
 pub enum SeqHistDeleted {
     Bool(bool),
@@ -608,6 +635,7 @@ pub enum SeqHistDeleted {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Sequence history record
 /// assembly: records how seq was assembled from others
 pub struct SeqHist {
@@ -618,12 +646,14 @@ pub struct SeqHist {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SeqHistRec {
     pub date: Option<Date>,
     pub ids: Vec<SeqId>,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Sequence representations
 pub enum SeqData {
     /// IUPAC 1 letter nuc acid code
@@ -661,6 +691,7 @@ pub enum SeqData {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// internal structure for `type` field in [`SeqGap`]
 pub enum SeqGapType {
     Unknown,
@@ -682,6 +713,7 @@ pub enum SeqGapType {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum SeqGapLinkage {
     Unlinked,
     Linked,
@@ -689,6 +721,7 @@ pub enum SeqGapLinkage {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SeqGap {
     pub r#type: SeqGapType,
     pub linkage: Option<SeqGapLinkage>,
@@ -696,6 +729,7 @@ pub struct SeqGap {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// internal representation for `type` in [`LinkageEvidence`]
 pub enum LinkageEvidenceType {
     PairedEnds,
@@ -713,6 +747,7 @@ pub enum LinkageEvidenceType {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct LinkageEvidence {
     pub r#type: LinkageEvidenceType,
 }
@@ -763,6 +798,7 @@ pub type NCBIPaa = Vec<u8>;
 pub type NCBIStdAa = Vec<u8>;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// This is a replica of [`TextSeqId`]
 ///
 /// This is specific for annotations, and exists to maintain a semantic difference
@@ -775,6 +811,7 @@ pub struct TextAnnotId {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum AnnotId {
     Local(ObjectId),
     NCBI(u64),
@@ -785,6 +822,7 @@ pub enum AnnotId {
 pub type AnnotDescr = Vec<AnnotDesc>;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum AnnotDesc {
     /// a short name for this collection
     Name(String),
@@ -809,6 +847,7 @@ pub enum AnnotDesc {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Class of align [`SeqAnnot`]
 pub enum AlignType {
     /// set of alignments to the same sequence
@@ -821,6 +860,7 @@ pub enum AlignType {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct AlignDef {
     pub align_type: AlignType,
     /// used for the one ref [`SeqId`] for now
@@ -828,6 +868,7 @@ pub struct AlignDef {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum SeqAnnotDB {
     GenBank,
     EMBL,
@@ -840,26 +881,35 @@ pub enum SeqAnnotDB {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// Internal representation for `data` choice in [`SeqAnnot`]
 pub enum SeqAnnotData {
     FTable(Vec<SeqFeat>),
     Align(Vec<SeqAlign>),
     Graph(Vec<SeqGraph>),
+
     /// used for communication between tools
     IDS(Vec<SeqId>),
+
     /// used for communication between tools
     Locs(Vec<SeqLoc>),
+
+    #[serde(rename="seq-table")]
     /// features in table form
     SeqTable(SeqTable),
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SeqAnnot {
     pub id: Option<Vec<AnnotId>>,
     pub db: Option<SeqAnnotDB>,
+
     /// source if `db` [`SeqAnnotDB::Other`]
     pub name: Option<String>,
+
     /// used only for standalone [`SeqAnnot`]'s
     pub desc: Option<AnnotDescr>,
+
     pub data: SeqAnnotData,
 }

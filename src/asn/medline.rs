@@ -7,6 +7,7 @@ use crate::general::Date;
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="lowercase")]
 pub enum MedlineEntryStatus {
     /// record as supplied by publisher
     Publisher = 1,
@@ -20,6 +21,7 @@ pub enum MedlineEntryStatus {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// a MEDLINE or PubMed entry
 pub struct MedlineEntry {
     /// MEDLINE UID, sometimes not yet available from PubMed
@@ -31,6 +33,7 @@ pub struct MedlineEntry {
     /// article citation
     pub cit: CitArt,
 
+    #[serde(rename="abstract")]
     pub r#abstract: Option<String>,
     pub mesh: Option<Vec<MedlineMesh>>,
     pub substance: Option<Vec<MedlineRn>>,
@@ -68,15 +71,16 @@ pub struct MedlineMesh {
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct MedlineQual {
-    // TODO: default false
+
     /// true if main point
-    pub mp: bool,
+    pub mp: bool,           // TODO: default false
 
     /// the subheading
     pub subh: String,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum MedlineSiType {
     DDBJ = 1,
     /// Carbohydrate Structure Database
@@ -108,6 +112,7 @@ pub enum MedlineSiType {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum MedlineRnType {
     NameOnly,
 
@@ -121,6 +126,7 @@ pub enum MedlineRnType {
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Medline substance records
 pub struct MedlineRn {
+    #[serde(rename="type")]
     /// type of record
     pub r#type: MedlineRnType,
 
@@ -135,11 +141,13 @@ pub struct MedlineRn {
 /// medline cross reference records
 pub struct MedlineSi {
     /// type of xref
+    #[serde(rename="type")]
     pub r#type: MedlineSiType,
     pub cit: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum MedlineFieldType {
     /// look in line code
     Other,
@@ -153,6 +161,7 @@ pub enum MedlineFieldType {
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct MedlineField {
+    #[serde(rename="type")]
     /// keyed type
     pub r#type: MedlineFieldType,
 
@@ -164,6 +173,7 @@ pub struct MedlineField {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum DocRefType {
     Medline = 1,
     PubMed,
@@ -173,6 +183,7 @@ pub enum DocRefType {
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// reference to a document
 pub struct DocRef {
+    #[serde(rename="type")]
     pub r#type: DocRefType,
     pub uid: u64,
 }

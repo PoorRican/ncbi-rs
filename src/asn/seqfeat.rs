@@ -60,6 +60,7 @@ use crate::seqloc::{GiimportId, SeqId, SeqLoc};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// Feature identifiers
 pub enum FeatId {
     /// GenInfo backbone
@@ -76,6 +77,7 @@ pub enum FeatId {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Experimental evidence for existence of feature
 pub enum SeqFeatExpEvidence {
     /// any reasonable experiment check
@@ -86,6 +88,7 @@ pub enum SeqFeatExpEvidence {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Sequence feature generalization
 pub struct SeqFeat {
     pub id: Option<FeatId>,
@@ -144,6 +147,7 @@ pub struct SeqFeat {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum SeqFeatBond {
     Disulfide,
     Thiolester,
@@ -153,6 +157,7 @@ pub enum SeqFeatBond {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum SeqFeatSite {
     Active,
     Binding,
@@ -174,8 +179,8 @@ pub enum SeqFeatSite {
     GammaCarboxylglutamicAcid,
     Blocked,
     LipidBinding,
-    NPBinding,
-    DNABinding,
+    NpBinding,
+    DnaBinding,
     SignalPeptide,
     TransitPeptide,
     TransmembraneRegion,
@@ -184,6 +189,7 @@ pub enum SeqFeatSite {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// Protein secondary structure
 pub enum PSecStr {
     /// any helix
@@ -197,6 +203,7 @@ pub enum PSecStr {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum SeqFeatData {
     Gene(GeneRef),
     Org(OrgRef),
@@ -230,9 +237,11 @@ pub enum SeqFeatData {
     /// a numbering system
     Num(Numbering),
 
+    #[serde(rename="psec-str")]
     /// protein secondary structure
     PSecStr(PSecStr),
 
+    #[serde(rename="non-std-residue")]
     /// non-standard residue here in seq
     NonStdResidue(String),
 
@@ -251,6 +260,7 @@ pub struct SeqFeatXref {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SeqFeatSupport {
     pub experiment: Option<Vec<ExperimentSupport>>,
     pub inference: Option<Vec<InferenceSupport>>,
@@ -258,6 +268,7 @@ pub struct SeqFeatSupport {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum EvidenceCategory {
     NotSet,
     Coordinates,
@@ -286,6 +297,7 @@ pub struct EvidenceBasis {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 pub enum InferenceSupportType {
     #[default]
     NotSet,
@@ -305,18 +317,21 @@ pub enum InferenceSupportType {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct InferenceSupport {
     pub category: Option<EvidenceCategory>,
+    #[serde(rename="type")]
     pub r#type: InferenceSupportType,
     pub other_type: Option<String>,
     // TODO: default to false
     pub same_species: bool,
     pub basis: EvidenceBasis,
     pub pmids: Option<Vec<PubMedId>>,
-    pub soids: Option<Vec<DOI>>,
+    pub dois: Option<Vec<DOI>>,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct ModelEvidenceItem {
     pub id: SeqId,
     pub exon_count: Option<u64>,
@@ -328,6 +343,7 @@ pub struct ModelEvidenceItem {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct ModelEvidenceSupport {
     pub method: Option<String>,
     pub mrna: Option<Vec<ModelEvidenceItem>>,
@@ -342,6 +358,7 @@ pub struct ModelEvidenceSupport {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 pub enum CdRegionFrame {
     #[default]
     /// not set, code uses one
@@ -353,6 +370,7 @@ pub enum CdRegionFrame {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Instructions to translate from a nucleic acid to a peptide
 pub struct CdRegion {
     /// just an ORF ?
@@ -392,6 +410,7 @@ pub struct CdRegion {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// Storage type for genetic code data
 ///
 /// I do not know what purpose the "start" variants [`Self::SNcbiStdAa`],
@@ -425,6 +444,7 @@ pub enum GeneticCodeOpt {
 pub type GeneticCode = Vec<GeneticCodeOpt>;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// the amino acid that is the exception
 pub enum CodeBreakAA {
     /// ASCII value of [`crate::asn::NCBIEaa`] code
@@ -469,6 +489,7 @@ pub struct GbQual {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum CloneRefPlacementMethod {
     /// clone placed by end sequence
     EndSeq,
@@ -495,6 +516,7 @@ pub enum CloneRefPlacementMethod {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Specification of clone features
 pub struct CloneRef {
     /// official clone symbol
@@ -513,6 +535,7 @@ pub struct CloneRef {
 pub type CloneSeqSet = Vec<CloneSeq>;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum CloneSeqType {
     Insert,
     End,
@@ -520,16 +543,19 @@ pub enum CloneSeqType {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum CloneSeqConfidence {
     /// multiple hits
     Multiple,
 
     /// unspecified
-    NA,
+    Na,
 
+    #[serde(rename="nohit-rep")]
     /// no hits, end flagged repetitive
     NoHitRep,
 
+    #[serde(rename="nohitnorep")]
     /// no hits, end not flagged repetitive
     NoHitNoRep,
 
@@ -541,9 +567,11 @@ pub enum CloneSeqConfidence {
     /// virtual (hasn't been sequenced)
     Virtual,
 
+    #[serde(rename="multiple-rep")]
     /// multiple hits, end flagged repetitive
     MultipleRep,
 
+    #[serde(rename="multiplenorep")]
     /// multiple hits, end not flagged repetitive
     MultipleNoRep,
 
@@ -554,6 +582,7 @@ pub enum CloneSeqConfidence {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum CloneSeqSupport {
     /// sequence used to place clone
     Prototype,
@@ -569,7 +598,9 @@ pub enum CloneSeqSupport {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct CloneSeq {
+    #[serde(rename="type")]
     pub r#type: CloneSeqType,
     pub confidence: Option<CloneSeqConfidence>,
 
@@ -585,6 +616,7 @@ pub struct CloneSeq {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum VariantResourceLink {
     /// Clinical, Pubmed, Cited
     Preserved = 1,
@@ -592,28 +624,34 @@ pub enum VariantResourceLink {
     /// Provisional third party annotations
     Provisional = 2,
 
+    #[serde(rename="has3D")]
     /// has 3D structure in SNP3D table
     Has3D = 4,
 
+    #[serde(rename="submitterLinkout")]
     /// SNP -> SubSNP -> Batch link_out
     SubmitterLinkout = 8,
 
     /// Clinical if LSDB, OMIM, TPA, Diagnostic
     Clinical = 16,
 
+    #[serde(rename="genotypeKit")]
     /// Marker exists on high density genotyping kit
     GenotypeKit = 32,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum VariantGeneLocation {
     /// sequence intervals covered by a gene ID but not
     /// having an aligned transcript
     InGene = 1,
 
+    #[serde(rename="near-gene-5")]
     /// within 2kb of the 5' end of a gene feature
     NearGene5 = 2,
 
+    #[serde(rename="near-gene-3")]
     /// within 0.5kb of the 3' end of a gene feature
     NearGene3 = 4,
 
@@ -626,9 +664,11 @@ pub enum VariantGeneLocation {
     /// in acceptor splice-site
     Acceptor = 32,
 
+    #[serde(rename="utr-5")]
     /// in 5' UTR
     UTR5 = 64,
 
+    #[serde(rename="utr-3")]
     /// in 3' UTR
     UTR3 = 128,
 
@@ -642,10 +682,11 @@ pub enum VariantGeneLocation {
     Intergenic = 1024,
 
     /// variant is located in a conserved non-coding region
-    ConservedNonCoding = 2048,
+    ConservedNoncoding = 2048,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum VariantEffect {
     /// known to cause no functional changes.
     /// since value is 0, it does not combine with any other bit, explicitly
@@ -678,13 +719,14 @@ pub enum VariantEffect {
 
     /// reverse of [`Self::StopGain`]: reference codon is a stop codon, but
     /// a SNP variant allele changes the codon to a non-termination codon.
-    StopLose = 256,
+    StopLoss = 256,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum VariantMapping {
     /// another SNP has the same mapped positions on reference assembly
-    HasOtherSNP = 1,
+    HasOtherSnp = 1,
 
     /// weight 1 or 2 SNPs that map to different chromosomes on
     /// different assemblies
@@ -695,6 +737,7 @@ pub enum VariantMapping {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// captures specificity of placement
 ///
 /// # Note
@@ -708,26 +751,35 @@ pub enum VariantMapWeight {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum FrequencyBasedValidation {
     /// low frequency variation that is cited in journal or other reputable
     /// source.
     IsMutation = 1,
 
+    #[serde(rename="above-5pct-all")]
     /// >5% minor allele freq in each and all populations
-    Above5Pct1Plus = 2,
+    Above5pctAll = 2,
+
+    #[serde(rename="above-5pct-1plus")]
+    /// >5% minor allele freq in 1+ populations
+    Above5pct1plus = 4,
 
     /// bit is set if the variant has a minor allele observed in two or
     /// more separate chromosomes.
-    Validated = 4,
+    Validated = 8,
 
+    #[serde(rename="above-1pct-all")]
     /// >1% minor allele frequency in each and all populations
-    Above1PctAll = 8,
+    Above1pctAll = 16,
 
+    #[serde(rename="above-1pct-1plus")]
     /// >1% minor allele frequency in 1+ populations
-    Above1Pct1Plus = 32,
+    Above1pct1plus = 32,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum VariantGenotype {
     /// exists in a haplotype tagging set
     InHaplotypeSet,
@@ -737,6 +789,7 @@ pub enum VariantGenotype {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum VariantQualityCheck {
     /// reference sequence allele at the mapped position is not present in
     /// the SNP allele list, adjust for orientation
@@ -757,6 +810,7 @@ pub enum VariantQualityCheck {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum VariantConfidence {
     Unknown,
     LikelyArtifact,
@@ -764,6 +818,7 @@ pub enum VariantConfidence {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// origin of this allele, if known
 ///
 /// Note is a bitflag and more than one state can be represented at once
@@ -784,6 +839,7 @@ pub enum VariantAlleleOrigin {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// observed allele state, if known
 ///
 /// NOTE this field is not a bitflag
@@ -797,6 +853,7 @@ pub enum VariantAlleleState {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Specification of variation features
 ///
 /// The intention is to provide information to clients that reflect internal
@@ -856,6 +913,7 @@ pub struct VariantProperties {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// does this variant have known clinical significance?
 pub enum PhenotypeClinicalSignificance {
     Unknown,
@@ -870,6 +928,7 @@ pub enum PhenotypeClinicalSignificance {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct Phenotype {
     pub source: Option<String>,
     pub term: Option<String>,
@@ -880,6 +939,7 @@ pub struct Phenotype {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// This field is an explicit bitflag
 pub enum PopulationDataFlags {
     IsDefaultPopulation = 1,
@@ -888,6 +948,7 @@ pub enum PopulationDataFlags {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct PopulationData {
     /// assayed population (eg: HAPMAP-CEU)
     pub population: String,
@@ -905,6 +966,7 @@ pub struct ExtLoc {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum VariantRefMethod {
     Unknown,
     BacAcgh,
@@ -920,7 +982,7 @@ pub enum VariantRefMethod {
     OeaAssembly,
     OligoAcgh,
     PairedEnd,
-    PCR,
+    Pcr,
     Qpcr,
     ReadDepth,
     Roma,
@@ -936,6 +998,7 @@ pub enum VariantRefMethod {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum VariationRefDataSetType {
     Unknown,
     Compound,
@@ -952,12 +1015,14 @@ pub enum VariationRefDataSetType {
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct VariationRefDataSet {
+    #[serde(rename="type")]
     pub r#type: VariationRefDataSetType,
     pub variations: Vec<VariationRef>,
     pub name: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum VariationRefData {
     Unknown,
 
@@ -983,6 +1048,7 @@ pub enum VariationRefData {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// see http://www.hgvs.org/mutnomen/recs-prot.html
 pub struct VariationFrameshift {
     pub phase: Option<i64>,
@@ -990,6 +1056,7 @@ pub struct VariationFrameshift {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct VariationLossOfHeterozygosity {
     /// in germline comparison, it will be reference genome assembly
     /// (default) or referenece/normal population. In somatic mutation,
@@ -1001,6 +1068,7 @@ pub struct VariationLossOfHeterozygosity {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum VariationConsequence {
     Unknown,
 
@@ -1021,6 +1089,7 @@ pub enum VariationConsequence {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SomaticOriginCondition {
     pub description: Option<String>,
 
@@ -1038,6 +1107,7 @@ pub struct VariationSomaticOrigin {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// reference to SNP
 ///
 /// This object relates three IDs:
@@ -1080,6 +1150,7 @@ pub struct VariationRef {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum DeltaSeq {
     Literal(SeqLiteral),
     Loc(SeqLoc),
@@ -1089,6 +1160,7 @@ pub enum DeltaSeq {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 pub enum DeltaAction {
     #[default]
     /// replace len(seq) positions starting with location.start with seq
@@ -1109,6 +1181,7 @@ pub enum DeltaAction {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct DeltaItem {
     pub seq: Option<DeltaSeq>,
 
@@ -1123,6 +1196,7 @@ pub struct DeltaItem {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum VariationInstType {
     /// `delta=None`
     Unknown,
@@ -1139,11 +1213,12 @@ pub enum VariationInstType {
     /// validation to be established in [`VariantProperties`]. The strict
     /// definition of SNP is an SNV with an established population frequency
     /// of at least 1% in at least 1 population.
-    SNV,
+    Snv,
 
     /// `delta=[morph of length >1]`
-    MNP,
+    Mnp,
 
+    #[serde(rename="delins")]
     /// `delta=[del, ins]`
     DelIns,
 
@@ -1164,7 +1239,7 @@ pub enum VariationInstType {
     Transposon,
 
     /// `delta=[del, ins= 'this' with fuzzy multiplier]`
-    CNV,
+    Cnv,
 
     /// `delta=[ins.seq= upstream location on the same strand]`
     DirectCopy,
@@ -1203,6 +1278,7 @@ pub enum VariationInstType {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// Used to label items in a [`VariationRef`] package
 pub enum VariationInstObservation {
     /// represents the asserted base at a position
@@ -1217,6 +1293,7 @@ pub enum VariationInstObservation {
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct VariationInst {
+    #[serde(rename="type")]
     pub r#type: VariationInstType,
 
     /// sequence that replaces the location, in biological order
@@ -1229,6 +1306,7 @@ pub struct VariationInst {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum RSiteRef {
     /// may be unparsable
     Str(String),
@@ -1239,6 +1317,7 @@ pub enum RSiteRef {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// Represents RNA feature types
 pub enum RnaRefType {
     Unknown,
@@ -1268,6 +1347,7 @@ pub enum RnaRefType {
 
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum RnaRefExt {
     /// for naming "other" type
     Name(String),
@@ -1281,12 +1361,14 @@ pub enum RnaRefExt {
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct RnaRef {
+    #[serde(rename="type")]
     pub r#type: RnaRefType,
     pub pseudo: Option<bool>,
     pub ext: Option<RnaRefExt>,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum TRnaExtAa {
     IUPACAa(u64),
     NCBIEaa(u64),
@@ -1329,6 +1411,7 @@ pub struct RnaQual {
 pub type RnaQualSet = Vec<RnaQual>;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct GeneRef {
     /// official gene symbol
     pub locus: Option<String>,
@@ -1358,6 +1441,7 @@ pub struct GeneRef {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum GeneNomenclatureStatus {
     Unknown,
     Official,
@@ -1397,6 +1481,7 @@ pub struct OrgRef {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum OrgNameChoice {
     /// genus/species type name
     Binomial(BinomialOrgName),
@@ -1421,6 +1506,7 @@ pub struct OrgName {
     /// attribution of name
     pub attrib: Option<String>,
 
+    #[serde(rename="mod")]
     pub r#mod: Option<Vec<OrgMod>>,
 
     /// lineage with semicolon separators
@@ -1443,11 +1529,18 @@ pub struct OrgName {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum OrgModSubType {
     Strain = 2,
+
+    #[serde(rename="substrain")]
     SubStrain,
+
     Type,
+
+    #[serde(rename="subtype")]
     SubType,
+
     Variety,
     Serotype,
     Serogroup,
@@ -1527,6 +1620,7 @@ pub type MultiOrgName = Vec<OrgName>;
 pub type PartialOrgName = Vec<TaxElement>;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum TaxElementFixedLevel {
     /// level must be set in string
     Other,
@@ -1537,6 +1631,7 @@ pub enum TaxElementFixedLevel {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct TaxElement {
     pub fixed_level: TaxElementFixedLevel,
     pub level: Option<String>,
@@ -1544,6 +1639,7 @@ pub struct TaxElement {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 /// biological context from which a molecule came from
 pub enum BioSourceGenome {
     #[default]
@@ -1558,7 +1654,7 @@ pub enum BioSourceGenome {
     Extrachrom,
     Plasmid,
     Transposon,
-    INsertionSeq,
+    InsertionSeq,
     Cyanelle,
     Proviral,
     Virion,
@@ -1574,6 +1670,7 @@ pub enum BioSourceGenome {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="lowercase")]
 pub enum BioSourceOrigin {
     #[default]
     Unknown,
@@ -1597,6 +1694,7 @@ pub enum BioSourceOrigin {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct BioSource {
     /// biological context
     pub genome: BioSourceGenome,
@@ -1631,6 +1729,7 @@ pub type PCRPrimerSeq = String;
 pub type PCRPrimerName = String;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum SubSourceSubType {
     Chromosome = 1,
     Map,
@@ -1701,17 +1800,24 @@ pub struct SubSource {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 pub enum ProtRefProcessingStatus {
     #[default]
     NotSet,
+
+    #[serde(rename="preprotein")]
     PreProtein,
+
     Mature,
     SignalPeptide,
     TransitPeptide,
+
+    #[serde(rename="propeptide")]
     ProPeptide,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Reference to a protein name
 pub struct ProtRef {
     /// protein name
@@ -1734,6 +1840,7 @@ pub struct ProtRef {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum TxSystem {
     Unknown,
 
@@ -1745,6 +1852,7 @@ pub enum TxSystem {
 
     /// eukaryotic Pol III
     Pol3,
+
     Bacterial,
     Viral,
 
@@ -1756,6 +1864,7 @@ pub enum TxSystem {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// Represents type of transcription initiation site (TIS)
 pub enum InitType {
     Unknown,
@@ -1771,6 +1880,7 @@ pub enum InitType {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Transcription Initiation Site feature data block
 pub struct TxInit {
     /// descriptive name of initiation site
@@ -1811,6 +1921,7 @@ pub struct TxInit {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum TxEvidenceExpCode {
     Unknown,
 
@@ -1829,6 +1940,7 @@ pub enum TxEvidenceExpCode {
     /// di-deoxy RNA sequencing
     PeSeq,
 
+    #[serde(rename="cDNA-seq")]
     /// full-length cDNA sequencing
     CDnaSeq,
 
@@ -1850,6 +1962,7 @@ pub enum TxEvidenceExpCode {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 pub enum TxEvidenceExpressionSystem {
     Unknown,
     #[default]
@@ -1862,6 +1975,7 @@ pub enum TxEvidenceExpressionSystem {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct TxEvidence {
     pub exp_code: TxEvidenceExpCode,
     pub expression_system: TxEvidenceExpressionSystem,

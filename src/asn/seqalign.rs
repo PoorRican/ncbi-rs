@@ -9,6 +9,7 @@ use serde::{Serialize, Deserialize};
 pub type SeqAlignSet = Vec<SeqAlign>;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum SeqAlignType {
     NotSet,
     Global,
@@ -22,6 +23,7 @@ pub enum SeqAlignType {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum SeqAlignSegs {
     DenDiag(Vec<DenseDiag>),
     DenSeg(DenseSeg),
@@ -34,6 +36,7 @@ pub enum SeqAlignSegs {
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct SeqAlign {
+    #[serde(rename="type")]
     pub r#type: SeqAlignType,
     /// dimensionality
     pub dim: Option<u64>,
@@ -143,12 +146,14 @@ pub struct StdSeg {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum SplicedSegProduct {
     Transcript,
     Protein,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SplicedSeg {
     /// product is either protein or transcript (cDNA)
     pub product_id: Option<SeqId>,
@@ -190,6 +195,7 @@ pub struct SplicedSeg {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum SplicedSegModifier {
     /// start found for protein/product or genomic alignment
     StartCodonFound(bool),
@@ -199,6 +205,7 @@ pub enum SplicedSegModifier {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Complete or partial exon
 ///
 /// Two consecutive [`SplicedExon`]'s may belong to one exon
@@ -239,6 +246,7 @@ pub struct SplicedExon {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum ProductPos {
     NucPos(u64),
     ProtPos(ProtPos),
@@ -257,6 +265,7 @@ pub struct ProtPos {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Piece of an exon
 ///
 /// Each variant contains lengths given in nucleotide bases
@@ -276,7 +285,7 @@ pub enum SplicedExonChunk {
 
     /// Insertion in product sequence
     /// (ie: gap in the genomic sequence)
-    ProductLine(u64),
+    ProductIns(u64),
 
     /// Insertion in product sequence
     /// (ie: gap in the genomic sequence)
@@ -292,6 +301,7 @@ pub struct SpliceSite {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// [`SparseSeg`] follows the semantics of [`DenseSeg`] and is optimized
 /// for representing sparse multiple alignments.
 pub struct SparseSeg {
@@ -307,6 +317,7 @@ pub struct SparseSeg {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SparseAlign {
     pub first_id: SeqId,
     pub second_id: SeqId,
@@ -335,6 +346,7 @@ pub struct SparseSegExt {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum ScoreValue {
     Real(f64),
     Int(i64),

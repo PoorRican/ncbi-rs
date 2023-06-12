@@ -8,6 +8,7 @@ use crate::seqloc::{SeqId};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum EMBLDbNameCode {
     EMBL,
     GenBank,
@@ -30,6 +31,7 @@ pub enum EMBLDbNameCode {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum EMBLDbName {
     Code(EMBLDbNameCode),
     Name(String),
@@ -37,11 +39,12 @@ pub enum EMBLDbName {
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct EMBLXref {
-    pub db_name: EMBLDbName,
+    pub dbname: EMBLDbName,
     pub id: Vec<ObjectId>,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 pub enum EMBLBlockClass {
     NotSet,
     #[default]
@@ -51,6 +54,7 @@ pub enum EMBLBlockClass {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum EMBLBlockDiv {
     Fun,
     Inv,
@@ -82,6 +86,7 @@ pub struct EMBLBlock {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// internal representation of `class` field for [`SPBlock`]
 pub enum SPBlockClass {
     NotSet,
@@ -93,6 +98,7 @@ pub enum SPBlockClass {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// SWISSPROT specific descriptions
 pub struct SPBlock {
     pub class: SPBlockClass,
@@ -127,6 +133,7 @@ pub struct SPBlock {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// PIR specific descriptions
 pub struct PIRBlock {
     /// had punctuation in sequence?
@@ -154,6 +161,7 @@ pub struct PIRBlock {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct GBBlock {
     pub extra_accessions: Option<Vec<String>>,
     /// source line
@@ -175,6 +183,7 @@ pub struct GBBlock {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Protein Research Foundation specific definition
 pub struct PRFBlock {
     pub extra_src: Option<PRFExtraSrc>,
@@ -191,6 +200,7 @@ pub struct PRFExtraSrc {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// PDB specific descriptions
 pub struct PDBBlock {
     /// deposition date: month,year

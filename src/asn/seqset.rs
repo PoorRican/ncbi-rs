@@ -8,60 +8,88 @@ use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 /// internal representation of `class` field for [`BioSeqSet`]
 pub enum BioSeqSetClass {
     #[default]
     NotSet,
+
     /// nuc acid and coded proteins
     NucProt,
+
+    #[serde(rename="segset")]
     /// segmented sequence + parts
     SegSet,
+
+    #[serde(rename="conset")]
     /// constructed sequence + parts
     ConSet,
+
     /// parts for [`BioSeqSetClass::SetSet`] or [`BioSeqSetClass::ConSet`]
     Parts,
+
     /// GenInfo backbone
-    GIBB,
+    Gibb,
+
     /// GenInfo
-    GI,
+    Gi,
+
     /// converted GenBank
-    GenBank,
+    Genbank,
+
     /// converted PIR
-    PIR,
+    Pir,
+
     /// all the seqs from a single publication
     PubSet,
+
     /// a set of equivalent maps or seqs
     Equiv,
+
     /// converted SWISSPROT
-    SWISSPROT,
+    Swissprot,
+
     /// a complete PDB entry
-    PDBEntry,
+    PdbEntry,
+
     /// set of mutations
     MutSet,
+
     /// population study
     PopSet,
+
     /// phylogenetic study
     PhySet,
+
     /// ecological sample study
     EcoSet,
+
     /// genomic products, chrom+mRNA+protein
     GenProdSet,
+
     /// whole genome shotgun project
-    WGSSet,
+    WgsSet,
+
     /// named annotation set
     NamedAnnot,
+
     /// with instantiated mRNA+protein
     NamedAnnotProd,
+
     /// set from a single read
     ReadSet,
+
     /// paired sequences within a read-set
     PairedEndReads,
+
     /// viral segments or mitochondrial mini-circles
     SmallGenomeSet,
+
     Other = 255,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// just a collection
 pub struct BioSeqSet {
     pub id: Option<ObjectId>,
@@ -81,6 +109,7 @@ pub struct BioSeqSet {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum SeqEntry {
     Seq(BioSeq),
     Set(BioSeqSet),

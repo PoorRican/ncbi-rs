@@ -7,22 +7,61 @@
 //! for more information on.
 
 use crate::biblio::IdPat;
-use crate::general::{Date, IntFuzz, ObjectId};
+use crate::general::{Date, DbTag, IntFuzz, ObjectId};
 use crate::seqfeat::FeatId;
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum SeqId {
     Local(ObjectId),
+    /// GenInfo backbone sequence id
     GibbSq(i64),
+
+    /// GenInfo backbone molecule type
     GibbMt(i64),
+
+    /// GenINfo import id
     Giim(GiimportId),
+
     Genbank(TextseqId),
     Embl(TextseqId),
     Pir(TextseqId),
     Swissprot(TextseqId),
     Patent(PatentSeqId),
+    /// left for historical reasons, `Other = ReqSeq`
     Other(TextseqId),
+
+    /// for other databases
+    General(DbTag),
+
+    /// GenInfo integrated database
+    Gi(u64),
+
+    /// DDBJ
+    Ddbj(TextseqId),
+
+    /// PRF SEQDB
+    Prf(TextseqId),
+
+    /// PDB sequence
+    Pdb(PDBSeqId),
+
+    /// Third party annot/seq: Genbank
+    Tpg(TextseqId),
+
+    /// Third party annot/seq: EMBL
+    Tpe(TextseqId),
+
+    /// Third party annot/seq: DDBJ
+    Tpd(TextseqId),
+
+    /// internal NCBI genome pipeline
+    Gpipe(TextseqId),
+
+    #[serde(rename="named-annot-track")]
+    /// internal named annotation
+    NamedAnnotTrack(TextseqId),
 }
 
 pub type SeqIdSet = Vec<SeqId>;
@@ -52,6 +91,7 @@ pub struct GiimportId {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct PDBSeqId {
     pub mol: PDBMolId,
     pub rel: Option<Date>,
@@ -62,6 +102,7 @@ pub struct PDBSeqId {
 pub type PDBMolId = String;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Defines a location on a [`BioSeq`].
 ///
 /// Class hierarchy makes it possible to use the same type in multiple contexts.
@@ -98,6 +139,7 @@ pub enum SeqLoc {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SeqInterval {
     pub from: i64,
     pub to: i64,
@@ -118,6 +160,7 @@ pub struct SeqPoint {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct PackedSeqPnt {
     pub strand: Option<NaStrand>,
     pub id: SeqId,
@@ -126,6 +169,7 @@ pub struct PackedSeqPnt {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Strand of nucleic acid
 pub enum NaStrand {
     Unknown,

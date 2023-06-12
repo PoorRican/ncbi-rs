@@ -6,6 +6,7 @@ use crate::seqloc::SeqLoc;
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum SeqGraphChoice {
     Real(RealGraph),
     Int(IntGraph),
@@ -13,6 +14,7 @@ pub enum SeqGraphChoice {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// For values mapped by residue or range to sequence
 pub struct SeqGraph {
     pub title: Option<String>,
@@ -37,6 +39,7 @@ pub struct SeqGraph {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct Graph<T> {
     /// top of graph
     pub max: T,
