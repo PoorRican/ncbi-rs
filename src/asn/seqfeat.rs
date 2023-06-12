@@ -53,9 +53,10 @@
 /// that the data is correct but may not behave as expected.
 
 use crate::biblio::{DOI, PubMedId};
+use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
 use crate::r#pub::PubSet;
-use crate::seq::{DbTag, Heterogen, IntFuzz, ObjectId, PubDesc, SeqId, SeqLiteral, SeqLoc, UserObject, Numbering};
-use crate::seqloc::GiimportId;
+use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
+use crate::seqloc::{GiimportId, SeqId, SeqLoc};
 use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]
