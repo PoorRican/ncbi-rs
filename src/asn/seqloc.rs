@@ -9,8 +9,9 @@
 use crate::biblio::IdPat;
 use crate::general::{Date, IntFuzz, ObjectId};
 use crate::seqfeat::FeatId;
+use serde::{Serialize, Deserialize};
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum SeqId {
     Local(ObjectId),
     GibbSq(i64),
@@ -26,7 +27,7 @@ pub enum SeqId {
 
 pub type SeqIdSet = Vec<SeqId>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct PatentSeqId {
     /// number of sequence in patent
     pub seqid: u64,
@@ -35,7 +36,7 @@ pub struct PatentSeqId {
     pub cit: IdPat,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct TextseqId {
     pub name: Option<String>,
     pub accession: Option<String>,
@@ -43,14 +44,14 @@ pub struct TextseqId {
     pub version: Option<u64>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct GiimportId {
     pub id: i64,
     pub db: Option<String>,
     pub release: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct PDBSeqId {
     pub mol: PDBMolId,
     pub rel: Option<Date>,
@@ -60,7 +61,7 @@ pub struct PDBSeqId {
 /// name of mol, should be 4 chars
 pub type PDBMolId = String;
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Defines a location on a [`BioSeq`].
 ///
 /// Class hierarchy makes it possible to use the same type in multiple contexts.
@@ -96,7 +97,7 @@ pub enum SeqLoc {
     Feat(FeatId),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct SeqInterval {
     pub from: i64,
     pub to: i64,
@@ -108,7 +109,7 @@ pub struct SeqInterval {
 
 pub type PackedSeqInt = Vec<SeqInterval>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct SeqPoint {
     pub point: i64,
     pub strand: Option<NaStrand>,
@@ -116,7 +117,7 @@ pub struct SeqPoint {
     pub fuzz: Option<IntFuzz>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct PackedSeqPnt {
     pub strand: Option<NaStrand>,
     pub id: SeqId,
@@ -124,7 +125,7 @@ pub struct PackedSeqPnt {
     pub points: Vec<i64>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Strand of nucleic acid
 pub enum NaStrand {
     Unknown,
@@ -137,7 +138,7 @@ pub enum NaStrand {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// bond between residues
 pub struct SeqBond {
     /// connection to at least one residue

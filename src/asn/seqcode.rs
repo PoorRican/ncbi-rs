@@ -6,8 +6,9 @@
 //! increase continuously. So IUPAC codes, which are upper case letters will
 //! always have 65 0 cells before the code begins. This allows all codes to do
 //! indexed lookups.
+use serde::{Serialize, Deserialize};
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Sequence representations
 pub enum SeqCodeType {
     /// IUPAC 1 letter nuc acid code
@@ -34,7 +35,7 @@ pub enum SeqCodeType {
     NCBIStdAa,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// for tables of sequence mappings
 pub struct SeqMapTable {
     /// code to map from
@@ -49,7 +50,7 @@ pub struct SeqMapTable {
     pub table: Vec<u64>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// internal representation of map index
 pub struct SeqCodeTableCell {
     /// the printed symbol or letter
@@ -58,7 +59,7 @@ pub struct SeqCodeTableCell {
     pub name: String,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// for names of coded values
 pub struct SeqCodeTable {
     /// name of code
@@ -74,7 +75,7 @@ pub struct SeqCodeTable {
     pub comps: Option<Vec<u64>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// for distribution
 pub struct SeqCodeSet {
     pub codes: Option<Vec<SeqCodeTable>>,

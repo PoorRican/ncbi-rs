@@ -9,8 +9,9 @@ use crate::biblio::{
     PubMedId,
 };
 use crate::medline::MedlineEntry;
+use serde::{Serialize, Deserialize};
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum Pub {
     /// general or generic unparsed
     Gen(CitGen),
@@ -46,7 +47,7 @@ pub enum Pub {
 
 pub type PubEquiv = Vec<Pub>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum PubSet {
     Pub(Vec<Pub>),
     Medline(Vec<MedlineEntry>),

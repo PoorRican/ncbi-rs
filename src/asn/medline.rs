@@ -4,8 +4,9 @@
 
 use crate::biblio::{CitArt, PubMedId};
 use crate::general::Date;
+use serde::{Serialize, Deserialize};
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
 pub enum MedlineEntryStatus {
     /// record as supplied by publisher
     Publisher = 1,
@@ -18,7 +19,7 @@ pub enum MedlineEntryStatus {
     Medline,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// a MEDLINE or PubMed entry
 pub struct MedlineEntry {
     /// MEDLINE UID, sometimes not yet available from PubMed
@@ -52,7 +53,7 @@ pub struct MedlineEntry {
     pub status: MedlineEntryStatus,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct MedlineMesh {
     // TODO: default false
     /// true if main point (*)
@@ -65,7 +66,7 @@ pub struct MedlineMesh {
     pub qual: Option<Vec<MedlineQual>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct MedlineQual {
     // TODO: default false
     /// true if main point
@@ -75,7 +76,7 @@ pub struct MedlineQual {
     pub subh: String,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum MedlineSiType {
     DDBJ = 1,
     /// Carbohydrate Structure Database
@@ -106,7 +107,7 @@ pub enum MedlineSiType {
     GDB,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum MedlineRnType {
     NameOnly,
 
@@ -117,7 +118,7 @@ pub enum MedlineRnType {
     EC,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Medline substance records
 pub struct MedlineRn {
     /// type of record
@@ -130,7 +131,7 @@ pub struct MedlineRn {
     pub name: String,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// medline cross reference records
 pub struct MedlineSi {
     /// type of xref
@@ -138,7 +139,7 @@ pub struct MedlineSi {
     pub cit: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum MedlineFieldType {
     /// look in line code
     Other,
@@ -150,7 +151,7 @@ pub enum MedlineFieldType {
     Erratum,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct MedlineField {
     /// keyed type
     pub r#type: MedlineFieldType,
@@ -162,14 +163,14 @@ pub struct MedlineField {
     pub ids: Option<Vec<DocRef>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum DocRefType {
     Medline = 1,
     PubMed,
     NCBIGi,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// reference to a document
 pub struct DocRef {
     pub r#type: DocRefType,

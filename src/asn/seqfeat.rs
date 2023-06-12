@@ -57,8 +57,9 @@ use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
 use crate::r#pub::PubSet;
 use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
+use serde::{Serialize, Deserialize};
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Feature identifiers
 pub enum FeatId {
     /// GenInfo backbone
@@ -74,7 +75,7 @@ pub enum FeatId {
     General(DbTag),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Experimental evidence for existence of feature
 pub enum SeqFeatExpEvidence {
     /// any reasonable experiment check
@@ -84,7 +85,7 @@ pub enum SeqFeatExpEvidence {
     NotExperimental,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Sequence feature generalization
 pub struct SeqFeat {
     pub id: Option<FeatId>,
@@ -142,7 +143,7 @@ pub struct SeqFeat {
     pub support: Option<SeqFeatSupport>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum SeqFeatBond {
     Disulfide,
     Thiolester,
@@ -151,7 +152,7 @@ pub enum SeqFeatBond {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum SeqFeatSite {
     Active,
     Binding,
@@ -182,7 +183,7 @@ pub enum SeqFeatSite {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Protein secondary structure
 pub enum PSecStr {
     /// any helix
@@ -195,7 +196,7 @@ pub enum PSecStr {
     Turn,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum SeqFeatData {
     Gene(GeneRef),
     Org(OrgRef),
@@ -243,20 +244,20 @@ pub enum SeqFeatData {
     Variation(VariationRef),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct SeqFeatXref {
     pub id: Option<FeatId>,
     pub data: Option<SeqFeatData>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct SeqFeatSupport {
     pub experiment: Option<Vec<ExperimentSupport>>,
     pub inference: Option<Vec<InferenceSupport>>,
     pub model_evidence: Option<Vec<ModelEvidenceSupport>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum EvidenceCategory {
     NotSet,
     Coordinates,
@@ -264,7 +265,7 @@ pub enum EvidenceCategory {
     Existence,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ExperimentSupport {
     pub category: Option<EvidenceCategory>,
     pub explanation: String,
@@ -272,19 +273,19 @@ pub struct ExperimentSupport {
     pub dois: Option<Vec<DOI>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ProgramId {
     pub name: String,
     pub version: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct EvidenceBasis {
     pub programs: Option<Vec<ProgramId>>,
     pub accessions: Option<Vec<SeqId>>,
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
 pub enum InferenceSupportType {
     #[default]
     NotSet,
@@ -303,7 +304,7 @@ pub enum InferenceSupportType {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct InferenceSupport {
     pub category: Option<EvidenceCategory>,
     pub r#type: InferenceSupportType,
@@ -315,7 +316,7 @@ pub struct InferenceSupport {
     pub soids: Option<Vec<DOI>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ModelEvidenceItem {
     pub id: SeqId,
     pub exon_count: Option<u64>,
@@ -326,7 +327,7 @@ pub struct ModelEvidenceItem {
     pub supports_all_exon_combo: bool,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ModelEvidenceSupport {
     pub method: Option<String>,
     pub mrna: Option<Vec<ModelEvidenceItem>>,
@@ -340,7 +341,7 @@ pub struct ModelEvidenceSupport {
     pub supports_all_exon_combo: bool, // TODO: default false
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
 pub enum CdRegionFrame {
     #[default]
     /// not set, code uses one
@@ -351,7 +352,7 @@ pub enum CdRegionFrame {
     Three,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Instructions to translate from a nucleic acid to a peptide
 pub struct CdRegion {
     /// just an ORF ?
@@ -390,7 +391,7 @@ pub struct CdRegion {
     pub stops: Option<u64>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Storage type for genetic code data
 ///
 /// I do not know what purpose the "start" variants [`Self::SNcbiStdAa`],
@@ -423,7 +424,7 @@ pub enum GeneticCodeOpt {
 
 pub type GeneticCode = Vec<GeneticCodeOpt>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// the amino acid that is the exception
 pub enum CodeBreakAA {
     /// ASCII value of [`crate::asn::NCBIEaa`] code
@@ -436,7 +437,7 @@ pub enum CodeBreakAA {
     NcbiStdAa(u64),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// specific codon exceptions
 pub struct CodeBreak {
     /// location of exception
@@ -449,7 +450,7 @@ pub struct CodeBreak {
 /// table of genetic codes
 pub type GeneticCodeTable = Vec<GeneticCode>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Features imported from other databases
 pub struct ImpFeat {
     pub key: String,
@@ -461,13 +462,13 @@ pub struct ImpFeat {
     pub descr: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct GbQual {
     pub qual: String,
     pub val: String,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum CloneRefPlacementMethod {
     /// clone placed by end sequence
     EndSeq,
@@ -493,7 +494,7 @@ pub enum CloneRefPlacementMethod {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Specification of clone features
 pub struct CloneRef {
     /// official clone symbol
@@ -511,14 +512,14 @@ pub struct CloneRef {
 
 pub type CloneSeqSet = Vec<CloneSeq>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum CloneSeqType {
     Insert,
     End,
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum CloneSeqConfidence {
     /// multiple hits
     Multiple,
@@ -552,7 +553,7 @@ pub enum CloneSeqConfidence {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum CloneSeqSupport {
     /// sequence used to place clone
     Prototype,
@@ -567,7 +568,7 @@ pub enum CloneSeqSupport {
     NonSupporting,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct CloneSeq {
     pub r#type: CloneSeqType,
     pub confidence: Option<CloneSeqConfidence>,
@@ -583,7 +584,7 @@ pub struct CloneSeq {
     pub support: Option<CloneSeqSupport>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum VariantResourceLink {
     /// Clinical, Pubmed, Cited
     Preserved = 1,
@@ -604,7 +605,7 @@ pub enum VariantResourceLink {
     GenotypeKit = 32,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum VariantGeneLocation {
     /// sequence intervals covered by a gene ID but not
     /// having an aligned transcript
@@ -644,7 +645,7 @@ pub enum VariantGeneLocation {
     ConservedNonCoding = 2048,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum VariantEffect {
     /// known to cause no functional changes.
     /// since value is 0, it does not combine with any other bit, explicitly
@@ -680,7 +681,7 @@ pub enum VariantEffect {
     StopLose = 256,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum VariantMapping {
     /// another SNP has the same mapped positions on reference assembly
     HasOtherSNP = 1,
@@ -693,7 +694,7 @@ pub enum VariantMapping {
     IsAssemblySpecific = 4,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// captures specificity of placement
 ///
 /// # Note
@@ -706,7 +707,7 @@ pub enum VariantMapWeight {
     ManyPlacements = 10,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum FrequencyBasedValidation {
     /// low frequency variation that is cited in journal or other reputable
     /// source.
@@ -726,7 +727,7 @@ pub enum FrequencyBasedValidation {
     Above1Pct1Plus = 32,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum VariantGenotype {
     /// exists in a haplotype tagging set
     InHaplotypeSet,
@@ -735,7 +736,7 @@ pub enum VariantGenotype {
     HasGenotypes,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum VariantQualityCheck {
     /// reference sequence allele at the mapped position is not present in
     /// the SNP allele list, adjust for orientation
@@ -755,14 +756,14 @@ pub enum VariantQualityCheck {
     GenotypeConflict = 16,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum VariantConfidence {
     Unknown,
     LikelyArtifact,
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// origin of this allele, if known
 ///
 /// Note is a bitflag and more than one state can be represented at once
@@ -782,7 +783,7 @@ pub enum VariantAlleleOrigin {
     Other = 10732741824,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// observed allele state, if known
 ///
 /// NOTE this field is not a bitflag
@@ -795,7 +796,7 @@ pub enum VariantAlleleState {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Specification of variation features
 ///
 /// The intention is to provide information to clients that reflect internal
@@ -854,7 +855,7 @@ pub struct VariantProperties {
     pub is_ancestral_allele: Option<bool>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// does this variant have known clinical significance?
 pub enum PhenotypeClinicalSignificance {
     Unknown,
@@ -868,7 +869,7 @@ pub enum PhenotypeClinicalSignificance {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct Phenotype {
     pub source: Option<String>,
     pub term: Option<String>,
@@ -878,7 +879,7 @@ pub struct Phenotype {
     pub clinical_significance: Option<PhenotypeClinicalSignificance>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// This field is an explicit bitflag
 pub enum PopulationDataFlags {
     IsDefaultPopulation = 1,
@@ -886,7 +887,7 @@ pub enum PopulationDataFlags {
     IsRareAllele = 4,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct PopulationData {
     /// assayed population (eg: HAPMAP-CEU)
     pub population: String,
@@ -897,13 +898,13 @@ pub struct PopulationData {
     pub flags: Option<PopulationDataFlags>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct ExtLoc {
     pub id: ObjectId,
     pub location: SeqLoc,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum VariantRefMethod {
     Unknown,
     BacAcgh,
@@ -934,7 +935,7 @@ pub enum VariantRefMethod {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum VariationRefDataSetType {
     Unknown,
     Compound,
@@ -949,14 +950,14 @@ pub enum VariationRefDataSetType {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct VariationRefDataSet {
     pub r#type: VariationRefDataSetType,
     pub variations: Vec<VariationRef>,
     pub name: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum VariationRefData {
     Unknown,
 
@@ -981,14 +982,14 @@ pub enum VariationRefData {
     Complex,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// see http://www.hgvs.org/mutnomen/recs-prot.html
 pub struct VariationFrameshift {
     pub phase: Option<i64>,
     pub x_length: Option<i64>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct VariationLossOfHeterozygosity {
     /// in germline comparison, it will be reference genome assembly
     /// (default) or referenece/normal population. In somatic mutation,
@@ -999,7 +1000,7 @@ pub struct VariationLossOfHeterozygosity {
     pub test: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum VariationConsequence {
     Unknown,
 
@@ -1019,7 +1020,7 @@ pub enum VariationConsequence {
     LossOfHeterozygosity(VariationLossOfHeterozygosity),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct SomaticOriginCondition {
     pub description: Option<String>,
 
@@ -1027,7 +1028,7 @@ pub struct SomaticOriginCondition {
     pub object_id: Option<Vec<DbTag>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct VariationSomaticOrigin {
     /// description of the somatic origin itself
     pub source: Option<SubSource>,
@@ -1036,7 +1037,7 @@ pub struct VariationSomaticOrigin {
     pub condition: Option<SomaticOriginCondition>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// reference to SNP
 ///
 /// This object relates three IDs:
@@ -1078,7 +1079,7 @@ pub struct VariationRef {
     pub somatic_origin: Option<Vec<VariationSomaticOrigin>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum DeltaSeq {
     Literal(SeqLiteral),
     Loc(SeqLoc),
@@ -1087,7 +1088,7 @@ pub enum DeltaSeq {
     This,
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
 pub enum DeltaAction {
     #[default]
     /// replace len(seq) positions starting with location.start with seq
@@ -1107,7 +1108,7 @@ pub enum DeltaAction {
     InsBefore,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct DeltaItem {
     pub seq: Option<DeltaSeq>,
 
@@ -1121,7 +1122,7 @@ pub struct DeltaItem {
     pub action: DeltaAction,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum VariationInstType {
     /// `delta=None`
     Unknown,
@@ -1201,7 +1202,7 @@ pub enum VariationInstType {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Used to label items in a [`VariationRef`] package
 pub enum VariationInstObservation {
     /// represents the asserted base at a position
@@ -1214,7 +1215,7 @@ pub enum VariationInstObservation {
     Variant = 4,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct VariationInst {
     pub r#type: VariationInstType,
 
@@ -1227,7 +1228,7 @@ pub struct VariationInst {
     pub observation: Option<VariationInstObservation>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum RSiteRef {
     /// may be unparsable
     Str(String),
@@ -1237,7 +1238,7 @@ pub enum RSiteRef {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Represents RNA feature types
 pub enum RnaRefType {
     Unknown,
@@ -1266,7 +1267,7 @@ pub enum RnaRefType {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum RnaRefExt {
     /// for naming "other" type
     Name(String),
@@ -1278,14 +1279,14 @@ pub enum RnaRefExt {
     Gen(RnaGen),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct RnaRef {
     pub r#type: RnaRefType,
     pub pseudo: Option<bool>,
     pub ext: Option<RnaRefExt>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum TRnaExtAa {
     IUPACAa(u64),
     NCBIEaa(u64),
@@ -1293,7 +1294,7 @@ pub enum TRnaExtAa {
     NCBIStdAa(u64),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// tRNA feature extensions
 pub struct TRnaExt {
     /// transported amino acid
@@ -1306,7 +1307,7 @@ pub struct TRnaExt {
     pub anticodon: Option<SeqLoc>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct RnaGen {
     /// for ncRNA's, the class of non-coding RNA
     ///
@@ -1319,7 +1320,7 @@ pub struct RnaGen {
     pub quals: Option<RnaQualSet>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct RnaQual {
     pub qual: String,
     pub val: String,
@@ -1327,7 +1328,7 @@ pub struct RnaQual {
 
 pub type RnaQualSet = Vec<RnaQual>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct GeneRef {
     /// official gene symbol
     pub locus: Option<String>,
@@ -1356,14 +1357,14 @@ pub struct GeneRef {
     pub formal_name: Option<GeneNomenclature>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum GeneNomenclatureStatus {
     Unknown,
     Official,
     Interim,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct GeneNomenclature {
     pub status: GeneNomenclatureStatus,
     pub symbol: Option<String>,
@@ -1371,7 +1372,7 @@ pub struct GeneNomenclature {
     pub source: Option<DbTag>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Reference to an organism
 ///
 /// Defines only the organism. Lower levels of detail for biological molecules
@@ -1395,7 +1396,7 @@ pub struct OrgRef {
     pub orgname: Option<OrgName>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum OrgNameChoice {
     /// genus/species type name
     Binomial(BinomialOrgName),
@@ -1413,7 +1414,7 @@ pub enum OrgNameChoice {
     Partial(PartialOrgName),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct OrgName {
     pub name: Option<OrgNameChoice>,
 
@@ -1441,7 +1442,7 @@ pub struct OrgName {
     pub pgcode: Option<u64>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum OrgModSubType {
     Strain = 2,
     SubStrain,
@@ -1500,7 +1501,7 @@ pub enum OrgModSubType {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct OrgMod {
     pub subtype: OrgModSubType,
     pub subname: String,
@@ -1509,7 +1510,7 @@ pub struct OrgMod {
     pub attrib: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct BinomialOrgName {
     /// required
     pub genus: String,
@@ -1525,7 +1526,7 @@ pub type MultiOrgName = Vec<OrgName>;
 /// used when genus not known
 pub type PartialOrgName = Vec<TaxElement>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum TaxElementFixedLevel {
     /// level must be set in string
     Other,
@@ -1535,14 +1536,14 @@ pub enum TaxElementFixedLevel {
     Class,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct TaxElement {
     pub fixed_level: TaxElementFixedLevel,
     pub level: Option<String>,
     pub name: String,
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
 /// biological context from which a molecule came from
 pub enum BioSourceGenome {
     #[default]
@@ -1572,7 +1573,7 @@ pub enum BioSourceGenome {
     PlasmidInPlastid,
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
 pub enum BioSourceOrigin {
     #[default]
     Unknown,
@@ -1595,7 +1596,7 @@ pub enum BioSourceOrigin {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct BioSource {
     /// biological context
     pub genome: BioSourceGenome,
@@ -1614,14 +1615,14 @@ pub struct BioSource {
 }
 
 pub type PCRReationSet = Vec<PCRReaction>;
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct PCRReaction {
     pub forward: Option<PCRPrimerSet>,
     pub reverse: Option<PCRPrimerSet>,
 }
 
 pub type PCRPrimerSet = Vec<PCRPrimer>;
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct PCRPrimer {
     pub seq: Option<PCRPrimerSeq>,
     pub name: Option<PCRPrimerName>,
@@ -1629,7 +1630,7 @@ pub struct PCRPrimer {
 pub type PCRPrimerSeq = String;
 pub type PCRPrimerName = String;
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum SubSourceSubType {
     Chromosome = 1,
     Map,
@@ -1690,7 +1691,7 @@ pub enum SubSourceSubType {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct SubSource {
     pub subtype: SubSourceSubType,
     pub name: String,
@@ -1699,7 +1700,7 @@ pub struct SubSource {
     pub attrib: Option<String>,
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
 pub enum ProtRefProcessingStatus {
     #[default]
     NotSet,
@@ -1710,7 +1711,7 @@ pub enum ProtRefProcessingStatus {
     ProPeptide,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Reference to a protein name
 pub struct ProtRef {
     /// protein name
@@ -1732,7 +1733,7 @@ pub struct ProtRef {
     pub processed: ProtRefProcessingStatus,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum TxSystem {
     Unknown,
 
@@ -1754,7 +1755,7 @@ pub enum TxSystem {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Represents type of transcription initiation site (TIS)
 pub enum InitType {
     Unknown,
@@ -1769,7 +1770,7 @@ pub enum InitType {
     Region,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// Transcription Initiation Site feature data block
 pub struct TxInit {
     /// descriptive name of initiation site
@@ -1809,7 +1810,7 @@ pub struct TxInit {
     pub evidence: Option<Vec<TxEvidence>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum TxEvidenceExpCode {
     Unknown,
 
@@ -1848,7 +1849,7 @@ pub enum TxEvidenceExpCode {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
 pub enum TxEvidenceExpressionSystem {
     Unknown,
     #[default]
@@ -1860,7 +1861,7 @@ pub enum TxEvidenceExpressionSystem {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct TxEvidence {
     pub exp_code: TxEvidenceExpCode,
     pub expression_system: TxEvidenceExpressionSystem,
