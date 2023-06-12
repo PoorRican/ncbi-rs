@@ -1,5 +1,18 @@
 [package]
-name = "ncbi_bioseq"
+name = "ncbi"
+authors = ["Josué D. Figueroa"]
+description = "Rust data structures for NCBI APIs"
+repository = "https://github.com/PoorRican/ncbi-rs/"
+keywords = ["bioinformatics", "ncbi", "dna", "biology", "parser"]
+categories = ["science", "data-structures", "database", "parser-implementations"]
+license = "GPL-3.0-only"
+
+version = "v0.1.0-beta"
+edition = "2021"
+
+[badges]
+maintenance = { status = "actively-developed" }
+
 version = "0.1.0"
 edition = "2021"
 
