@@ -5,7 +5,6 @@
 
 use crate::general::{Date, DbTag, ObjectId};
 use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
-use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug, Default)]
 /// internal representation of `class` field for [`BioSeqSet`]
@@ -77,7 +76,7 @@ pub struct BioSeqSet {
     pub date: Option<Date>,
     pub descr: Option<SeqDescr>,
     pub seq_set: Vec<SeqEntry>,
-    pub annot: Option<BTreeSet<SeqAnnot>>,
+    pub annot: Option<Vec<SeqAnnot>>,
 }
 
 #[derive(PartialEq, Debug)]

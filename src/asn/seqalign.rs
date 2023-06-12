@@ -5,9 +5,7 @@
 use crate::general::{ObjectId, UserObject};
 use crate::seqloc::{NaStrand, SeqId, SeqLoc};
 
-use std::collections::BTreeSet;
-
-pub type SeqAlignSet = BTreeSet<SeqAlign>;
+pub type SeqAlignSet = Vec<SeqAlign>;
 
 #[derive(PartialEq, Debug)]
 pub enum SeqAlignType {
@@ -39,12 +37,12 @@ pub struct SeqAlign {
     /// dimensionality
     pub dim: Option<u64>,
     /// for whole alignment
-    pub score: Option<BTreeSet<Score>>,
+    pub score: Option<Vec<Score>>,
     /// alignment data
     pub segs: SeqAlignSegs,
     /// regions of sequence over which
     /// alignment was computed
-    pub bounds: Option<BTreeSet<SeqLoc>>,
+    pub bounds: Option<Vec<SeqLoc>>,
     /// alignment id
     pub id: Option<Vec<ObjectId>>,
     /// extra info
@@ -64,7 +62,7 @@ pub struct DenseDiag {
     /// len of aligned segments
     pub len: u64,
     pub strands: Option<Vec<NaStrand>>,
-    pub scores: Option<BTreeSet<Score>>,
+    pub scores: Option<Vec<Score>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -187,7 +185,7 @@ pub struct SplicedSeg {
     /// alignment descriptors / modifiers
     ///
     /// this provides a set for extension
-    pub modifiers: Option<BTreeSet<SplicedSegModifier>>,
+    pub modifiers: Option<Vec<SplicedSegModifier>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -298,13 +296,13 @@ pub struct SpliceSite {
 pub struct SparseSeg {
     pub master_id: Option<SeqId>,
     /// pairwise alignments constituting this multiple alignment
-    pub rows: BTreeSet<SparseAlign>,
+    pub rows: Vec<SparseAlign>,
 
     /// per-row scores
-    pub row_scores: Option<BTreeSet<Score>>,
+    pub row_scores: Option<Vec<Score>>,
 
     /// index of extra items
-    pub ext: Option<BTreeSet<SparseSegExt>>,
+    pub ext: Option<Vec<SparseSegExt>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -327,7 +325,7 @@ pub struct SparseAlign {
     pub second_strands: Option<Vec<NaStrand>>,
 
     /// per-segment scores
-    pub seg_scores: Option<BTreeSet<Score>>,
+    pub seg_scores: Option<Vec<Score>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -348,4 +346,4 @@ pub struct Score {
     pub value: ScoreValue,
 }
 
-pub type ScoreSet = BTreeSet<Score>;
+pub type ScoreSet = Vec<Score>;

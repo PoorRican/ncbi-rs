@@ -15,7 +15,6 @@ use crate::seqfeat::{
 use crate::seqloc::{SeqId, SeqLoc};
 use crate::seqres::SeqGraph;
 use crate::seqtable::SeqTable;
-use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]
 /// Single continuous biological sequence.
@@ -48,7 +47,7 @@ pub struct BioSeq {
     pub annot: Option<Vec<SeqAnnot>>,
 }
 
-pub type SeqDescr = BTreeSet<SeqDesc>;
+pub type SeqDescr = Vec<SeqDesc>;
 
 #[derive(PartialEq, Debug)]
 /// # Note
@@ -611,7 +610,7 @@ pub enum SeqHistDeleted {
 /// Sequence history record
 /// assembly: records how seq was assembled from others
 pub struct SeqHist {
-    pub assembly: Option<BTreeSet<SeqAlign>>,
+    pub assembly: Option<Vec<SeqAlign>>,
     pub replaces: Option<SeqHistRec>,
     pub replaced_by: Option<SeqHistRec>,
     pub deleted: Option<SeqHistDeleted>,
@@ -620,7 +619,7 @@ pub struct SeqHist {
 #[derive(PartialEq, Debug)]
 pub struct SeqHistRec {
     pub date: Option<Date>,
-    pub ids: BTreeSet<SeqId>,
+    pub ids: Vec<SeqId>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -692,7 +691,7 @@ pub enum SeqGapLinkage {
 pub struct SeqGap {
     pub r#type: SeqGapType,
     pub linkage: Option<SeqGapLinkage>,
-    pub linkage_evidence: Option<BTreeSet<LinkageEvidence>>,
+    pub linkage_evidence: Option<Vec<LinkageEvidence>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -824,7 +823,7 @@ pub enum AlignType {
 pub struct AlignDef {
     pub align_type: AlignType,
     /// used for the one ref [`SeqId`] for now
-    pub ids: Option<BTreeSet<SeqId>>,
+    pub ids: Option<Vec<SeqId>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -842,20 +841,20 @@ pub enum SeqAnnotDB {
 #[derive(PartialEq, Debug)]
 /// Internal representation for `data` choice in [`SeqAnnot`]
 pub enum SeqAnnotData {
-    FTable(BTreeSet<SeqFeat>),
-    Align(BTreeSet<SeqAlign>),
-    Graph(BTreeSet<SeqGraph>),
+    FTable(Vec<SeqFeat>),
+    Align(Vec<SeqAlign>),
+    Graph(Vec<SeqGraph>),
     /// used for communication between tools
-    IDS(BTreeSet<SeqId>),
+    IDS(Vec<SeqId>),
     /// used for communication between tools
-    Locs(BTreeSet<SeqLoc>),
+    Locs(Vec<SeqLoc>),
     /// features in table form
     SeqTable(SeqTable),
 }
 
 #[derive(PartialEq, Debug)]
 pub struct SeqAnnot {
-    pub id: Option<BTreeSet<AnnotId>>,
+    pub id: Option<Vec<AnnotId>>,
     pub db: Option<SeqAnnotDB>,
     /// source if `db` [`SeqAnnotDB::Other`]
     pub name: Option<String>,

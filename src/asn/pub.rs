@@ -9,7 +9,6 @@ use crate::biblio::{
     PubMedId,
 };
 use crate::medline::MedlineEntry;
-use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]
 pub enum Pub {
@@ -45,15 +44,15 @@ pub enum Pub {
     PmId(PubMedId),
 }
 
-pub type PubEquiv = BTreeSet<Pub>;
+pub type PubEquiv = Vec<Pub>;
 
 #[derive(PartialEq, Debug)]
 pub enum PubSet {
-    Pub(BTreeSet<Pub>),
-    Medline(BTreeSet<MedlineEntry>),
-    Article(BTreeSet<CitArt>),
-    Journal(BTreeSet<CitJour>),
-    Book(BTreeSet<CitBook>),
-    Proc(BTreeSet<CitProc>),
-    Patent(BTreeSet<CitPat>),
+    Pub(Vec<Pub>),
+    Medline(Vec<MedlineEntry>),
+    Article(Vec<CitArt>),
+    Journal(Vec<CitJour>),
+    Book(Vec<CitBook>),
+    Proc(Vec<CitProc>),
+    Patent(Vec<CitPat>),
 }

@@ -2,8 +2,6 @@
 //!
 //! As per [general.asn](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/asn_spec/general.asn.html)
 
-use std::collections::BTreeSet;
-
 #[derive(PartialEq, Debug)]
 /// Model precise timestamp or an un-parsed string
 ///
@@ -125,7 +123,7 @@ pub enum IntFuzz {
     Range(Range),
     Pct(i64),
     Lim(FuzzLimit),
-    Alt(BTreeSet<i64>),
+    Alt(Vec<i64>),
 }
 
 #[derive(PartialEq, Debug)]
@@ -138,7 +136,7 @@ pub struct UserObject {
     /// type of object within class
     pub r#type: ObjectId,
     /// the object itself
-    pub data: BTreeSet<UserField>,
+    pub data: Vec<UserField>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -150,11 +148,11 @@ pub enum UserData {
     // OS(`octal string`),
     /// for using other definitions
     Object(UserObject),
-    Strs(BTreeSet<String>),
-    Ints(BTreeSet<i64>),
-    Reals(BTreeSet<f64>),
-    Fields(BTreeSet<UserField>),
-    Objects(BTreeSet<UserObject>),
+    Strs(Vec<String>),
+    Ints(Vec<i64>),
+    Reals(Vec<f64>),
+    Fields(Vec<UserField>),
+    Objects(Vec<UserObject>),
 }
 
 #[derive(PartialEq, Debug)]

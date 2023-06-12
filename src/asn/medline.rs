@@ -4,7 +4,6 @@
 
 use crate::biblio::{CitArt, PubMedId};
 use crate::general::Date;
-use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug, Default)]
 pub enum MedlineEntryStatus {
@@ -32,23 +31,23 @@ pub struct MedlineEntry {
     pub cit: CitArt,
 
     pub r#abstract: Option<String>,
-    pub mesh: Option<BTreeSet<MedlineMesh>>,
-    pub substance: Option<BTreeSet<MedlineRn>>,
-    pub xref: Option<BTreeSet<MedlineSi>>,
+    pub mesh: Option<Vec<MedlineMesh>>,
+    pub substance: Option<Vec<MedlineRn>>,
+    pub xref: Option<Vec<MedlineSi>>,
 
     /// ID Number (grants, contracts)
-    pub idnum: Option<BTreeSet<String>>,
+    pub idnum: Option<Vec<String>>,
 
-    pub gene: Option<BTreeSet<String>>,
+    pub gene: Option<Vec<String>>,
 
     /// MEDLINE records may include the PubMedId
     pub pmid: Option<PubMedId>,
 
     /// may show publication types (review, etc)
-    pub pub_type: Option<BTreeSet<String>>,
+    pub pub_type: Option<Vec<String>>,
 
     /// additional Medline field types
-    pub mlfield: Option<BTreeSet<MedlineField>>,
+    pub mlfield: Option<Vec<MedlineField>>,
 
     pub status: MedlineEntryStatus,
 }
@@ -63,7 +62,7 @@ pub struct MedlineMesh {
     pub term: String,
 
     /// qualifiers
-    pub qual: Option<BTreeSet<MedlineQual>>,
+    pub qual: Option<Vec<MedlineQual>>,
 }
 
 #[derive(PartialEq, Debug)]

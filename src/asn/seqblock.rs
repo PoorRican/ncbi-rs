@@ -5,7 +5,6 @@
 
 use crate::general::{Date, DbTag, ObjectId};
 use crate::seqloc::{SeqId};
-use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]
 pub enum EMBLDbNameCode {
@@ -98,23 +97,23 @@ pub struct SPBlock {
     pub class: SPBlockClass,
 
     /// old SWISSPROT id's
-    pub extra_acc: Option<BTreeSet<String>>,
+    pub extra_acc: Option<Vec<String>>,
 
     /// seq known to start with Met
     /// Should default to false
     pub imeth: bool,
 
     /// plasmid names carrying gene
-    pub plasnm: Option<BTreeSet<String>>,
+    pub plasnm: Option<Vec<String>>,
 
     /// xref to other sequences
-    pub seqref: Option<BTreeSet<SeqId>>,
+    pub seqref: Option<Vec<SeqId>>,
 
     /// xref to non-sequence db's
-    pub dbref: Option<BTreeSet<DbTag>>,
+    pub dbref: Option<Vec<DbTag>>,
 
     /// keywords
-    pub keywords: Option<BTreeSet<String>>,
+    pub keywords: Option<Vec<String>>,
 
     /// creation date
     pub created: Option<Date>,
@@ -150,7 +149,7 @@ pub struct PIRBlock {
     pub seq_raw: Option<String>,
 
     /// xref to other sequences
-    pub seqref: Option<BTreeSet<SeqId>>,
+    pub seqref: Option<Vec<SeqId>>,
 }
 
 #[derive(PartialEq, Debug)]

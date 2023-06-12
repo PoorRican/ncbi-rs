@@ -57,7 +57,6 @@ use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
 use crate::r#pub::PubSet;
 use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
-use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]
 /// Feature identifiers
@@ -123,10 +122,10 @@ pub struct SeqFeat {
     pub exp_ev: Option<SeqFeatExpEvidence>,
 
     /// cite other relevant features
-    pub xref: Option<BTreeSet<SeqFeatXref>>,
+    pub xref: Option<Vec<SeqFeatXref>>,
 
     /// support for xref to other databases
-    pub dbxref: Option<BTreeSet<DbTag>>,
+    pub dbxref: Option<Vec<DbTag>>,
 
     /// annotated on pseudogene
     pub pseudo: Option<bool>,
@@ -135,10 +134,10 @@ pub struct SeqFeat {
     pub except_text: Option<String>,
 
     /// set of id's; will replace `id` field
-    pub ids: Option<BTreeSet<FeatId>>,
+    pub ids: Option<Vec<FeatId>>,
 
     /// set of extensions; will replace `ext` field
-    pub exts: Option<BTreeSet<UserObject>>,
+    pub exts: Option<Vec<UserObject>>,
 
     pub support: Option<SeqFeatSupport>,
 }
@@ -252,9 +251,9 @@ pub struct SeqFeatXref {
 
 #[derive(PartialEq, Debug)]
 pub struct SeqFeatSupport {
-    pub experiment: Option<BTreeSet<ExperimentSupport>>,
-    pub inference: Option<BTreeSet<InferenceSupport>>,
-    pub model_evidence: Option<BTreeSet<ModelEvidenceSupport>>,
+    pub experiment: Option<Vec<ExperimentSupport>>,
+    pub inference: Option<Vec<InferenceSupport>>,
+    pub model_evidence: Option<Vec<ModelEvidenceSupport>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -269,8 +268,8 @@ pub enum EvidenceCategory {
 pub struct ExperimentSupport {
     pub category: Option<EvidenceCategory>,
     pub explanation: String,
-    pub pmids: Option<BTreeSet<PubMedId>>,
-    pub dois: Option<BTreeSet<DOI>>,
+    pub pmids: Option<Vec<PubMedId>>,
+    pub dois: Option<Vec<DOI>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -281,8 +280,8 @@ pub struct ProgramId {
 
 #[derive(PartialEq, Debug)]
 pub struct EvidenceBasis {
-    pub programs: Option<BTreeSet<ProgramId>>,
-    pub accessions: Option<BTreeSet<SeqId>>,
+    pub programs: Option<Vec<ProgramId>>,
+    pub accessions: Option<Vec<SeqId>>,
 }
 
 #[derive(PartialEq, Debug, Default)]
@@ -312,8 +311,8 @@ pub struct InferenceSupport {
     // TODO: default to false
     pub same_species: bool,
     pub basis: EvidenceBasis,
-    pub pmids: Option<BTreeSet<PubMedId>>,
-    pub soids: Option<BTreeSet<DOI>>,
+    pub pmids: Option<Vec<PubMedId>>,
+    pub soids: Option<Vec<DOI>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -330,11 +329,11 @@ pub struct ModelEvidenceItem {
 #[derive(PartialEq, Debug)]
 pub struct ModelEvidenceSupport {
     pub method: Option<String>,
-    pub mrna: Option<BTreeSet<ModelEvidenceItem>>,
-    pub est: Option<BTreeSet<ModelEvidenceItem>>,
-    pub protein: Option<BTreeSet<ModelEvidenceItem>>,
+    pub mrna: Option<Vec<ModelEvidenceItem>>,
+    pub est: Option<Vec<ModelEvidenceItem>>,
+    pub protein: Option<Vec<ModelEvidenceItem>>,
     pub identification: Option<SeqId>,
-    pub dbxref: Option<BTreeSet<DbTag>>,
+    pub dbxref: Option<Vec<DbTag>>,
     pub exon_count: Option<u64>,
     pub exon_length: Option<u64>,
     pub full_length: bool,             // TODO: default false
@@ -422,7 +421,7 @@ pub enum GeneticCodeOpt {
     SNcbiStdAa(Vec<u8>),
 }
 
-pub type GeneticCode = BTreeSet<GeneticCodeOpt>;
+pub type GeneticCode = Vec<GeneticCodeOpt>;
 
 #[derive(PartialEq, Debug)]
 /// the amino acid that is the exception
@@ -448,7 +447,7 @@ pub struct CodeBreak {
 }
 
 /// table of genetic codes
-pub type GeneticCodeTable = BTreeSet<GeneticCode>;
+pub type GeneticCodeTable = Vec<GeneticCode>;
 
 #[derive(PartialEq, Debug)]
 /// Features imported from other databases
@@ -510,7 +509,7 @@ pub struct CloneRef {
     pub clone_seq: Option<CloneSeqSet>,
 }
 
-pub type CloneSeqSet = BTreeSet<CloneSeq>;
+pub type CloneSeqSet = Vec<CloneSeq>;
 
 #[derive(PartialEq, Debug)]
 pub enum CloneSeqType {
@@ -873,7 +872,7 @@ pub enum PhenotypeClinicalSignificance {
 pub struct Phenotype {
     pub source: Option<String>,
     pub term: Option<String>,
-    pub xref: Option<BTreeSet<DbTag>>,
+    pub xref: Option<Vec<DbTag>>,
 
     /// does this variant have known clinical significance?
     pub clinical_significance: Option<PhenotypeClinicalSignificance>,
@@ -893,7 +892,7 @@ pub struct PopulationData {
     pub population: String,
     pub genotype_frequency: Option<f64>,
     pub chromosomes_tested: Option<u64>,
-    pub sample_ids: Option<BTreeSet<ObjectId>>,
+    pub sample_ids: Option<Vec<ObjectId>>,
     pub allele_frequency: Option<f64>,
     pub flags: Option<PopulationDataFlags>,
 }
@@ -953,7 +952,7 @@ pub enum VariationRefDataSetType {
 #[derive(PartialEq, Debug)]
 pub struct VariationRefDataSet {
     pub r#type: VariationRefDataSetType,
-    pub variations: BTreeSet<VariationRef>,
+    pub variations: Vec<VariationRef>,
     pub name: Option<String>,
 }
 
@@ -974,7 +973,7 @@ pub enum VariationRefData {
     /// location of the set equals to the union of member locations
     Set(Vec<VariationRefDataSet>),
 
-    Variations(BTreeSet<VariationRef>),
+    Variations(Vec<VariationRef>),
 
     /// variant is a complex and un-described change at the location
     ///
@@ -1025,7 +1024,7 @@ pub struct SomaticOriginCondition {
     pub description: Option<String>,
 
     /// reference to BioTerm / other descriptive database
-    pub object_id: Option<BTreeSet<DbTag>>,
+    pub object_id: Option<Vec<DbTag>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -1054,29 +1053,29 @@ pub struct VariationRef {
     pub id: Option<DbTag>,
     pub parent_id: Option<DbTag>,
     pub sample_id: Option<ObjectId>,
-    pub other_ids: Option<BTreeSet<DbTag>>,
+    pub other_ids: Option<Vec<DbTag>>,
 
     /// names and synonyms
     /// some variants have well-known canonical names and possible
     /// accepted synonyms
     pub name: Option<String>,
-    pub synonyms: Option<BTreeSet<String>>,
+    pub synonyms: Option<Vec<String>>,
 
     /// tag for comment and descriptions
     pub description: Option<String>,
 
     /// phenotype
-    pub phenotype: Option<BTreeSet<Phenotype>>,
+    pub phenotype: Option<Vec<Phenotype>>,
 
     /// sequencing / acquisition method
-    pub method: Option<BTreeSet<VariantRefMethod>>,
+    pub method: Option<Vec<VariantRefMethod>>,
 
     /// variant properties bitflags
     pub variant_prop: Option<VariantProperties>,
 
     pub data: VariationRefData,
-    pub consequence: Option<BTreeSet<VariationConsequence>>,
-    pub somatic_origin: Option<BTreeSet<VariationSomaticOrigin>>,
+    pub consequence: Option<Vec<VariationConsequence>>,
+    pub somatic_origin: Option<Vec<VariationSomaticOrigin>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -1301,7 +1300,7 @@ pub struct TRnaExt {
     pub aa: TRnaExtAa,
 
     /// codon(s) as in [`GeneticCode`]
-    pub codon: Option<BTreeSet<u64>>,
+    pub codon: Option<Vec<u64>>,
 
     /// location of anticodon
     pub anticodon: Option<SeqLoc>,
@@ -1346,10 +1345,10 @@ pub struct GeneRef {
     pub pseudo: bool, // TODO: default false
 
     /// ids in other dbases
-    pub db: Option<BTreeSet<DbTag>>,
+    pub db: Option<Vec<DbTag>>,
 
     /// synonyms for locus
-    pub syn: Option<BTreeSet<String>>,
+    pub syn: Option<Vec<String>>,
 
     /// systematic gene name (eg: MI0001, ORF0069)
     pub locus_tag: Option<String>,
@@ -1385,13 +1384,13 @@ pub struct OrgRef {
     pub common: Option<String>,
 
     /// unstructured modifiers
-    pub r#mod: Option<BTreeSet<String>>,
+    pub r#mod: Option<Vec<String>>,
 
     /// ids in taxonomic or culture databases
-    pub db: Option<BTreeSet<DbTag>>,
+    pub db: Option<Vec<DbTag>>,
 
     /// synonyms for `taxname` or common
-    pub syn: Option<BTreeSet<String>>,
+    pub syn: Option<Vec<String>>,
 
     pub orgname: Option<OrgName>,
 }
@@ -1614,14 +1613,14 @@ pub struct BioSource {
     pub pcr_primers: Option<PCRReationSet>,
 }
 
-pub type PCRReationSet = BTreeSet<PCRReaction>;
+pub type PCRReationSet = Vec<PCRReaction>;
 #[derive(PartialEq, Debug)]
 pub struct PCRReaction {
     pub forward: Option<PCRPrimerSet>,
     pub reverse: Option<PCRPrimerSet>,
 }
 
-pub type PCRPrimerSet = BTreeSet<PCRPrimer>;
+pub type PCRPrimerSet = Vec<PCRPrimer>;
 #[derive(PartialEq, Debug)]
 pub struct PCRPrimer {
     pub seq: Option<PCRPrimerSeq>,
@@ -1715,19 +1714,19 @@ pub enum ProtRefProcessingStatus {
 /// Reference to a protein name
 pub struct ProtRef {
     /// protein name
-    pub name: Option<BTreeSet<String>>,
+    pub name: Option<Vec<String>>,
 
     /// description (instead of name)
     pub desc: Option<String>,
 
     /// E.C. number(s)
-    pub ec: Option<BTreeSet<String>>,
+    pub ec: Option<Vec<String>>,
 
     /// activities
-    pub activity: Option<BTreeSet<String>>,
+    pub activity: Option<Vec<String>>,
 
     /// id's in other dbases
-    pub db: Option<BTreeSet<DbTag>>,
+    pub db: Option<Vec<DbTag>>,
 
     /// processing status
     pub processed: ProtRefProcessingStatus,
@@ -1807,7 +1806,7 @@ pub struct TxInit {
     pub location_accurate: bool, // TODO: default false
 
     pub inittype: InitType,
-    pub evidence: Option<BTreeSet<TxEvidence>>,
+    pub evidence: Option<Vec<TxEvidence>>,
 }
 
 #[derive(PartialEq, Debug)]

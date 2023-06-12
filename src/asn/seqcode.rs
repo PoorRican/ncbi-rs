@@ -6,7 +6,6 @@
 //! increase continuously. So IUPAC codes, which are upper case letters will
 //! always have 65 0 cells before the code begins. This allows all codes to do
 //! indexed lookups.
-use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]
 /// Sequence representations
@@ -78,6 +77,6 @@ pub struct SeqCodeTable {
 #[derive(PartialEq, Debug)]
 /// for distribution
 pub struct SeqCodeSet {
-    pub codes: Option<BTreeSet<SeqCodeTable>>,
-    pub maps: Option<BTreeSet<SeqMapTable>>,
+    pub codes: Option<Vec<SeqCodeTable>>,
+    pub maps: Option<Vec<SeqMapTable>>,
 }

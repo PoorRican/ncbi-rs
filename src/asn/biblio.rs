@@ -2,7 +2,6 @@
 //! Adapted from ["biblio.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/biblio/biblio.asn)
 
 use crate::general::{Date, DbTag, PersonId};
-use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]
 /// represents multiple ways to id an article
@@ -38,7 +37,7 @@ pub type PmcPid = String;
 /// Publisher Id supplied to PubMed
 pub type PmPid = String;
 
-pub type ArticleIdSet = BTreeSet<ArticleId>;
+pub type ArticleIdSet = Vec<ArticleId>;
 
 #[derive(PartialEq, Debug)]
 /// points of publication
@@ -90,7 +89,7 @@ pub struct PubStatusDate {
     pub date: Date,
 }
 
-pub type PubStatusDateSet = BTreeSet<PubStatusDate>;
+pub type PubStatusDateSet = Vec<PubStatusDate>;
 
 #[derive(PartialEq, Debug)]
 /// journal or book
@@ -435,7 +434,7 @@ pub enum TitleItem {
     ISBN(String),
 }
 
-pub type Title = BTreeSet<TitleItem>;
+pub type Title = Vec<TitleItem>;
 
 #[derive(PartialEq, Debug)]
 /// For pre-publication citations

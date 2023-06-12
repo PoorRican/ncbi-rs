@@ -9,7 +9,6 @@
 use crate::biblio::IdPat;
 use crate::general::{Date, IntFuzz, ObjectId};
 use crate::seqfeat::FeatId;
-use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug)]
 pub enum SeqId {
@@ -25,7 +24,7 @@ pub enum SeqId {
     Other(TextseqId),
 }
 
-pub type SeqIdSet = BTreeSet<SeqId>;
+pub type SeqIdSet = Vec<SeqId>;
 
 #[derive(PartialEq, Debug)]
 pub struct PatentSeqId {
@@ -107,7 +106,7 @@ pub struct SeqInterval {
     pub fuzz_to: Option<IntFuzz>,
 }
 
-pub type PackedSeqInt = BTreeSet<SeqInterval>;
+pub type PackedSeqInt = Vec<SeqInterval>;
 
 #[derive(PartialEq, Debug)]
 pub struct SeqPoint {
@@ -151,4 +150,4 @@ pub struct SeqBond {
 /// this will hold anything
 pub type SeqLocMix = Vec<SeqLoc>;
 /// set of equivalent locations
-pub type SeqLocEquiv = BTreeSet<SeqLoc>;
+pub type SeqLocEquiv = Vec<SeqLoc>;
