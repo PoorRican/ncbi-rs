@@ -2,7 +2,8 @@
 //!
 //! Adapted from ["medline.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/C_DOC/lxr/source/asn/medline.asn)
 
-use crate::biblio::{CitArt, Date, PubMedId};
+use crate::biblio::{CitArt, PubMedId};
+use crate::general::Date;
 use std::collections::BTreeSet;
 
 #[derive(PartialEq, Debug, Default)]
