@@ -11,7 +11,7 @@ use crate::biblio::{
 use crate::medline::MedlineEntry;
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum Pub {
     /// general or generic unparsed
@@ -48,7 +48,7 @@ pub enum Pub {
 
 pub type PubEquiv = Vec<Pub>;
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum PubSet {
     Pub(Vec<Pub>),

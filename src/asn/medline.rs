@@ -6,7 +6,7 @@ use crate::biblio::{CitArt, PubMedId};
 use crate::general::Date;
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all="lowercase")]
 pub enum MedlineEntryStatus {
     /// record as supplied by publisher
@@ -20,7 +20,7 @@ pub enum MedlineEntryStatus {
     Medline,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// a MEDLINE or PubMed entry
 pub struct MedlineEntry {
@@ -56,7 +56,7 @@ pub struct MedlineEntry {
     pub status: MedlineEntryStatus,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct MedlineMesh {
     // TODO: default false
     /// true if main point (*)
@@ -69,7 +69,7 @@ pub struct MedlineMesh {
     pub qual: Option<Vec<MedlineQual>>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct MedlineQual {
 
     /// true if main point
@@ -79,7 +79,7 @@ pub struct MedlineQual {
     pub subh: String,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum MedlineSiType {
     DDBJ = 1,
@@ -111,7 +111,7 @@ pub enum MedlineSiType {
     GDB,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum MedlineRnType {
     NameOnly,
@@ -123,7 +123,7 @@ pub enum MedlineRnType {
     EC,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Medline substance records
 pub struct MedlineRn {
     #[serde(rename="type")]
@@ -137,7 +137,7 @@ pub struct MedlineRn {
     pub name: String,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// medline cross reference records
 pub struct MedlineSi {
     /// type of xref
@@ -146,7 +146,7 @@ pub struct MedlineSi {
     pub cit: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum MedlineFieldType {
     /// look in line code
@@ -159,7 +159,7 @@ pub enum MedlineFieldType {
     Erratum,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct MedlineField {
     #[serde(rename="type")]
     /// keyed type
@@ -172,7 +172,7 @@ pub struct MedlineField {
     pub ids: Option<Vec<DocRef>>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum DocRefType {
     Medline = 1,
@@ -180,7 +180,7 @@ pub enum DocRefType {
     NCBIGi,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// reference to a document
 pub struct DocRef {
     #[serde(rename="type")]

@@ -11,7 +11,7 @@ use crate::general::{Date, DbTag, IntFuzz, ObjectId};
 use crate::seqfeat::FeatId;
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum SeqId {
     Local(ObjectId),
@@ -66,7 +66,7 @@ pub enum SeqId {
 
 pub type SeqIdSet = Vec<SeqId>;
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PatentSeqId {
     /// number of sequence in patent
     pub seqid: u64,
@@ -75,7 +75,7 @@ pub struct PatentSeqId {
     pub cit: IdPat,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct TextseqId {
     pub name: Option<String>,
     pub accession: Option<String>,
@@ -83,14 +83,14 @@ pub struct TextseqId {
     pub version: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct GiimportId {
     pub id: i64,
     pub db: Option<String>,
     pub release: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 pub struct PDBSeqId {
     pub mol: PDBMolId,
@@ -101,7 +101,7 @@ pub struct PDBSeqId {
 /// name of mol, should be 4 chars
 pub type PDBMolId = String;
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// Defines a location on a [`BioSeq`].
 ///
@@ -138,7 +138,7 @@ pub enum SeqLoc {
     Feat(FeatId),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 pub struct SeqInterval {
     pub from: i64,
@@ -151,7 +151,7 @@ pub struct SeqInterval {
 
 pub type PackedSeqInt = Vec<SeqInterval>;
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct SeqPoint {
     pub point: i64,
     pub strand: Option<NaStrand>,
@@ -159,7 +159,7 @@ pub struct SeqPoint {
     pub fuzz: Option<IntFuzz>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 pub struct PackedSeqPnt {
     pub strand: Option<NaStrand>,
@@ -168,7 +168,7 @@ pub struct PackedSeqPnt {
     pub points: Vec<i64>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// Strand of nucleic acid
 pub enum NaStrand {
@@ -182,7 +182,7 @@ pub enum NaStrand {
     Other = 255,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// bond between residues
 pub struct SeqBond {
     /// connection to at least one residue

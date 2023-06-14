@@ -8,7 +8,7 @@
 //! indexed lookups.
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 /// Sequence representations
 pub enum SeqCodeType {
@@ -36,7 +36,7 @@ pub enum SeqCodeType {
     NCBIStdAa,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// for tables of sequence mappings
 pub struct SeqMapTable {
@@ -52,7 +52,7 @@ pub struct SeqMapTable {
     pub table: Vec<u64>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// internal representation of map index
 pub struct SeqCodeTableCell {
@@ -62,7 +62,7 @@ pub struct SeqCodeTableCell {
     pub name: String,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// for names of coded values
 pub struct SeqCodeTable {
@@ -79,7 +79,7 @@ pub struct SeqCodeTable {
     pub comps: Option<Vec<u64>>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// for distribution
 pub struct SeqCodeSet {
     pub codes: Option<Vec<SeqCodeTable>>,

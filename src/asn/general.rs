@@ -4,7 +4,7 @@
 
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 /// Model precise timestamp or an un-parsed string
 ///
@@ -16,7 +16,18 @@ pub enum Date {
     Date(DateStd),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+impl Default for Date {
+    fn default() -> Self {
+        Self::Date(
+            DateStd {
+                year: 2023,
+                ..DateStd::default()
+            }
+        )
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// NOTE: this is NOT a unix tm struct
 pub struct DateStd {
     /// full year
@@ -35,7 +46,7 @@ pub struct DateStd {
     pub second: Option<u8>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 /// Can tag or name anything
 pub enum ObjectId {
@@ -43,7 +54,7 @@ pub enum ObjectId {
     Str(String),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Generalized for tagging
 pub struct DbTag {
     /// name of database or system
@@ -52,7 +63,7 @@ pub struct DbTag {
     pub tag: ObjectId,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 /// define a std element for people
 pub enum PersonId {
@@ -68,72 +79,72 @@ pub enum PersonId {
     Consortium(String),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// structured names
 pub struct NameStd {
     pub last: String,
     pub first: Option<String>,
     pub middle: Option<String>,
-    
+
     /// full name (eg: "J. John Smith, Esq")
     pub full: Option<String>,
-    
+
     /// first + middle initials
     pub initials: Option<String>,
-    
+
     /// Jr, Sr, III
     pub suffix: Option<String>,
-    
+
     /// Dr., Sister, etc
     pub title: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct Range {
     pub max: i64,
     pub min: i64,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum FuzzLimit {
     /// unknown
     Unk,
-    
+
     /// greater than
     GT,
-    
+
     /// less than
     LT,
-    
+
     /// space to right of position
     TR,
-    
+
     /// space to left of position
     TL,
-    
+
     /// artificial break at origin of circle
     Circle,
-    
+
     /// something else
     Other = 255,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 /// Communicate uncertainties in integer values
 pub enum IntFuzz {
     #[serde(rename="p-m")]
     /// plus or minus fixed amount
     PM(i64),
-    
+
     Range(Range),
     Pct(i64),
     Lim(FuzzLimit),
     Alt(Vec<i64>),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// a general object for a user defined structured data item
 ///
 /// used by [`SeqFeat`] and [`SeqDescr`]
@@ -149,7 +160,7 @@ pub struct UserObject {
     pub data: Vec<UserField>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum UserData {
     Str(String),
@@ -166,7 +177,7 @@ pub enum UserData {
     Objects(Vec<UserObject>),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct UserField {
     /// field label
     pub label: ObjectId,

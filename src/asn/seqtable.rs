@@ -5,7 +5,7 @@
 use crate::seqloc::{SeqId, SeqLoc, SeqInterval};
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// known column data types
 pub enum ColumnInfoFieldId {
@@ -51,7 +51,7 @@ pub enum ColumnInfoFieldId {
     DbxrefTag,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// Unsure on how this object is used
 ///
@@ -84,7 +84,7 @@ pub struct SeqTableColumnInfo {
     pub field_name: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct CommonStringTable {
     /// set of possible values
     pub strings: Vec<String>,
@@ -93,7 +93,7 @@ pub struct CommonStringTable {
     pub indexes: Vec<usize>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct CommonBytesTable {
     /// set of possible values
     pub bytes: Vec<Vec<u8>>,
@@ -102,7 +102,7 @@ pub struct CommonBytesTable {
     pub indexes: Vec<usize>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Not to sure what the purpose of this class is.
 ///
 /// Also unsure about original comments on scaling.
@@ -121,7 +121,7 @@ pub struct ScaledIntMultiData {
     pub max: Option<i32>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Pretty sure that this class is meant for using double's
 pub struct ScaledRealMultiData {
     // output data[i] = data[i] * mul + add
@@ -130,7 +130,7 @@ pub struct ScaledRealMultiData {
     pub data: Box<SeqTableMultiData>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Seems to be an artifact from C++ implementation in ASN.1 spec
 ///
 /// Unsure on utility.
@@ -144,7 +144,7 @@ pub struct BVectorData {
     pub data: Vec<u8>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 pub enum SeqTableMultiData {
     /// a set of 4-byte integers, one per row
@@ -201,7 +201,7 @@ pub enum SeqTableMultiData {
     Int8(Vec<u64>),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum SeqTableSingleData {
     Int(u64),
@@ -215,7 +215,7 @@ pub enum SeqTableSingleData {
     Int8(u8),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 pub enum SeqTableSparseIndex {
     /// Indexes of rows with values
@@ -234,7 +234,7 @@ pub enum SeqTableSparseIndex {
     BitSetBvector(BVectorData),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 pub struct SeqTableColumn {
     /// column description or reference to previously defined info
@@ -253,7 +253,7 @@ pub struct SeqTableColumn {
     pub sparse_other: Option<SeqTableSingleData>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 pub struct SeqTable {
     /// type of features in this table

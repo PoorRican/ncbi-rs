@@ -4,7 +4,7 @@
 use crate::general::{Date, DbTag, PersonId};
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 /// represents multiple ways to id an article
 pub enum ArticleId {
@@ -41,10 +41,11 @@ pub type PmPid = String;
 
 pub type ArticleIdSet = Vec<ArticleId>;
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 /// points of publication
 pub enum PubStatus {
+    #[default]
     /// date manuscript received for review
     Received = 1,
 
@@ -84,7 +85,7 @@ pub enum PubStatus {
     Other = 255,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// done as a struct so fields can be added
 pub struct PubStatusDate {
     pub pubstatus: PubStatus,
@@ -94,7 +95,7 @@ pub struct PubStatusDate {
 
 pub type PubStatusDateSet = Vec<PubStatusDate>;
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 /// journal or book
 pub enum CitArtFrom {
@@ -103,7 +104,7 @@ pub enum CitArtFrom {
     Proc(CitProc),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Article in journal or book
 pub struct CitArt {
     /// title or paper (ANSI requires)
@@ -118,7 +119,7 @@ pub struct CitArt {
     pub ids: Option<ArticleIdSet>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// journal citation
 pub struct CitJour {
     /// title of journal
@@ -126,7 +127,7 @@ pub struct CitJour {
     pub imp: Imprint,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// book citation
 pub struct CitBook {
     /// title of book
@@ -141,7 +142,7 @@ pub struct CitBook {
     pub imp: Imprint,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// meeting proceedings
 pub struct CitProc {
     /// citation to meeting
@@ -150,7 +151,7 @@ pub struct CitProc {
     pub meet: Meeting,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// Patent citation
 pub struct CitPat {
@@ -194,7 +195,7 @@ pub struct CitPat {
     pub r#abstract: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PatentPriority {
     /// patent country code
     pub country: String,
@@ -206,7 +207,7 @@ pub struct PatentPriority {
     pub date: Date,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum IdPatChoice {
     /// patent document number
@@ -216,7 +217,7 @@ pub enum IdPatChoice {
     AppNumber(String),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// identifies a patent
 pub struct IdPat {
@@ -229,7 +230,7 @@ pub struct IdPat {
     pub doc_type: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum LetType {
     Manuscript = 1,
@@ -237,7 +238,7 @@ pub enum LetType {
     Thesis,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// cite a letter, thesis, or manuscript
 pub struct CitLet {
@@ -251,7 +252,7 @@ pub struct CitLet {
     pub r#type: LetType,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 /// represents medium of submission
 pub enum SubMedium {
@@ -262,7 +263,7 @@ pub enum SubMedium {
     Other = 255,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Cite a direct data submission
 ///
 /// # Original Comment
@@ -286,7 +287,7 @@ pub struct CitSub {
     pub descr: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// NOT from ANSI, this is a catchall
 pub struct CitGen {
@@ -314,7 +315,7 @@ pub struct CitGen {
     pub pmid: Option<PubMedId>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum AuthListNames {
     /// full citations
@@ -327,7 +328,7 @@ pub enum AuthListNames {
     Str(Vec<String>),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// authorship group
 pub struct AuthList {
     pub names: AuthListNames,
@@ -336,14 +337,14 @@ pub struct AuthList {
     pub affil: Option<Affil>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum AuthorLevel {
     Primary = 1,
     Secondary,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum AuthorRole {
     Compiler = 1,
@@ -352,7 +353,7 @@ pub enum AuthorRole {
     Translator,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 pub struct Author {
     /// author, primary, or secondary
@@ -368,7 +369,7 @@ pub struct Author {
     pub is_corr: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// std representation for affiliations
 pub struct AffilStd {
@@ -396,7 +397,7 @@ pub struct AffilStd {
     pub postal_code: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum Affil {
     /// unparsed string
@@ -406,7 +407,7 @@ pub enum Affil {
     Std(AffilStd),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 /// title group
 ///
@@ -461,7 +462,7 @@ pub enum TitleItem {
 
 pub type Title = Vec<TitleItem>;
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 /// For pre-publication citations
 pub enum ImprintPrePub {
@@ -474,7 +475,7 @@ pub enum ImprintPrePub {
     Other = 255,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 pub struct Imprint {
     /// date of publication
@@ -515,10 +516,11 @@ pub struct Imprint {
     pub history: Option<PubStatusDateSet>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 /// represents type of entry retraction
 pub enum CitRetractType {
+    #[default]
     /// this citation is retracted
     Retracted = 1,
 
@@ -532,7 +534,7 @@ pub enum CitRetractType {
     Erratum,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct CitRetract {
     #[serde(rename="type")]
     /// retraction of an entry
@@ -542,7 +544,7 @@ pub struct CitRetract {
     pub exp: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct Meeting {
     pub number: String,
     pub date: Date,

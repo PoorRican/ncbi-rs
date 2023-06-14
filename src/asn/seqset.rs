@@ -7,7 +7,7 @@ use crate::general::{Date, DbTag, ObjectId};
 use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all="kebab-case")]
 /// internal representation of `class` field for [`BioSeqSet`]
 pub enum BioSeqSetClass {
@@ -88,7 +88,7 @@ pub enum BioSeqSetClass {
     Other = 255,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// just a collection
 pub struct BioSeqSet {
@@ -108,7 +108,7 @@ pub struct BioSeqSet {
     pub annot: Option<Vec<SeqAnnot>>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum SeqEntry {
     Seq(BioSeq),

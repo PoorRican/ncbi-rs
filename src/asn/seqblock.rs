@@ -7,7 +7,7 @@ use crate::general::{Date, DbTag, ObjectId};
 use crate::seqloc::{SeqId};
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum EMBLDbNameCode {
     EMBL,
@@ -30,20 +30,20 @@ pub enum EMBLDbNameCode {
     Other = 255,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum EMBLDbName {
     Code(EMBLDbNameCode),
     Name(String),
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct EMBLXref {
     pub dbname: EMBLDbName,
     pub id: Vec<ObjectId>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug, Default)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all="kebab-case")]
 pub enum EMBLBlockClass {
     NotSet,
@@ -53,7 +53,7 @@ pub enum EMBLBlockClass {
     Other = 255,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum EMBLBlockDiv {
     Fun,
@@ -74,7 +74,7 @@ pub enum EMBLBlockDiv {
     Other = 255,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct EMBLBlock {
     pub class: EMBLBlockClass,
     pub div: EMBLBlockDiv,
@@ -85,7 +85,7 @@ pub struct EMBLBlock {
     pub xref: Option<Vec<EMBLXref>>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// internal representation of `class` field for [`SPBlock`]
 pub enum SPBlockClass {
@@ -97,7 +97,7 @@ pub enum SPBlockClass {
     Other = 255,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// SWISSPROT specific descriptions
 pub struct SPBlock {
@@ -132,7 +132,7 @@ pub struct SPBlock {
     pub annotupd: Option<Date>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// PIR specific descriptions
 pub struct PIRBlock {
@@ -160,7 +160,7 @@ pub struct PIRBlock {
     pub seqref: Option<Vec<SeqId>>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 pub struct GBBlock {
     pub extra_accessions: Option<Vec<String>>,
@@ -182,7 +182,7 @@ pub struct GBBlock {
     pub taxonomy: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// Protein Research Foundation specific definition
 pub struct PRFBlock {
@@ -190,7 +190,7 @@ pub struct PRFBlock {
     pub keywords: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PRFExtraSrc {
     pub host: Option<String>,
     pub part: Option<String>,
@@ -199,7 +199,7 @@ pub struct PRFExtraSrc {
     pub taxon: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
 /// PDB specific descriptions
 pub struct PDBBlock {
@@ -217,7 +217,7 @@ pub struct PDBBlock {
     pub replace: Option<PDBReplace>,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PDBReplace {
     pub date: Date,
 
