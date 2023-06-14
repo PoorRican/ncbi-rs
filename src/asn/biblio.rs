@@ -232,7 +232,7 @@ pub struct IdPat {
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
-pub enum LetType {
+pub enum CitLetType {
     Manuscript = 1,
     Letter,
     Thesis,
@@ -249,13 +249,16 @@ pub struct CitLet {
     pub man_id: Option<String>,
 
     #[serde(rename="type")]
-    pub r#type: LetType,
+    pub r#type: CitLetType,
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
-/// represents medium of submission
-pub enum SubMedium {
+/// Internal representation for medium of submission for `medium` in [`CitSub`]
+///
+/// Originally `ENUMERATED`
+pub enum CitSubMedium {
+    #[default]
     Paper = 1,
     Tape,
     Floppy,
@@ -278,7 +281,7 @@ pub struct CitSub {
     pub imp: Option<Imprint>,
 
     /// medium of submission
-    pub medium: SubMedium,
+    pub medium: CitSubMedium,
 
     /// replaces imp, will become required
     pub date: Option<Date>,
