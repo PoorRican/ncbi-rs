@@ -27,7 +27,7 @@ impl Default for Date {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// NOTE: this is NOT a unix tm struct
 pub struct DateStd {
     /// full year
