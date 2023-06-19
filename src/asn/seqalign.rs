@@ -5,13 +5,21 @@
 use crate::general::{ObjectId, UserObject};
 use crate::seqloc::{NaStrand, SeqId, SeqLoc};
 use serde::{Serialize, Deserialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 pub type SeqAlignSet = Vec<SeqAlign>;
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of alignment type for [`SeqAlign`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum SeqAlignType {
     NotSet,
+
     Global,
     /// unbroken, but not ordered, diagonals
     Diags,
@@ -19,6 +27,7 @@ pub enum SeqAlignType {
     Partial,
     /// discontinuous alignment
     Disc,
+
     Other = 255,
 }
 

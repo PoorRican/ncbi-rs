@@ -6,9 +6,10 @@
 use crate::general::{Date, DbTag, ObjectId};
 use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
 use serde::{Serialize, Deserialize};
+use serde_repr::{Serialize_repr, Deserialize_repr};
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="kebab-case")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
 /// internal representation of `class` field for [`BioSeqSet`]
 pub enum BioSeqSetClass {
     #[default]
@@ -17,11 +18,9 @@ pub enum BioSeqSetClass {
     /// nuc acid and coded proteins
     NucProt,
 
-    #[serde(rename="segset")]
     /// segmented sequence + parts
     SegSet,
 
-    #[serde(rename="conset")]
     /// constructed sequence + parts
     ConSet,
 

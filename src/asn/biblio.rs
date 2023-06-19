@@ -3,6 +3,7 @@
 
 use crate::general::{Date, DbTag, PersonId};
 use serde::{Serialize, Deserialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
@@ -41,11 +42,15 @@ pub type PmPid = String;
 
 pub type ArticleIdSet = Vec<ArticleId>;
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// points of publication
+///
+/// # Notes
+///
+/// Originally implement as `INTEGER`. Therefore, it is assumed that serialized
+/// representation is an 8-bit integer.
 pub enum PubStatus {
-    #[default]
     /// date manuscript received for review
     Received = 1,
 
@@ -230,8 +235,12 @@ pub struct IdPat {
     pub doc_type: Option<String>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum CitLetType {
     Manuscript = 1,
     Letter,
@@ -252,13 +261,15 @@ pub struct CitLet {
     pub r#type: CitLetType,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// Internal representation for medium of submission for `medium` in [`CitSub`]
 ///
-/// Originally `ENUMERATED`
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum CitSubMedium {
-    #[default]
     Paper = 1,
     Tape,
     Floppy,
@@ -340,15 +351,23 @@ pub struct AuthList {
     pub affil: Option<Affil>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum AuthorLevel {
     Primary = 1,
     Secondary,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum AuthorRole {
     Compiler = 1,
     Editor,
@@ -465,9 +484,14 @@ pub enum TitleItem {
 
 pub type Title = Vec<TitleItem>;
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// For pre-publication citations
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum ImprintPrePub {
     /// submitted, not accepted
     Submitted = 1,
@@ -519,11 +543,15 @@ pub struct Imprint {
     pub history: Option<PubStatusDateSet>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// represents type of entry retraction
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum CitRetractType {
-    #[default]
     /// this citation is retracted
     Retracted = 1,
 

@@ -5,9 +5,16 @@
 use crate::biblio::{CitArt, PubMedId};
 use crate::general::Date;
 use serde::{Serialize, Deserialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
+/// Internal representation for entry status for [`MedlineEntry`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum MedlineEntryStatus {
     /// record as supplied by publisher
     Publisher = 1,
@@ -79,8 +86,14 @@ pub struct MedlineQual {
     pub subh: String,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of cross-ref type for [`MedlineSi`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum MedlineSiType {
     DDBJ = 1,
     /// Carbohydrate Structure Database
@@ -111,8 +124,14 @@ pub enum MedlineSiType {
     GDB,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of type of medline substance record for [`MedlineRn`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum MedlineRnType {
     NameOnly,
 
@@ -146,8 +165,14 @@ pub struct MedlineSi {
     pub cit: Option<String>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of medline field type for [`MedlineField`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum MedlineFieldType {
     /// look in line code
     Other,
@@ -172,8 +197,12 @@ pub struct MedlineField {
     pub ids: Option<Vec<DocRef>>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum DocRefType {
     Medline = 1,
     PubMed,

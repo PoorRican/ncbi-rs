@@ -16,6 +16,7 @@ use crate::seqloc::{SeqId, SeqLoc};
 use crate::seqres::SeqGraph;
 use crate::seqtable::SeqTable;
 use serde::{Serialize, Deserialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
@@ -120,12 +121,17 @@ pub enum SeqDesc {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="kebab-case")]
-/// Represents type of biomolecule
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
+/// Internal representation of biomolecular type for [`MolInfo`]
 ///
 /// # Notes
-/// Non-camelcase types look cleaner for names with "RNA"/"DNA"
+///
+/// - Non-camelcase types look cleaner for names with "RNA"/"DNA", therefore non-CamelCase names
+///   have been explicitly allowed
+///
+/// - Original implementation lists this as `INTEGER`, therefore it is assumed that
+///   serialized representation is an integer
 pub enum BioMol {
     #[default]
     Unknown,
@@ -154,8 +160,14 @@ pub enum BioMol {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="kebab-case")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
+/// Internal representation of molecular technique for [`MolInfo`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum MolTech {
     #[default]
     Unknown,
@@ -172,7 +184,6 @@ pub enum MolTech {
     /// from physical mapping techniques
     PhysMap,
     /// derived from other data, not a primary entity
-    #[serde(rename_all="kebab-case")]
     Derived,
     /// conceptual translation
     ConceptTrans,
@@ -203,7 +214,7 @@ pub enum MolTech {
     /// barcode of life project
     Barcode,
     /// composite of WGS and HTGS
-    CompositeWH,
+    CompositeWgsHtgs,
     /// transcriptome shotgun assembly
     TSA,
     /// targeted locus sets/studies
@@ -212,14 +223,19 @@ pub enum MolTech {
     Other = 255,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="kebab-case")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
 /// Capture sequence completeness.
 ///
 /// Completeness is not indicated in most records. For genomes, assume
 /// the sequences are incomplete unless specifically marked as complete.
 /// For mRNAs, assume the ends are not known exactly unless marked as having
 /// the left or right end.
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum MolCompleteness {
     #[default]
     Unknown,
@@ -245,11 +261,16 @@ pub struct MolInfo {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// GenInfo Backbone molecule types
 ///
 /// Captures type of molecule represented
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum GIBBMol {
     Unknown,
     Genomic,
@@ -268,9 +289,14 @@ pub enum GIBBMol {
     Other = 255,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// GenInfo Backbone Modifiers
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum GIBBMod {
     DNA,
     RNA,
@@ -312,12 +338,17 @@ pub enum GIBBMod {
     Other = 255,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// Sequencing method
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum GIBBMethod {
     /// Conceptual translation
-    ConceptTrans,
+    ConceptTrans = 1,
     /// Peptide was sequenced
     SeqPept,
     /// concept transl. w/ partial pept. seq.
@@ -372,9 +403,14 @@ pub struct NumEnum {
     pub names: Vec<String>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
-/// type of reference
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of type of reference for [`NumRef`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum NumRefType {
     NotSet,
     /// by segmented or const seq sources
@@ -446,8 +482,8 @@ pub struct PubDesc {
 /// Cofactor, prosthetic group, inhibitor, etc
 pub type Heterogen = String;
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// Representation class for [`SeqInst`]
 ///
 /// Stored by [`SeqInst`] and is independent of [`Mol`]
@@ -485,6 +521,11 @@ pub type Heterogen = String;
 ///          The feature table is part of [`SeqInst`] because for a map, it is
 ///          an essential part of instantiating the map [`BioSeq`], not merely
 ///          annotation on a known sequence.
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum Repr {
     /// empty
     NotSet,
@@ -507,10 +548,15 @@ pub enum Repr {
     Other = 255,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// molecule class in living organism
 ///  > cdna = rna
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum Mol {
     NotSet,
     DNA,
@@ -521,9 +567,14 @@ pub enum Mol {
     Other = 255,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="kebab-case")]
-/// Topology of biomolecule
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
+/// Internal representation of biomolecule topology for [`SeqInst`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum Topology {
     NotSet,
     #[default]
@@ -533,9 +584,14 @@ pub enum Topology {
     Other = 255,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
-/// Strandedness in living organism
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of strandedness in living organism for [`SeqInst`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum Strand {
     NotSet,
     /// single strand
@@ -690,9 +746,14 @@ pub enum SeqData {
     Gap(SeqGap),
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// internal structure for `type` field in [`SeqGap`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum SeqGapType {
     Unknown,
     #[deprecated]
@@ -712,8 +773,14 @@ pub enum SeqGapType {
     Other = 255,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation for linkage status for [`SeqGap`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum SeqGapLinkage {
     Unlinked,
     Linked,
@@ -728,8 +795,8 @@ pub struct SeqGap {
     pub linkage_evidence: Option<Vec<LinkageEvidence>>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// internal representation for `type` in [`LinkageEvidence`]
 pub enum LinkageEvidenceType {
     PairedEnds,
@@ -846,9 +913,14 @@ pub enum AnnotDesc {
     Region(SeqLoc),
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
-/// Class of align [`SeqAnnot`]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of align type for [`SeqAnnot`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum AlignType {
     /// set of alignments to the same sequence
     Ref,
@@ -867,8 +939,14 @@ pub struct AlignDef {
     pub ids: Option<Vec<SeqId>>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of source DB for [`SeqAnnot`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum SeqAnnotDB {
     GenBank,
     EMBL,

@@ -6,9 +6,16 @@
 use crate::general::{Date, DbTag, ObjectId};
 use crate::seqloc::{SeqId};
 use serde::{Serialize, Deserialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of DB code for [`EMBLDbNameCode`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum EMBLDbNameCode {
     EMBL,
     GenBank,
@@ -43,8 +50,14 @@ pub struct EMBLXref {
     pub id: Vec<ObjectId>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="kebab-case")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
+/// Internal representation of block class for [`EMBLBlockClass`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum EMBLBlockClass {
     NotSet,
     #[default]
@@ -53,8 +66,14 @@ pub enum EMBLBlockClass {
     Other = 255,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of block division for [`EMBLBlockClass`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum EMBLBlockDiv {
     Fun,
     Inv,
@@ -85,9 +104,14 @@ pub struct EMBLBlock {
     pub xref: Option<Vec<EMBLXref>>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
-/// internal representation of `class` field for [`SPBlock`]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// internal representation of `class` for [`SPBlock`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum SPBlockClass {
     NotSet,
     /// conforms to all SWISSPROT checks

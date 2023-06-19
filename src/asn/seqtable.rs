@@ -4,9 +4,10 @@
 
 use crate::seqloc::{SeqId, SeqLoc, SeqInterval};
 use serde::{Serialize, Deserialize};
+use serde_repr::{Serialize_repr, Deserialize_repr};
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// known column data types
 pub enum ColumnInfoFieldId {
     // position types
@@ -265,7 +266,7 @@ pub struct SeqTable {
 
     /// subtype of features in this table, ...
     ///
-    /// Original comment:
+    /// # Original comment:
     ///
     ///     ... defined in header SeqFeatData.hpp
     pub feat_subtype: Option<usize>,

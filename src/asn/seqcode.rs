@@ -7,13 +7,19 @@
 //! always have 65 0 cells before the code begins. This allows all codes to do
 //! indexed lookups.
 use serde::{Serialize, Deserialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// Sequence representations
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum SeqCodeType {
     /// IUPAC 1 letter nuc acid code
-    IUPACNa,
+    IUPACNa = 1,
     /// IUPAC 1 letter amino acid code
     IUPACAa,
     /// 2 bit nucleic acid code
