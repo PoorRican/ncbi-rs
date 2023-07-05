@@ -6,11 +6,15 @@
 //! See [book](https://ncbi.github.io/cxx-toolkit/pages/ch_datamod#ch_datamod._ASN1_Specification_s_8)
 //! for more information on.
 
+use atoi::atoi;
 use crate::biblio::IdPat;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId};
 use crate::seqfeat::FeatId;
 use serde::{Serialize, Deserialize};
 use serde_repr::{Serialize_repr, Deserialize_repr};
+use quick_xml::events::{BytesEnd, BytesStart, Event};
+use quick_xml::Reader;
+use crate::XMLElement;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
@@ -65,6 +69,37 @@ pub enum SeqId {
     NamedAnnotTrack(TextseqId),
 }
 
+impl XMLElement for SeqId {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-id")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Self {
+        // variants
+        let other = BytesStart::new("Seq-id_other");
+        let general = BytesStart::new("Seq-id_general");
+        let gi = BytesStart::new("Seq-id_gi");
+
+        loop {
+            if let Event::Start(e) = reader.read_event().unwrap() {
+                if e.name() == other.name() {
+                    return SeqId::Other(TextseqId::from_reader(reader)).into();
+                }
+                else if e.name() == general.name() {
+                    return SeqId::General(DbTag::from_reader(reader)).into();
+                }
+                else if e.name() == gi.name() {
+                    if let Event::Text(text) = reader.read_event().unwrap() {
+                        return SeqId::Gi(
+                            atoi(text.as_ref()).expect("Can't parse &[u8] into int")
+                        ).into();
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub type SeqIdSet = Vec<SeqId>;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -82,6 +117,64 @@ pub struct TextseqId {
     pub accession: Option<String>,
     pub release: Option<String>,
     pub version: Option<u64>,
+}
+
+impl XMLElement for TextseqId {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Textseq-id")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Self {
+        let mut name = None;
+        let mut accession = None;
+        let mut release = None;
+        let mut version = None;
+
+        let name_element = BytesStart::new("Textseq-id_name");
+        let accession_element = BytesStart::new("Textseq-id_accession");
+        let release_element = BytesStart::new("Textseq-id_release");
+        let version_element = BytesStart::new("Textseq-id_version");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    if e.name() == name_element.name() {
+                        if let Event::Text(text) = reader.read_event().unwrap() {
+                            name = text.escape_ascii().to_string().into();
+                        }
+                    }
+                    else if e.name() == accession_element.name() {
+                        if let Event::Text(text) = reader.read_event().unwrap() {
+                            accession = text.escape_ascii().to_string().into();
+                        }
+                    }
+                    else if e.name() == release_element.name() {
+                        if let Event::Text(text) = reader.read_event().unwrap() {
+                            release = text.escape_ascii().to_string().into();
+                        }
+                    }
+                    else if e.name() == version_element.name() {
+                        if let Event::Text(text) = reader.read_event().unwrap() {
+                            version = atoi(text.as_ref());
+                        }
+                    }
+                }
+                Event::End(e) => {
+                    if e.name() == Self::start_bytes().to_end().name() {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        Self {
+            name,
+            accession,
+            release,
+            version
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]

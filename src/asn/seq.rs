@@ -4,6 +4,8 @@
 //!
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
+use quick_xml::events::{BytesEnd, BytesStart, Event};
+use quick_xml::Reader;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
 use crate::r#pub::PubEquiv;
 use crate::seqalign::SeqAlign;
@@ -17,6 +19,7 @@ use crate::seqres::SeqGraph;
 use crate::seqtable::SeqTable;
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use crate::XMLElement;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
@@ -46,8 +49,49 @@ pub struct BioSeq {
     /// descriptors
     pub descr: Option<SeqDescr>,
     /// the sequence data
-    pub inst: SeqInst,
+    pub inst: Option<SeqInst>, // TODO: temporary `Option`
     pub annot: Option<Vec<SeqAnnot>>,
+}
+
+impl XMLElement for BioSeq {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Bioseq")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Self {
+        let mut id = Vec::new();
+        let mut descr = None;
+        let mut inst = None;
+        let mut annot = None;
+
+        let id_elem = BytesStart::new("Bioseq_id");
+        let descr_elem = BytesStart::new("Bioseq_descr");
+        let inst_elem = BytesStart::new("Bioseq_inst");
+        let annot_elem = BytesStart::new("Bioseq_annot");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    if e.name() == id_elem.name() {
+                        id = SeqId::vec_from_reader(reader, id_elem.to_end());
+                    }
+                }
+                Event::End(e) => {
+                    if e.name() == Self::start_bytes().to_end().name() {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        Self {
+            id,
+            descr,
+            inst,
+            annot
+        }
+    }
 }
 
 pub type SeqDescr = Vec<SeqDesc>;

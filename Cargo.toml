@@ -19,3 +19,9 @@ maintenance = { status = "actively-developed" }
 bitflags = { version = "2.3.2", features = ["serde"] }
 serde = { version = "1.0.164", features = ["derive"] }
 serde_repr = "0.1.12"
+quick-xml = { version = "0.29.0", features = ["serialize"]}
+atoi = "2.0.0"
+
+# standard crate data is left out
+[dev-dependencies]
+reqwest = { version = "0.11.18", features = ["blocking"] }

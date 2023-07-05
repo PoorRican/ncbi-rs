@@ -2,7 +2,11 @@
 //!
 //! As per [general.asn](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/asn_spec/general.asn.html)
 
+use atoi::atoi;
+use quick_xml::events::{BytesStart, Event};
+use quick_xml::Reader;
 use serde::{Serialize, Deserialize};
+use crate::XMLElement;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
@@ -47,11 +51,39 @@ pub struct DateStd {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
 /// Can tag or name anything
 pub enum ObjectId {
     Id(u64),
     Str(String),
+}
+
+impl XMLElement for ObjectId {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Object-id")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Self {
+        // variants
+        let id_element = BytesStart::new("Object-id_id");
+        let str_element = BytesStart::new("Object-id_str");
+
+        loop {
+            if let Event::Start(e) = reader.read_event().unwrap() {
+                if e.name() == id_element.name() {
+                    if let Event::Text(text) = reader.read_event().unwrap() {
+                        return ObjectId::Id(
+                            atoi(text.as_ref()).expect("Can't parse &[u8] into int")
+                        ).into();
+                    }
+                }
+                else if e.name() == str_element.name() {
+                    if let Event::Text(text) = reader.read_event().unwrap() {
+                        return ObjectId::Str(text.escape_ascii().to_string())
+                    }
+                }
+            }
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -61,6 +93,45 @@ pub struct DbTag {
     pub db: String,
     /// appropriate tag
     pub tag: ObjectId,
+}
+
+impl XMLElement for DbTag {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Dbtag")
+    }
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Self {
+        let mut db = None;
+        let mut tag = None;
+
+        let db_element = BytesStart::new("Dbtag_db");
+        let tag_element = BytesStart::new("Dbtag_tag");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    if e.name() == db_element.name() {
+                        if let Event::Text(text) = reader.read_event().unwrap() {
+                            db = text.escape_ascii().to_string().into();
+                        }
+                    }
+                    else if e.name() == tag_element.name() {
+                        tag = ObjectId::from_reader(reader).into();
+                    }
+                }
+                Event::End(e) => {
+                    if e.name() == Self::start_bytes().to_end().name() {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        Self {
+            db: db.unwrap(),
+            tag: tag.unwrap(),
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
