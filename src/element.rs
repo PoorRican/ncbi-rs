@@ -3,7 +3,7 @@ use quick_xml::Reader;
 
 pub trait XMLElement {
     fn start_bytes() -> BytesStart<'static>;
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Self;
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized;
 
     fn vec_from_reader<'a, E>(reader: &mut Reader<&[u8]>, end: E) -> Vec<Self>
     where
@@ -12,13 +12,15 @@ pub trait XMLElement {
     {
         let binding = Self::start_bytes();
         let end = end.into().unwrap_or(binding.to_end());
-        let mut ids = Vec::new();
+        let mut items = Vec::new();
 
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
                     if e.name() == Self::start_bytes().name() {
-                        ids.push(Self::from_reader(reader));
+                        if let Some(val) = Self::from_reader(reader) {
+                            items.push(val);
+                        }
                     }
                 }
                 Event::End(e) => {
@@ -30,6 +32,6 @@ pub trait XMLElement {
             }
         }
 
-        ids
+        items
     }
 }

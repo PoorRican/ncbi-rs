@@ -110,7 +110,7 @@ pub fn parse_xml(response: &str) -> Result<DataType, ()> {
         match reader.read_event().unwrap() {
             Event::Start(e) => {
                 if e.name() == BioSeqSet::start_bytes().name() {
-                    let set = BioSeqSet::from_reader(&mut reader);
+                    let set = BioSeqSet::from_reader(&mut reader).unwrap();
                     return Ok(DataType::BioSeqSet(set));
                 }
             }

@@ -114,7 +114,7 @@ impl XMLElement for BioSeqSet {
         BytesStart::new("Bioseq-set")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Self {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
         let seq_set_element = BytesStart::new("Bioseq-set_seq-set");
 
         let mut id = None;
@@ -155,7 +155,7 @@ impl XMLElement for BioSeqSet {
             descr,
             seq_set,
             annot,
-        }
+        }.into()
     }
 }
 
@@ -169,7 +169,7 @@ impl XMLElement for SeqEntry {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Seq-entry")
     }
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Self {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
         let seq = BytesStart::new("Seq-entry_seq");
         let set = BytesStart::new("Seq-entry_set");
 
@@ -181,10 +181,10 @@ impl XMLElement for SeqEntry {
                 Event::Start(e) => {
                     println!("Got here");
                     if e.name() == seq.name() {
-                        entry = Self::Seq(BioSeq::from_reader(reader)).into();
+                        entry = Self::Seq(BioSeq::from_reader(reader).unwrap()).into();
                     }
                     else if e.name() == set.name() {
-                        entry = Self::Set(BioSeqSet::from_reader(reader)).into();
+                        entry = Self::Set(BioSeqSet::from_reader(reader).unwrap()).into();
                     }
                 }
                 Event::End(e) => {
@@ -198,6 +198,6 @@ impl XMLElement for SeqEntry {
         }
         println!("Finished parsing Seq-entry");
 
-        entry.unwrap()
+        entry
     }
 }

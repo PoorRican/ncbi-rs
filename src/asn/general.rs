@@ -62,7 +62,7 @@ impl XMLElement for ObjectId {
         BytesStart::new("Object-id")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Self {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
         // variants
         let id_element = BytesStart::new("Object-id_id");
         let str_element = BytesStart::new("Object-id_str");
@@ -78,7 +78,7 @@ impl XMLElement for ObjectId {
                 }
                 else if e.name() == str_element.name() {
                     if let Event::Text(text) = reader.read_event().unwrap() {
-                        return ObjectId::Str(text.escape_ascii().to_string())
+                        return ObjectId::Str(text.escape_ascii().to_string()).into()
                     }
                 }
             }
@@ -99,7 +99,7 @@ impl XMLElement for DbTag {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Dbtag")
     }
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Self {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
         let mut db = None;
         let mut tag = None;
 
@@ -115,7 +115,7 @@ impl XMLElement for DbTag {
                         }
                     }
                     else if e.name() == tag_element.name() {
-                        tag = ObjectId::from_reader(reader).into();
+                        tag = ObjectId::from_reader(reader);
                     }
                 }
                 Event::End(e) => {
@@ -130,7 +130,7 @@ impl XMLElement for DbTag {
         Self {
             db: db.unwrap(),
             tag: tag.unwrap(),
-        }
+        }.into()
     }
 }
 

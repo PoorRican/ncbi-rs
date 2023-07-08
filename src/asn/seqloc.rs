@@ -74,7 +74,7 @@ impl XMLElement for SeqId {
         BytesStart::new("Seq-id")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Self {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
         // variants
         let other = BytesStart::new("Seq-id_other");
         let general = BytesStart::new("Seq-id_general");
@@ -83,10 +83,10 @@ impl XMLElement for SeqId {
         loop {
             if let Event::Start(e) = reader.read_event().unwrap() {
                 if e.name() == other.name() {
-                    return SeqId::Other(TextseqId::from_reader(reader)).into();
+                    return SeqId::Other(TextseqId::from_reader(reader).unwrap()).into();
                 }
                 else if e.name() == general.name() {
-                    return SeqId::General(DbTag::from_reader(reader)).into();
+                    return SeqId::General(DbTag::from_reader(reader).unwrap()).into();
                 }
                 else if e.name() == gi.name() {
                     if let Event::Text(text) = reader.read_event().unwrap() {
@@ -124,7 +124,7 @@ impl XMLElement for TextseqId {
         BytesStart::new("Textseq-id")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Self {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
         let mut name = None;
         let mut accession = None;
         let mut release = None;
@@ -173,7 +173,7 @@ impl XMLElement for TextseqId {
             accession,
             release,
             version
-        }
+        }.into()
     }
 }
 

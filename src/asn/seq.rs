@@ -58,7 +58,7 @@ impl XMLElement for BioSeq {
         BytesStart::new("Bioseq")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Self {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
         let mut id = Vec::new();
         let mut descr = None;
         let mut inst = None;
@@ -90,7 +90,7 @@ impl XMLElement for BioSeq {
             descr,
             inst,
             annot
-        }
+        }.into()
     }
 }
 
