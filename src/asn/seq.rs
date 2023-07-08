@@ -4,7 +4,7 @@
 //!
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
-use quick_xml::events::{BytesEnd, BytesStart, Event};
+use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
 use crate::r#pub::PubEquiv;
@@ -75,11 +75,17 @@ impl XMLElement for BioSeq {
                     if e.name() == id_elem.name() {
                         id = SeqId::vec_from_reader(reader, id_elem.to_end());
                     }
+                    else if e.name() == descr_elem.name() {
+                        descr = SeqDescr::from_reader(reader);
+                    }
                 }
                 Event::End(e) => {
                     if e.name() == Self::start_bytes().to_end().name() {
                         break;
                     }
+                }
+                Event::Eof => {
+                    break;
                 }
                 _ => ()
             }
@@ -95,6 +101,16 @@ impl XMLElement for BioSeq {
 }
 
 pub type SeqDescr = Vec<SeqDesc>;
+
+impl XMLElement for SeqDescr {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-descr")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        return SeqDesc::vec_from_reader(reader, Self::start_bytes().to_end()).into()
+    }
+}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
@@ -162,6 +178,35 @@ pub enum SeqDesc {
     MolInfo(MolInfo),
     /// model evidence for XM records
     ModelEv(ModelEvidenceSupport),
+}
+
+impl XMLElement for SeqDesc {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seqdesc")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        // variants
+        let source_element = BytesStart::new("Seqdesc_source");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+                    if name == source_element.name() {
+                        return Self::Source(BioSource::from_reader(reader).unwrap()).into()
+                    }
+                }
+                Event::End(e) => {
+                    // this occurs for a SeqDesc variant that does not yet have a parsing implementation
+                    if Self::is_end(&e) {
+                        return None;
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
 }
 
 #[allow(non_camel_case_types)]

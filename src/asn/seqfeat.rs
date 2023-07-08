@@ -52,56 +52,11 @@
 //! cases, the [`SeqFeat`] can be marked with an "exception" flag to indicate
 //! that the data is correct but may not behave as expected.
 
-/// A feature table is a collection of sequence features called [`SeqFeat`]s.
-/// A [`SeqFeat`] serves to connect a sequence location ([`SeqLoc`]) with a
-/// specific block of data known as a datablock. Datablocks are defined
-/// objects on their own and are often used in other contexts, such as
-/// publications ([`PubSet`]), references to organisms ([`OrgRef`]), or genes
-/// ([`GeneRef`]). Some datablocks, like coding regions ([`CdRegion`]), only make
-/// sense when considered within the context of a [`SeqLoc`]. However, each
-/// datablock is designed to fulfill a specific purpose and is independent
-/// of others. This means that changes or additions to one datablock do not
-/// affect the others.
-///
-/// When a pre-existing object from another context is used as a datablock,
-/// any software capable of utilizing that object can also operate on the
-/// feature. For example, code that displays a publication can function with a
-/// publication from a bibliographic database or one used as a sequence
-/// feature without any modifications.
-///
-/// The [`SeqFeat`] data structure and the [`SeqLoc`] used to attach it to the
-/// sequence are shared among all features. This allows for a set of operations
-/// that can be performed on all features, regardless of the type of datablocks
-/// attached to them. Therefore, a function designed to determine all features
-/// in a specific region of a Bioseq does not need to consider the specific
-/// types of features involved.
-///
-/// A [`SeqFeat`] is referred to as bipolar because it can have up to two
-/// [`SeqLoc`]s. The [`SeqFeat`].location indicates the "source" and represents
-/// the location on the DNA sequence, similar to the single location in common
-/// feature table implementations. The `product` from [`SeqFeat`] represents
-/// the "sink" and is typically associated with the protein sequence produced.
-/// For example, a [`CdRegion`] feature would have its [`SeqFeat`].location on
-/// the DNA and its [`SeqFeat`].product on the corresponding protein sequence.
-/// This usage defines the process of translating a DNA sequence into a protein
-/// sequence, establishing an explicit relationship between nucleic acid and
-/// protein sequence databases.
-///
-/// Having two [`SeqLoc`]s allows for a more comprehensive representation of
-/// data conflicts or exceptional biological circumstances. For instance,
-/// if an author presents a DNA sequence and its protein product in a figure,
-/// it is possible to enter the DNA and protein sequences independently and
-/// then confirm through the [`CdRegion`] feature that the DNA indeed translates
-/// to the provided protein sequence. In cases where the DNA and protein do
-/// not match, it could indicate an error in the database or the original
-/// paper. By setting a "conflict" flag in the CdRegion, the problem can be
-/// identified early and addressed. Additionally, there may be situations
-/// where a genomic sequence cannot be translated to a protein due to known
-/// biological reasons, such as RNA editing or suppressor tRNAs. In such
-/// cases, the [`SeqFeat`] can be marked with an "exception" flag to indicate
-/// that the data is correct but may not behave as expected.
-
+use atoi::atoi;
 use bitflags::bitflags;
+use enum_primitive::FromPrimitive;
+use quick_xml::events::{BytesStart, Event};
+use quick_xml::Reader;
 use crate::biblio::{DOI, PubMedId};
 use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
 use crate::r#pub::PubSet;
@@ -109,6 +64,8 @@ use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use crate::parsing_utils::try_field;
+use crate::XMLElement;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
@@ -1567,7 +1524,7 @@ pub struct GeneNomenclature {
     pub source: Option<DbTag>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// Reference to an organism
 ///
 /// Defines only the organism. Lower levels of detail for biological molecules
@@ -1591,6 +1548,45 @@ pub struct OrgRef {
     pub orgname: Option<OrgName>,
 }
 
+impl XMLElement for OrgRef {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Org-ref")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut org_ref = OrgRef::default();
+
+        let taxname_element = BytesStart::new("Org-ref_taxname");
+        let db_element = BytesStart::new("Org-ref_db");
+        let orgname_element = BytesStart::new("Org-ref_orgname");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    try_field(&name, &taxname_element, &mut org_ref.taxname, reader);
+
+                    if name == db_element.name() {
+                        org_ref.db = DbTag::vec_from_reader(reader, db_element.to_end()).into();
+                    }
+                    if name == orgname_element.name() {
+                        org_ref.orgname = OrgName::from_reader(reader).into();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        org_ref.into()
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum OrgNameChoice {
@@ -1610,7 +1606,36 @@ pub enum OrgNameChoice {
     Partial(PartialOrgName),
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+impl XMLElement for OrgNameChoice {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("OrgName_name")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variants
+        let binomial_element = BytesStart::new("OrgName_name_binomial");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == binomial_element.name() {
+                        return Self::Binomial(BinomialOrgName::from_reader(reader).unwrap()).into()
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None;
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct OrgName {
     pub name: Option<OrgNameChoice>,
 
@@ -1639,68 +1664,144 @@ pub struct OrgName {
     pub pgcode: Option<u64>,
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-pub enum OrgModSubType {
-    Strain = 2,
+impl XMLElement for OrgName {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("OrgName")
+    }
 
-    SubStrain,
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut org_name = OrgName::default();
 
-    Type,
+        let name_element = BytesStart::new("OrgName_name");
+        let attrib_element = BytesStart::new("OrgName_attrib");
+        let mod_element = BytesStart::new("OrgName_mod");
+        let lineage_element = BytesStart::new("OrgName_lineage");
+        let gcode_element = BytesStart::new("OrgName_gcode");
+        let div_element = BytesStart::new("OrgName_div");
 
-    SubType,
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
 
-    Variety,
-    Serotype,
-    Serogroup,
-    Serovar,
-    Cultivar,
-    Pathovar,
-    Chemovar,
-    Biovar,
-    Biotype,
-    Group,
-    SubGroup,
-    Isolate,
-    Common,
-    Acronym,
+                    if name == name_element.name() {
+                        org_name.name = OrgNameChoice::from_reader(reader);
+                    }
 
-    /// chromosome dosage of hybrid
-    Dosage,
+                    try_field(&name, &attrib_element, &mut org_name.attrib, reader);
 
-    /// natural host of this specimen
-    NatHost,
+                    if name == mod_element.name() {
+                        org_name.r#mod = OrgMod::vec_from_reader(reader, mod_element.to_end()).into();
+                    }
 
-    SubSpecies,
-    SpecimenVoucher,
-    Authority,
-    Forma,
-    FormaSpecialis,
-    Ecotype,
-    Synonym,
-    Anamorph,
-    Breed,
+                    try_field(&name, &lineage_element, &mut org_name.lineage, reader);
 
-    /// used by taxonomy database
-    GbAcronym,
+                    if name == gcode_element.name() {
+                        if let Event::Text(text) = reader.read_event().unwrap() {
+                            org_name.gcode = atoi::<u64>(text.as_ref())
+                        }
+                        else {
+                        }
+                    }
 
-    /// used by taxonomy database
-    GbAnamorph,
+                    try_field(&name, &div_element, &mut org_name.div, reader)
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
 
-    /// used by taxonomy database
-    GbSynonym,
+        return org_name.into()
+    }
+}
 
-    CultureCollection,
-    BioMaterial,
-    MetagenomeSource,
-    TypeMaterial,
 
-    /// code of nomenclature in subname (B,P,V,Z or combination)
-    Nomenclature,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+    #[repr(u8)]
+    pub enum OrgModSubType {
+        Strain = 2,
 
-    OldLineage = 253,
-    OldName = 254,
-    Other = 255,
+        SubStrain,
+
+        Type,
+
+        SubType,
+
+        Variety,
+        Serotype,
+        Serogroup,
+        Serovar,
+        Cultivar,
+        Pathovar,
+        Chemovar,
+        Biovar,
+        Biotype,
+        Group,
+        SubGroup,
+        Isolate,
+        Common,
+        Acronym,
+
+        /// chromosome dosage of hybrid
+        Dosage,
+
+        /// natural host of this specimen
+        NatHost,
+
+        SubSpecies,
+        SpecimenVoucher,
+        Authority,
+        Forma,
+        FormaSpecialis,
+        Ecotype,
+        Synonym,
+        Anamorph,
+        Breed,
+
+        /// used by taxonomy database
+        GbAcronym,
+
+        /// used by taxonomy database
+        GbAnamorph,
+
+        /// used by taxonomy database
+        GbSynonym,
+
+        CultureCollection,
+        BioMaterial,
+        MetagenomeSource,
+        TypeMaterial,
+
+        /// code of nomenclature in subname (B,P,V,Z or combination)
+        Nomenclature,
+
+        OldLineage = 253,
+        OldName = 254,
+        Other = 255,
+    }
+}
+
+impl XMLElement for OrgModSubType {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("OrgMod_subtype")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Text(text) => {
+                    return Self::from_u8(atoi::<u8>(text.as_ref()).unwrap())
+                }
+                _ => ()
+            }
+        }
+
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -1712,7 +1813,49 @@ pub struct OrgMod {
     pub attrib: Option<String>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+impl XMLElement for OrgMod {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("OrgMod")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut subtype = None;
+        let mut subname = None;
+        let mut attrib = None;
+
+        let subtype_element = BytesStart::new("OrgMod_subtype");
+        let subname_element = BytesStart::new("OrgMod_subname");
+        let attrib_element = BytesStart::new("OrgMod_attrib");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == subtype_element.name() {
+                        subtype = OrgModSubType::from_reader(reader);
+                    }
+
+                    try_field(&name, &subname_element, &mut subname, reader);
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        Self {
+            subtype: subtype.unwrap(),
+            subname: subname.unwrap(),
+            attrib
+        }.into()
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct BinomialOrgName {
     /// required
     pub genus: String,
@@ -1720,6 +1863,40 @@ pub struct BinomialOrgName {
     /// species required if subspecies used
     pub species: Option<String>,
     pub subspecies: Option<String>,
+}
+
+impl XMLElement for BinomialOrgName {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("BinomialOrgName")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut binomial = BinomialOrgName::default();
+
+        let genus_element = BytesStart::new("BinomialOrgName_genus");
+        let species_element = BytesStart::new("BinomialOrgName_species");
+        let subspecies_element = BytesStart::new("BinomialOrgName_subspecies");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    try_field(&name, &genus_element, &mut binomial.genus, reader);
+                    try_field(&name, &species_element, &mut binomial.species, reader);
+                    try_field(&name, &subspecies_element, &mut binomial.subspecies, reader);
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        binomial.into()
+    }
 }
 
 /// the first value will be used to assign division
@@ -1747,35 +1924,55 @@ pub struct TaxElement {
     pub name: String,
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
-#[repr(u8)]
-/// biological context from which a molecule came from
-pub enum BioSourceGenome {
-    #[default]
-    Unknown,
-    Genomic,
-    Chloroplast,
-    Chromoplast,
-    Kinetoplast,
-    Mitochondrion,
-    Plastid,
-    Macronuclear,
-    Extrachrom,
-    Plasmid,
-    Transposon,
-    InsertionSeq,
-    Cyanelle,
-    Proviral,
-    Virion,
-    Nucleomorph,
-    Apicoplast,
-    Leucoplast,
-    Proplastid,
-    EndogenousVirus,
-    Hydrogenosome,
-    Chromosome,
-    PlasmidInMitochondrion,
-    PlasmidInPlastid,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    /// biological context from which a molecule came from
+    pub enum BioSourceGenome {
+        #[default]
+        Unknown,
+        Genomic,
+        Chloroplast,
+        Chromoplast,
+        Kinetoplast,
+        Mitochondrion,
+        Plastid,
+        Macronuclear,
+        Extrachrom,
+        Plasmid,
+        Transposon,
+        InsertionSeq,
+        Cyanelle,
+        Proviral,
+        Virion,
+        Nucleomorph,
+        Apicoplast,
+        Leucoplast,
+        Proplastid,
+        EndogenousVirus,
+        Hydrogenosome,
+        Chromosome,
+        PlasmidInMitochondrion,
+        PlasmidInPlastid,
+    }
+}
+
+
+impl XMLElement for BioSourceGenome {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("BioSource_genome")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Text(text) => {
+                    return BioSourceGenome::from_u8(atoi::<u8>(text.as_ref()).unwrap())
+                }
+                _ => ()
+            }
+        }
+    }
 }
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
@@ -1802,7 +1999,7 @@ pub enum BioSourceOrigin {
     Other = 255,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all="kebab-case")]
 pub struct BioSource {
     /// biological context
@@ -1821,6 +2018,59 @@ pub struct BioSource {
     pub pcr_primers: Option<PCRReationSet>,
 }
 
+impl XMLElement for BioSource {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("BioSource")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut genome = BioSourceGenome::default();
+        let mut origin = BioSourceOrigin::default();
+        let mut org = OrgRef::default();
+        let mut subtype = None;
+        let mut is_focus = None;
+        let mut pcr_primers = None;
+
+        let genome_element = BytesStart::new("BioSource_genome");
+        let origin_element = BytesStart::new("BioSource_origin");
+        let org_element = BytesStart::new("BioSource_org");
+        let subtype_element = BytesStart::new("BioSource_subtype");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == genome_element.name() {
+                        genome = BioSourceGenome::from_reader(reader).unwrap();
+                    }
+                    else if name == org_element.name() {
+                        org = OrgRef::from_reader(reader).unwrap();
+                    }
+                    else if name == subtype_element.name() {
+                        subtype = SubSource::vec_from_reader(reader, subtype_element.to_end()).into();
+                   }
+                }
+                Event::End(e) => {
+                    if e.name() == Self::start_bytes().to_end().name() {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        Self {
+            genome,
+            origin,
+            org,
+            subtype,
+            is_focus,
+            pcr_primers
+        }.into()
+    }
+}
+
 pub type PCRReationSet = Vec<PCRReaction>;
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PCRReaction {
@@ -1837,66 +2087,85 @@ pub struct PCRPrimer {
 pub type PCRPrimerSeq = String;
 pub type PCRPrimerName = String;
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-pub enum SubSourceSubType {
-    Chromosome = 1,
-    Map,
-    Clone,
-    Subclone,
-    Haplotype,
-    Genotype,
-    Sex,
-    CellLine,
-    CellType,
-    TissueType,
-    CloneLib,
-    DevStage,
-    Frequency,
-    Germline,
-    Rearranged,
-    LabHost,
-    PopVariant,
-    TissueLib,
-    PlasmidName,
-    TransposonName,
-    InsertionSeqName,
-    PlastidName,
-    Country,
-    Segment,
-    EndogenousVirusName,
-    Transgenic,
-    EnvironmentalSample,
-    IsolationSource,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+    #[repr(u8)]
+    pub enum SubSourceSubType {
+        Chromosome = 1,
+        Map,
+        Clone,
+        Subclone,
+        Haplotype,
+        Genotype,
+        Sex,
+        CellLine,
+        CellType,
+        TissueType,
+        CloneLib,
+        DevStage,
+        Frequency,
+        Germline,
+        Rearranged,
+        LabHost,
+        PopVariant,
+        TissueLib,
+        PlasmidName,
+        TransposonName,
+        InsertionSeqName,
+        PlastidName,
+        Country,
+        Segment,
+        EndogenousVirusName,
+        Transgenic,
+        EnvironmentalSample,
+        IsolationSource,
 
-    /// +/- decimal degrees
-    LatLon,
+        /// +/- decimal degrees
+        LatLon,
 
-    /// DD-MMM-YYYY format
-    CollectionDate,
+        /// DD-MMM-YYYY format
+        CollectionDate,
 
-    /// name of person who collected sample
-    CollectedBy,
+        /// name of person who collected sample
+        CollectedBy,
 
-    /// name of person who identified sample
-    IdentifiedBy,
+        /// name of person who identified sample
+        IdentifiedBy,
 
-    /// sequence (possibly more than one; semicolon-separated)
-    FwdPrimerSeq,
+        /// sequence (possibly more than one; semicolon-separated)
+        FwdPrimerSeq,
 
-    /// sequence (possibly more than one; semicolon-separated)
-    RevPrimerSeq,
+        /// sequence (possibly more than one; semicolon-separated)
+        RevPrimerSeq,
 
-    FwdPrimerName,
-    RevPrimerName,
-    Metagenomic,
-    MatingType,
-    LinkageGroup,
-    Haplogroup,
-    WholeReplicon,
-    Phenotype,
-    Altitude,
-    Other = 255,
+        FwdPrimerName,
+        RevPrimerName,
+        Metagenomic,
+        MatingType,
+        LinkageGroup,
+        Haplogroup,
+        WholeReplicon,
+        Phenotype,
+        Altitude,
+        Other = 255,
+    }
+}
+
+impl XMLElement for SubSourceSubType {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("SubSource_subtype")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Text(text) => {
+                    return SubSourceSubType::from_u8(atoi::<u8>(text.as_ref()).unwrap())
+                }
+                _ => ()
+            }
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -1906,6 +2175,48 @@ pub struct SubSource {
 
     /// attribution/source of this name
     pub attrib: Option<String>,
+}
+
+impl XMLElement for SubSource {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("SubSource")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut subtype = None;
+        let mut name = String::new();
+        let mut attrib = None;
+
+        let subtype_element = BytesStart::new("SubSource_subtype");
+        let name_element = BytesStart::new("SubSource_name");
+        let attrib_element = BytesStart::new("SubSource_attrib");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let qname = e.name();
+
+                    if qname == subtype_element.name() {
+                        subtype = SubSourceSubType::from_reader(reader);
+                    }
+
+                    try_field(&qname, &name_element, &mut name, reader);
+                }
+                Event::End(e) => {
+                    if e.name() == Self::start_bytes().to_end().name() {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        Self {
+            subtype: subtype.unwrap(),
+            name,
+            attrib
+        }.into()
+    }
 }
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
