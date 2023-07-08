@@ -1,7 +1,7 @@
 use std::ops::Not;
 use ncbi::{DataType, get_local_xml, parse_xml};
 use ncbi::general::{DbTag, ObjectId};
-use ncbi::seq::{BioSeq, SeqDesc};
+use ncbi::seq::{BioMol, BioSeq, Mol, MolInfo, MolTech, SeqDesc};
 use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, BioSourceOrigin, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SubSource, SubSourceSubType};
 use ncbi::seqloc::SeqId;
 use ncbi::seqset::{BioSeqSet, SeqEntry};
@@ -145,11 +145,36 @@ fn parse_bioseq_descr_source() {
         subtype,
         ..BioSource::default()
     };
+    let mut has_biosource = false;
     for entry in bioseq.descr.unwrap().iter() {
         if let SeqDesc::Source(source) = entry {
-            assert_eq!(*source, expected)
+            assert_eq!(*source, expected);
+            has_biosource = true;
         }
     }
+    assert!(has_biosource);
+}
+
+#[test]
+fn parse_bioseq_desc_molinfo() {
+    let bioseq = get_bioseq(DATA1);
+
+    let expected = MolInfo {
+        bio_mol: BioMol::Genomic,
+        tech: MolTech::WGS,
+        tech_exp: None,
+        completeness: Default::default(),
+        gb_mol_type: None,
+    };
+
+    let mut has_mol_info = false;
+    for entry in bioseq.descr.unwrap().iter() {
+        if let SeqDesc::MolInfo(mol_info) = entry {
+            assert_eq!(*mol_info, expected);
+            has_mol_info = true;
+        }
+    }
+    assert!(has_mol_info);
 }
 
 #[test]
