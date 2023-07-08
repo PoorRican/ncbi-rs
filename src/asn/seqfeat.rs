@@ -3,6 +3,54 @@
 //! Adapted from ["seqfeat.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqfeat/seqfeat.asn)
 //! and documented by [NCBI C++ Toolkit Book](https://ncbi.github.io/cxx-toolkit/pages/ch_datamod#ch_datamod.datamodel.seqfeat)
 //!
+//! A feature table is a collection of sequence features called [`SeqFeat`]s.
+//! A [`SeqFeat`] serves to connect a sequence location ([`SeqLoc`]) with a
+//! specific block of data known as a datablock. Datablocks are defined
+//! objects on their own and are often used in other contexts, such as
+//! publications ([`PubSet`]), references to organisms ([`OrgRef`]), or genes
+//! ([`GeneRef`]). Some datablocks, like coding regions ([`CdRegion`]), only make
+//! sense when considered within the context of a [`SeqLoc`]. However, each
+//! datablock is designed to fulfill a specific purpose and is independent
+//! of others. This means that changes or additions to one datablock do not
+//! affect the others.
+//!
+//! When a pre-existing object from another context is used as a datablock,
+//! any software capable of utilizing that object can also operate on the
+//! feature. For example, code that displays a publication can function with a
+//! publication from a bibliographic database or one used as a sequence
+//! feature without any modifications.
+//!
+//! The [`SeqFeat`] data structure and the [`SeqLoc`] used to attach it to the
+//! sequence are shared among all features. This allows for a set of operations
+//! that can be performed on all features, regardless of the type of datablocks
+//! attached to them. Therefore, a function designed to determine all features
+//! in a specific region of a Bioseq does not need to consider the specific
+//! types of features involved.
+//!
+//! A [`SeqFeat`] is referred to as bipolar because it can have up to two
+//! [`SeqLoc`]s. The [`SeqFeat`].location indicates the "source" and represents
+//! the location on the DNA sequence, similar to the single location in common
+//! feature table implementations. The `product` from [`SeqFeat`] represents
+//! the "sink" and is typically associated with the protein sequence produced.
+//! For example, a [`CdRegion`] feature would have its [`SeqFeat`].location on
+//! the DNA and its [`SeqFeat`].product on the corresponding protein sequence.
+//! This usage defines the process of translating a DNA sequence into a protein
+//! sequence, establishing an explicit relationship between nucleic acid and
+//! protein sequence databases.
+//!
+//! Having two [`SeqLoc`]s allows for a more comprehensive representation of
+//! data conflicts or exceptional biological circumstances. For instance,
+//! if an author presents a DNA sequence and its protein product in a figure,
+//! it is possible to enter the DNA and protein sequences independently and
+//! then confirm through the [`CdRegion`] feature that the DNA indeed translates
+//! to the provided protein sequence. In cases where the DNA and protein do
+//! not match, it could indicate an error in the database or the original
+//! paper. By setting a "conflict" flag in the CdRegion, the problem can be
+//! identified early and addressed. Additionally, there may be situations
+//! where a genomic sequence cannot be translated to a protein due to known
+//! biological reasons, such as RNA editing or suppressor tRNAs. In such
+//! cases, the [`SeqFeat`] can be marked with an "exception" flag to indicate
+//! that the data is correct but may not behave as expected.
 
 /// A feature table is a collection of sequence features called [`SeqFeat`]s.
 /// A [`SeqFeat`] serves to connect a sequence location ([`SeqLoc`]) with a
