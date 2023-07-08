@@ -6,13 +6,20 @@
 //! increase continuously. So IUPAC codes, which are upper case letters will
 //! always have 65 0 cells before the code begins. This allows all codes to do
 //! indexed lookups.
-use std::collections::BTreeSet;
+use serde::{Serialize, Deserialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// Sequence representations
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum SeqCodeType {
     /// IUPAC 1 letter nuc acid code
-    IUPACNa,
+    IUPACNa = 1,
     /// IUPAC 1 letter amino acid code
     IUPACAa,
     /// 2 bit nucleic acid code
@@ -35,7 +42,8 @@ pub enum SeqCodeType {
     NCBIStdAa,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// for tables of sequence mappings
 pub struct SeqMapTable {
     /// code to map from
@@ -50,7 +58,8 @@ pub struct SeqMapTable {
     pub table: Vec<u64>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// internal representation of map index
 pub struct SeqCodeTableCell {
     /// the printed symbol or letter
@@ -59,7 +68,8 @@ pub struct SeqCodeTableCell {
     pub name: String,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// for names of coded values
 pub struct SeqCodeTable {
     /// name of code
@@ -75,9 +85,9 @@ pub struct SeqCodeTable {
     pub comps: Option<Vec<u64>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// for distribution
 pub struct SeqCodeSet {
-    pub codes: Option<BTreeSet<SeqCodeTable>>,
-    pub maps: Option<BTreeSet<SeqMapTable>>,
+    pub codes: Option<Vec<SeqCodeTable>>,
+    pub maps: Option<Vec<SeqMapTable>>,
 }

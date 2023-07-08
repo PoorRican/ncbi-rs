@@ -4,14 +4,22 @@
 
 use crate::general::{ObjectId, UserObject};
 use crate::seqloc::{NaStrand, SeqId, SeqLoc};
+use serde::{Serialize, Deserialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use std::collections::BTreeSet;
+pub type SeqAlignSet = Vec<SeqAlign>;
 
-pub type SeqAlignSet = BTreeSet<SeqAlign>;
-
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of alignment type for [`SeqAlign`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum SeqAlignType {
     NotSet,
+
     Global,
     /// unbroken, but not ordered, diagonals
     Diags,
@@ -19,10 +27,12 @@ pub enum SeqAlignType {
     Partial,
     /// discontinuous alignment
     Disc,
+
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum SeqAlignSegs {
     DenDiag(Vec<DenseDiag>),
     DenSeg(DenseSeg),
@@ -33,25 +43,26 @@ pub enum SeqAlignSegs {
     Sparse(SparseSeg),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct SeqAlign {
+    #[serde(rename="type")]
     pub r#type: SeqAlignType,
     /// dimensionality
     pub dim: Option<u64>,
     /// for whole alignment
-    pub score: Option<BTreeSet<Score>>,
+    pub score: Option<Vec<Score>>,
     /// alignment data
     pub segs: SeqAlignSegs,
     /// regions of sequence over which
     /// alignment was computed
-    pub bounds: Option<BTreeSet<SeqLoc>>,
+    pub bounds: Option<Vec<SeqLoc>>,
     /// alignment id
     pub id: Option<Vec<ObjectId>>,
     /// extra info
     pub ext: Option<Vec<UserObject>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// for (multiway) diagonals
 pub struct DenseDiag {
     /// dimensionality
@@ -64,10 +75,10 @@ pub struct DenseDiag {
     /// len of aligned segments
     pub len: u64,
     pub strands: Option<Vec<NaStrand>>,
-    pub scores: Option<BTreeSet<Score>>,
+    pub scores: Option<Vec<Score>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// The densest packing for sequence alignments only.
 ///
 ///
@@ -100,7 +111,7 @@ pub struct DenseSeg {
     pub scores: Option<Vec<Score>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// for (multiway) global or partial alignments
 pub struct PackedSeg {
     // TODO: default 2
@@ -128,7 +139,7 @@ pub struct PackedSeg {
     pub scores: Option<Vec<Score>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct StdSeg {
     // TODO: default 2
     /// dimensionality
@@ -143,13 +154,15 @@ pub struct StdSeg {
     pub scores: Option<Vec<Score>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum SplicedSegProduct {
     Transcript,
     Protein,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SplicedSeg {
     /// product is either protein or transcript (cDNA)
     pub product_id: Option<SeqId>,
@@ -187,10 +200,11 @@ pub struct SplicedSeg {
     /// alignment descriptors / modifiers
     ///
     /// this provides a set for extension
-    pub modifiers: Option<BTreeSet<SplicedSegModifier>>,
+    pub modifiers: Option<Vec<SplicedSegModifier>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum SplicedSegModifier {
     /// start found for protein/product or genomic alignment
     StartCodonFound(bool),
@@ -199,7 +213,8 @@ pub enum SplicedSegModifier {
     StopCodonFound(bool),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Complete or partial exon
 ///
 /// Two consecutive [`SplicedExon`]'s may belong to one exon
@@ -239,13 +254,14 @@ pub struct SplicedExon {
     pub ext: Option<Vec<UserObject>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum ProductPos {
     NucPos(u64),
     ProtPos(ProtPos),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// codon based position on protein (1/3 of aminoacid)
 pub struct ProtPos {
     /// standard protein position
@@ -257,7 +273,8 @@ pub struct ProtPos {
     pub frame: usize,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Piece of an exon
 ///
 /// Each variant contains lengths given in nucleotide bases
@@ -277,14 +294,14 @@ pub enum SplicedExonChunk {
 
     /// Insertion in product sequence
     /// (ie: gap in the genomic sequence)
-    ProductLine(u64),
+    ProductIns(u64),
 
     /// Insertion in product sequence
     /// (ie: gap in the genomic sequence)
     GenomicIns(u64),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// site involved in splice
 pub struct SpliceSite {
     /// typically two bases in the introgenic region,
@@ -292,22 +309,24 @@ pub struct SpliceSite {
     pub bases: String,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// [`SparseSeg`] follows the semantics of [`DenseSeg`] and is optimized
 /// for representing sparse multiple alignments.
 pub struct SparseSeg {
     pub master_id: Option<SeqId>,
     /// pairwise alignments constituting this multiple alignment
-    pub rows: BTreeSet<SparseAlign>,
+    pub rows: Vec<SparseAlign>,
 
     /// per-row scores
-    pub row_scores: Option<BTreeSet<Score>>,
+    pub row_scores: Option<Vec<Score>>,
 
     /// index of extra items
-    pub ext: Option<BTreeSet<SparseSegExt>>,
+    pub ext: Option<Vec<SparseSegExt>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SparseAlign {
     pub first_id: SeqId,
     pub second_id: SeqId,
@@ -327,25 +346,26 @@ pub struct SparseAlign {
     pub second_strands: Option<Vec<NaStrand>>,
 
     /// per-segment scores
-    pub seg_scores: Option<BTreeSet<Score>>,
+    pub seg_scores: Option<Vec<Score>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct SparseSegExt {
     pub index: u64,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum ScoreValue {
     Real(f64),
     Int(i64),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Use of [`Score`] is discouraged for external ASN.1 specifications
 pub struct Score {
     pub id: Option<ObjectId>,
     pub value: ScoreValue,
 }
 
-pub type ScoreSet = BTreeSet<Score>;
+pub type ScoreSet = Vec<Score>;

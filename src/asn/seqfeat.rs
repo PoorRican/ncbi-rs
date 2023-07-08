@@ -3,63 +3,72 @@
 //! Adapted from ["seqfeat.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqfeat/seqfeat.asn)
 //! and documented by [NCBI C++ Toolkit Book](https://ncbi.github.io/cxx-toolkit/pages/ch_datamod#ch_datamod.datamodel.seqfeat)
 //!
-/// A feature table is a collection of sequence features called [`SeqFeat`]s.
-/// A [`SeqFeat`] serves to connect a sequence location ([`SeqLoc`]) with a
-/// specific block of data known as a datablock. Datablocks are defined
-/// objects on their own and are often used in other contexts, such as
-/// publications ([`PubSet`]), references to organisms ([`OrgRef`]), or genes
-/// ([`GeneRef`]). Some datablocks, like coding regions ([`CdRegion`]), only make
-/// sense when considered within the context of a [`SeqLoc`]. However, each
-/// datablock is designed to fulfill a specific purpose and is independent
-/// of others. This means that changes or additions to one datablock do not
-/// affect the others.
-///
-/// When a pre-existing object from another context is used as a datablock,
-/// any software capable of utilizing that object can also operate on the
-/// feature. For example, code that displays a publication can function with a
-/// publication from a bibliographic database or one used as a sequence
-/// feature without any modifications.
-///
-/// The [`SeqFeat`] data structure and the [`SeqLoc`] used to attach it to the
-/// sequence are shared among all features. This allows for a set of operations
-/// that can be performed on all features, regardless of the type of datablocks
-/// attached to them. Therefore, a function designed to determine all features
-/// in a specific region of a Bioseq does not need to consider the specific
-/// types of features involved.
-///
-/// A [`SeqFeat`] is referred to as bipolar because it can have up to two
-/// [`SeqLoc`]s. The [`SeqFeat`].location indicates the "source" and represents
-/// the location on the DNA sequence, similar to the single location in common
-/// feature table implementations. The `product` from [`SeqFeat`] represents
-/// the "sink" and is typically associated with the protein sequence produced.
-/// For example, a [`CdRegion`] feature would have its [`SeqFeat`].location on
-/// the DNA and its [`SeqFeat`].product on the corresponding protein sequence.
-/// This usage defines the process of translating a DNA sequence into a protein
-/// sequence, establishing an explicit relationship between nucleic acid and
-/// protein sequence databases.
-///
-/// Having two [`SeqLoc`]s allows for a more comprehensive representation of
-/// data conflicts or exceptional biological circumstances. For instance,
-/// if an author presents a DNA sequence and its protein product in a figure,
-/// it is possible to enter the DNA and protein sequences independently and
-/// then confirm through the [`CdRegion`] feature that the DNA indeed translates
-/// to the provided protein sequence. In cases where the DNA and protein do
-/// not match, it could indicate an error in the database or the original
-/// paper. By setting a "conflict" flag in the CdRegion, the problem can be
-/// identified early and addressed. Additionally, there may be situations
-/// where a genomic sequence cannot be translated to a protein due to known
-/// biological reasons, such as RNA editing or suppressor tRNAs. In such
-/// cases, the [`SeqFeat`] can be marked with an "exception" flag to indicate
-/// that the data is correct but may not behave as expected.
+//! A feature table is a collection of sequence features called [`SeqFeat`]s.
+//! A [`SeqFeat`] serves to connect a sequence location ([`SeqLoc`]) with a
+//! specific block of data known as a datablock. Datablocks are defined
+//! objects on their own and are often used in other contexts, such as
+//! publications ([`PubSet`]), references to organisms ([`OrgRef`]), or genes
+//! ([`GeneRef`]). Some datablocks, like coding regions ([`CdRegion`]), only make
+//! sense when considered within the context of a [`SeqLoc`]. However, each
+//! datablock is designed to fulfill a specific purpose and is independent
+//! of others. This means that changes or additions to one datablock do not
+//! affect the others.
+//!
+//! When a pre-existing object from another context is used as a datablock,
+//! any software capable of utilizing that object can also operate on the
+//! feature. For example, code that displays a publication can function with a
+//! publication from a bibliographic database or one used as a sequence
+//! feature without any modifications.
+//!
+//! The [`SeqFeat`] data structure and the [`SeqLoc`] used to attach it to the
+//! sequence are shared among all features. This allows for a set of operations
+//! that can be performed on all features, regardless of the type of datablocks
+//! attached to them. Therefore, a function designed to determine all features
+//! in a specific region of a Bioseq does not need to consider the specific
+//! types of features involved.
+//!
+//! A [`SeqFeat`] is referred to as bipolar because it can have up to two
+//! [`SeqLoc`]s. The [`SeqFeat`].location indicates the "source" and represents
+//! the location on the DNA sequence, similar to the single location in common
+//! feature table implementations. The `product` from [`SeqFeat`] represents
+//! the "sink" and is typically associated with the protein sequence produced.
+//! For example, a [`CdRegion`] feature would have its [`SeqFeat`].location on
+//! the DNA and its [`SeqFeat`].product on the corresponding protein sequence.
+//! This usage defines the process of translating a DNA sequence into a protein
+//! sequence, establishing an explicit relationship between nucleic acid and
+//! protein sequence databases.
+//!
+//! Having two [`SeqLoc`]s allows for a more comprehensive representation of
+//! data conflicts or exceptional biological circumstances. For instance,
+//! if an author presents a DNA sequence and its protein product in a figure,
+//! it is possible to enter the DNA and protein sequences independently and
+//! then confirm through the [`CdRegion`] feature that the DNA indeed translates
+//! to the provided protein sequence. In cases where the DNA and protein do
+//! not match, it could indicate an error in the database or the original
+//! paper. By setting a "conflict" flag in the CdRegion, the problem can be
+//! identified early and addressed. Additionally, there may be situations
+//! where a genomic sequence cannot be translated to a protein due to known
+//! biological reasons, such as RNA editing or suppressor tRNAs. In such
+//! cases, the [`SeqFeat`] can be marked with an "exception" flag to indicate
+//! that the data is correct but may not behave as expected.
 
+use atoi::atoi;
+use bitflags::bitflags;
+use enum_primitive::FromPrimitive;
+use quick_xml::events::{BytesStart, Event};
+use quick_xml::Reader;
 use crate::biblio::{DOI, PubMedId};
 use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
 use crate::r#pub::PubSet;
 use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
-use std::collections::BTreeSet;
+use serde::{Serialize, Deserialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
+use crate::parsing_utils::try_field;
+use crate::XMLElement;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// Feature identifiers
 pub enum FeatId {
     /// GenInfo backbone
@@ -75,8 +84,14 @@ pub enum FeatId {
     General(DbTag),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// Experimental evidence for existence of feature
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum SeqFeatExpEvidence {
     /// any reasonable experiment check
     Experimental = 1,
@@ -85,7 +100,8 @@ pub enum SeqFeatExpEvidence {
     NotExperimental,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Sequence feature generalization
 pub struct SeqFeat {
     pub id: Option<FeatId>,
@@ -123,10 +139,10 @@ pub struct SeqFeat {
     pub exp_ev: Option<SeqFeatExpEvidence>,
 
     /// cite other relevant features
-    pub xref: Option<BTreeSet<SeqFeatXref>>,
+    pub xref: Option<Vec<SeqFeatXref>>,
 
     /// support for xref to other databases
-    pub dbxref: Option<BTreeSet<DbTag>>,
+    pub dbxref: Option<Vec<DbTag>>,
 
     /// annotated on pseudogene
     pub pseudo: Option<bool>,
@@ -135,26 +151,40 @@ pub struct SeqFeat {
     pub except_text: Option<String>,
 
     /// set of id's; will replace `id` field
-    pub ids: Option<BTreeSet<FeatId>>,
+    pub ids: Option<Vec<FeatId>>,
 
     /// set of extensions; will replace `ext` field
-    pub exts: Option<BTreeSet<UserObject>>,
+    pub exts: Option<Vec<UserObject>>,
 
     pub support: Option<SeqFeatSupport>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of chemical bond for [`SeqFeatData`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum SeqFeatBond {
-    Disulfide,
+    Disulfide = 1,
     Thiolester,
     XLink,
     Thioether,
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of site biochemical modification for [`SeqFeatData`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum SeqFeatSite {
-    Active,
+    Active = 1,
     Binding,
     Cleavage,
     Inhibit,
@@ -174,8 +204,8 @@ pub enum SeqFeatSite {
     GammaCarboxylglutamicAcid,
     Blocked,
     LipidBinding,
-    NPBinding,
-    DNABinding,
+    NpBinding,
+    DnaBinding,
     SignalPeptide,
     TransitPeptide,
     TransmembraneRegion,
@@ -183,11 +213,17 @@ pub enum SeqFeatSite {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
-/// Protein secondary structure
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of protein secondary structure for [`SeqFeatData`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum PSecStr {
     /// any helix
-    Helix,
+    Helix = 1,
 
     /// beta sheet
     Sheet,
@@ -196,7 +232,8 @@ pub enum PSecStr {
     Turn,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum SeqFeatData {
     Gene(GeneRef),
     Org(OrgRef),
@@ -230,9 +267,11 @@ pub enum SeqFeatData {
     /// a numbering system
     Num(Numbering),
 
+    #[serde(rename="psec-str")]
     /// protein secondary structure
     PSecStr(PSecStr),
 
+    #[serde(rename="non-std-residue")]
     /// non-standard residue here in seq
     NonStdResidue(String),
 
@@ -244,20 +283,28 @@ pub enum SeqFeatData {
     Variation(VariationRef),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct SeqFeatXref {
     pub id: Option<FeatId>,
     pub data: Option<SeqFeatData>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SeqFeatSupport {
-    pub experiment: Option<BTreeSet<ExperimentSupport>>,
-    pub inference: Option<BTreeSet<InferenceSupport>>,
-    pub model_evidence: Option<BTreeSet<ModelEvidenceSupport>>,
+    pub experiment: Option<Vec<ExperimentSupport>>,
+    pub inference: Option<Vec<InferenceSupport>>,
+    pub model_evidence: Option<Vec<ModelEvidenceSupport>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Discrete types for types of experimental evidence
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum EvidenceCategory {
     NotSet,
     Coordinates,
@@ -265,27 +312,34 @@ pub enum EvidenceCategory {
     Existence,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct ExperimentSupport {
     pub category: Option<EvidenceCategory>,
     pub explanation: String,
-    pub pmids: Option<BTreeSet<PubMedId>>,
-    pub dois: Option<BTreeSet<DOI>>,
+    pub pmids: Option<Vec<PubMedId>>,
+    pub dois: Option<Vec<DOI>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct ProgramId {
     pub name: String,
     pub version: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct EvidenceBasis {
-    pub programs: Option<BTreeSet<ProgramId>>,
-    pub accessions: Option<BTreeSet<SeqId>>,
+    pub programs: Option<Vec<ProgramId>>,
+    pub accessions: Option<Vec<SeqId>>,
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
+/// Internal representation of inference support type for [`InferenceSupport`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum InferenceSupportType {
     #[default]
     NotSet,
@@ -304,19 +358,22 @@ pub enum InferenceSupportType {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct InferenceSupport {
     pub category: Option<EvidenceCategory>,
+    #[serde(rename="type")]
     pub r#type: InferenceSupportType,
     pub other_type: Option<String>,
     // TODO: default to false
     pub same_species: bool,
     pub basis: EvidenceBasis,
-    pub pmids: Option<BTreeSet<PubMedId>>,
-    pub soids: Option<BTreeSet<DOI>>,
+    pub pmids: Option<Vec<PubMedId>>,
+    pub dois: Option<Vec<DOI>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct ModelEvidenceItem {
     pub id: SeqId,
     pub exon_count: Option<u64>,
@@ -327,21 +384,29 @@ pub struct ModelEvidenceItem {
     pub supports_all_exon_combo: bool,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct ModelEvidenceSupport {
     pub method: Option<String>,
-    pub mrna: Option<BTreeSet<ModelEvidenceItem>>,
-    pub est: Option<BTreeSet<ModelEvidenceItem>>,
-    pub protein: Option<BTreeSet<ModelEvidenceItem>>,
+    pub mrna: Option<Vec<ModelEvidenceItem>>,
+    pub est: Option<Vec<ModelEvidenceItem>>,
+    pub protein: Option<Vec<ModelEvidenceItem>>,
     pub identification: Option<SeqId>,
-    pub dbxref: Option<BTreeSet<DbTag>>,
+    pub dbxref: Option<Vec<DbTag>>,
     pub exon_count: Option<u64>,
     pub exon_length: Option<u64>,
     pub full_length: bool,             // TODO: default false
     pub supports_all_exon_combo: bool, // TODO: default false
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
+/// Internal representation of reading frame for [`CdRegion`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum CdRegionFrame {
     #[default]
     /// not set, code uses one
@@ -352,7 +417,8 @@ pub enum CdRegionFrame {
     Three,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Instructions to translate from a nucleic acid to a peptide
 pub struct CdRegion {
     /// just an ORF ?
@@ -391,7 +457,8 @@ pub struct CdRegion {
     pub stops: Option<u64>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// Storage type for genetic code data
 ///
 /// I do not know what purpose the "start" variants [`Self::SNcbiStdAa`],
@@ -422,9 +489,10 @@ pub enum GeneticCodeOpt {
     SNcbiStdAa(Vec<u8>),
 }
 
-pub type GeneticCode = BTreeSet<GeneticCodeOpt>;
+pub type GeneticCode = Vec<GeneticCodeOpt>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// the amino acid that is the exception
 pub enum CodeBreakAA {
     /// ASCII value of [`crate::asn::NCBIEaa`] code
@@ -437,7 +505,7 @@ pub enum CodeBreakAA {
     NcbiStdAa(u64),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// specific codon exceptions
 pub struct CodeBreak {
     /// location of exception
@@ -448,9 +516,9 @@ pub struct CodeBreak {
 }
 
 /// table of genetic codes
-pub type GeneticCodeTable = BTreeSet<GeneticCode>;
+pub type GeneticCodeTable = Vec<GeneticCode>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Features imported from other databases
 pub struct ImpFeat {
     pub key: String,
@@ -462,13 +530,20 @@ pub struct ImpFeat {
     pub descr: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct GbQual {
     pub qual: String,
     pub val: String,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of placement method for [`CloneRef`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum CloneRefPlacementMethod {
     /// clone placed by end sequence
     EndSeq,
@@ -494,7 +569,8 @@ pub enum CloneRefPlacementMethod {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Specification of clone features
 pub struct CloneRef {
     /// official clone symbol
@@ -510,22 +586,36 @@ pub struct CloneRef {
     pub clone_seq: Option<CloneSeqSet>,
 }
 
-pub type CloneSeqSet = BTreeSet<CloneSeq>;
+pub type CloneSeqSet = Vec<CloneSeq>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of clone sequence type for [`CloneSeq`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum CloneSeqType {
     Insert,
     End,
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of clone confidence for [`CloneSeq`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum CloneSeqConfidence {
     /// multiple hits
     Multiple,
 
     /// unspecified
-    NA,
+    Na,
 
     /// no hits, end flagged repetitive
     NoHitRep,
@@ -553,7 +643,13 @@ pub enum CloneSeqConfidence {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum CloneSeqSupport {
     /// sequence used to place clone
     Prototype,
@@ -568,8 +664,10 @@ pub enum CloneSeqSupport {
     NonSupporting,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct CloneSeq {
+    #[serde(rename="type")]
     pub r#type: CloneSeqType,
     pub confidence: Option<CloneSeqConfidence>,
 
@@ -584,117 +682,125 @@ pub struct CloneSeq {
     pub support: Option<CloneSeqSupport>,
 }
 
-#[derive(PartialEq, Debug)]
-pub enum VariantResourceLink {
-    /// Clinical, Pubmed, Cited
-    Preserved = 1,
+bitflags! {
+    #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+    pub struct VariantResourceLink: u8 {
+        /// Clinical, Pubmed, Cited
+        const Preserved = 1;
 
-    /// Provisional third party annotations
-    Provisional = 2,
+        /// Provisional third party annotations
+        const Provisional = 2;
 
-    /// has 3D structure in SNP3D table
-    Has3D = 4,
+        /// has 3D structure in SNP3D table
+        const Has3D = 4;
 
-    /// SNP -> SubSNP -> Batch link_out
-    SubmitterLinkout = 8,
+        /// SNP -> SubSNP -> Batch link_out
+        const SubmitterLinkout = 8;
 
-    /// Clinical if LSDB, OMIM, TPA, Diagnostic
-    Clinical = 16,
+        /// Clinical if LSDB, OMIM, TPA, Diagnostic
+        const Clinical = 16;
 
-    /// Marker exists on high density genotyping kit
-    GenotypeKit = 32,
+        /// Marker exists on high density genotyping kit
+        const GenotypeKit = 32;
+    }}
+
+bitflags! {
+    #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+    pub struct VariantGeneLocation: u32 {
+        /// sequence intervals covered by a gene ID but not
+        /// having an aligned transcript
+        const InGene = 1;
+
+        /// within 2kb of the 5' end of a gene feature
+        const NearGene5 = 2;
+
+        /// within 0.5kb of the 3' end of a gene feature
+        const NearGene3 = 4;
+
+        /// in intron
+        const Intron = 8;
+
+        /// in donor splice-site
+        const Donor = 16;
+
+        /// in acceptor splice-site
+        const Acceptor = 32;
+
+        /// in 5' UTR
+        const UTR5 = 64;
+
+        /// in 3' UTR
+        const UTR3 = 128;
+
+        /// the variant is observed in a start codon
+        const InStartCodon = 256;
+
+        /// the variant is observed in a stop codon
+        const InStopCodon = 512;
+
+        /// variant located between genes
+        const Intergenic = 1024;
+
+        /// variant is located in a conserved non-coding region
+        const ConservedNoncoding = 2048;
+    }
 }
 
-#[derive(PartialEq, Debug)]
-pub enum VariantGeneLocation {
-    /// sequence intervals covered by a gene ID but not
-    /// having an aligned transcript
-    InGene = 1,
+bitflags! {
+    #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+    pub struct VariantEffect: u16 {
+        /// known to cause no functional changes.
+        /// since value is 0, it does not combine with any other bit, explicitly
+        /// implying there are no consequences from SNP
+        const NoChange = 0;
 
-    /// within 2kb of the 5' end of a gene feature
-    NearGene5 = 2,
+        /// one allele in the set does not change the encoded amino aced
+        const Synonymous = 1;
 
-    /// within 0.5kb of the 3' end of a gene feature
-    NearGene3 = 4,
+        /// one allele in the set changes to STOP codon
+        const Nonsense = 2;
 
-    /// in intron
-    Intron = 8,
+        /// one allele in the set changes protein peptide
+        const Missense = 4;
 
-    /// in donor splice-site
-    Donor = 16,
+        /// one allele in the set changes all downstream amino acids
+        const Frameshift = 8;
 
-    /// in acceptor splice-site
-    Acceptor = 32,
+        /// the variant causes increased transcription
+        const UpRegulator = 16;
 
-    /// in 5' UTR
-    UTR5 = 64,
+        /// the variant causes decreased transcription
+        const DownRegulator = 32;
 
-    /// in 3' UTR
-    UTR3 = 128,
+        const Methylation = 64;
 
-    /// the variant is observed in a start codon
-    InStartCodon = 256,
+        /// reference codon is not stop codon, but the SNP variant allele changes
+        /// the codon to a termination codon
+        const StopGain = 128;
 
-    /// the variant is observed in a stop codon
-    InStopCodon = 512,
-
-    /// variant located between genes
-    Intergenic = 1024,
-
-    /// variant is located in a conserved non-coding region
-    ConservedNonCoding = 2048,
+        /// reverse of [`Self::StopGain`]: reference codon is a stop codon, but
+        /// a SNP variant allele changes the codon to a non-termination codon.
+        const StopLoss = 256;
+    }
 }
 
-#[derive(PartialEq, Debug)]
-pub enum VariantEffect {
-    /// known to cause no functional changes.
-    /// since value is 0, it does not combine with any other bit, explicitly
-    /// implying there are no consequences from SNP
-    NoChange = 0,
+bitflags! {
+    #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+    pub struct VariantMapping: u8 {
+        /// another SNP has the same mapped positions on reference assembly
+        const HasOtherSnp = 1;
 
-    /// one allele in the set does not change the encoded amino aced
-    Synonymous = 1,
+        /// weight 1 or 2 SNPs that map to different chromosomes on
+        /// different assemblies
+        const HasAssemblyConflict = 2;
 
-    /// one allele in the set changes to STOP codon
-    Nonsense = 2,
-
-    /// one allele in the set changes protein peptide
-    Missense = 4,
-
-    /// one allele in the set changes all downstream amino acids
-    Frameshift = 8,
-
-    /// the variant causes increased transcription
-    UpRegulator = 16,
-
-    /// the variant causes decreased transcription
-    DownRegulator = 32,
-
-    Methylation = 64,
-
-    /// reference codon is not stop codon, but the SNP variant allele changes
-    /// the codon to a termination codon
-    StopGain = 128,
-
-    /// reverse of [`Self::StopGain`]: reference codon is a stop codon, but
-    /// a SNP variant allele changes the codon to a non-termination codon.
-    StopLose = 256,
+        /// Only maps to 1 assembly
+        const IsAssemblySpecific = 4;
+    }
 }
 
-#[derive(PartialEq, Debug)]
-pub enum VariantMapping {
-    /// another SNP has the same mapped positions on reference assembly
-    HasOtherSNP = 1,
-
-    /// weight 1 or 2 SNPs that map to different chromosomes on
-    /// different assemblies
-    HasAssemblyConflict = 2,
-
-    /// Only maps to 1 assembly
-    IsAssemblySpecific = 4,
-}
-
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// captures specificity of placement
 ///
 /// # Note
@@ -707,27 +813,34 @@ pub enum VariantMapWeight {
     ManyPlacements = 10,
 }
 
-#[derive(PartialEq, Debug)]
-pub enum FrequencyBasedValidation {
-    /// low frequency variation that is cited in journal or other reputable
-    /// source.
-    IsMutation = 1,
+bitflags! {
+    #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+    pub struct FrequencyBasedValidation: u8 {
+        /// low frequency variation that is cited in journal or other reputable
+        /// source.
+        const IsMutation = 1;
 
-    /// >5% minor allele freq in each and all populations
-    Above5Pct1Plus = 2,
+        /// >5% minor allele freq in each and all populations
+        const Above5pctAll = 2;
 
-    /// bit is set if the variant has a minor allele observed in two or
-    /// more separate chromosomes.
-    Validated = 4,
+        /// >5% minor allele freq in 1+ populations
+        const Above5pct1plus = 4;
 
-    /// >1% minor allele frequency in each and all populations
-    Above1PctAll = 8,
+        /// bit is set if the variant has a minor allele observed in two or
+        /// more separate chromosomes.
+        const Validated = 8;
 
-    /// >1% minor allele frequency in 1+ populations
-    Above1Pct1Plus = 32,
+        /// >1% minor allele frequency in each and all populations
+        const Above1pctAll = 16;
+
+        /// >1% minor allele frequency in 1+ populations
+        const Above1pct1plus = 32;
+    }
+
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 pub enum VariantGenotype {
     /// exists in a haplotype tagging set
     InHaplotypeSet,
@@ -736,54 +849,64 @@ pub enum VariantGenotype {
     HasGenotypes,
 }
 
-#[derive(PartialEq, Debug)]
-pub enum VariantQualityCheck {
-    /// reference sequence allele at the mapped position is not present in
-    /// the SNP allele list, adjust for orientation
-    ContigAlleleMissing = 1,
+bitflags! {
+    #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+    pub struct VariantQualityCheck: u8 {
+        /// reference sequence allele at the mapped position is not present in
+        /// the SNP allele list, adjust for orientation
+        const ContigAlleleMissing = 1;
 
-    /// one member SS is withdrawn by submitter
-    WithdrawnBySubmitter = 2,
+        /// one member SS is withdrawn by submitter
+        const WithdrawnBySubmitter = 2;
 
-    /// RS set has 2+ alleles from different submissions and these sets
-    /// share no alleles in common
-    NonOverlappingAlleles = 4,
+        /// RS set has 2+ alleles from different submissions and these sets
+        /// share no alleles in common
+        const NonOverlappingAlleles = 4;
 
-    /// strain specific fixed difference
-    StrainSpecific = 8,
+        /// strain specific fixed difference
+        const StrainSpecific = 8;
 
-    /// has genotype conflict
-    GenotypeConflict = 16,
+        /// has genotype conflict
+        const GenotypeConflict = 16;
+    }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 pub enum VariantConfidence {
     Unknown,
     LikelyArtifact,
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
-/// origin of this allele, if known
-///
-/// Note is a bitflag and more than one state can be represented at once
-pub enum VariantAlleleOrigin {
-    Unknown = 0,
-    Germline = 1,
-    Somatic = 2,
-    Inherited = 4,
-    Paternal = 8,
-    Maternal = 16,
-    DeNovo = 32,
-    Biparental = 64,
-    Uniparental = 128,
-    NotTested = 256,
-    TestedInconclusive = 512,
-    NotReported = 1024,
-    Other = 10732741824,
+bitflags!{
+    #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+    /// origin of this allele, if known
+    ///
+    /// # See also
+    /// - [`bitflags`](https://docs.rs/bitflags/latest/bitflags/macro.bitflags.html)
+    ///   to view how multiple values may be held by this object
+    pub struct VariantAlleleOrigin: u32 {
+        const Unknown = 0;
+        const Germline = 1;
+        const Somatic = 2;
+        const Inherited = 4;
+        const Paternal = 8;
+        const Maternal = 16;
+        const DeNovo = 32;
+        const Biparental = 64;
+        const Uniparental = 128;
+        const NotTested = 256;
+        const TestedInconclusive = 512;
+        const NotReported = 1024;
+
+        /// stopper - 2^31
+        const Other = 1073741824;
+    }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// observed allele state, if known
 ///
 /// NOTE this field is not a bitflag
@@ -796,7 +919,8 @@ pub enum VariantAlleleState {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Specification of variation features
 ///
 /// The intention is to provide information to clients that reflect internal
@@ -855,7 +979,8 @@ pub struct VariantProperties {
     pub is_ancestral_allele: Option<bool>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// does this variant have known clinical significance?
 pub enum PhenotypeClinicalSignificance {
     Unknown,
@@ -869,42 +994,47 @@ pub enum PhenotypeClinicalSignificance {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct Phenotype {
     pub source: Option<String>,
     pub term: Option<String>,
-    pub xref: Option<BTreeSet<DbTag>>,
+    pub xref: Option<Vec<DbTag>>,
 
     /// does this variant have known clinical significance?
     pub clinical_significance: Option<PhenotypeClinicalSignificance>,
 }
 
-#[derive(PartialEq, Debug)]
-/// This field is an explicit bitflag
-pub enum PopulationDataFlags {
-    IsDefaultPopulation = 1,
-    IsMinorAllele = 2,
-    IsRareAllele = 4,
+bitflags! {
+    #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+    /// This field is an explicit bitflag
+    pub struct PopulationDataFlags: u8 {
+        const IsDefaultPopulation = 1;
+        const IsMinorAllele = 2;
+        const IsRareAllele = 4;
+    }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct PopulationData {
     /// assayed population (eg: HAPMAP-CEU)
     pub population: String,
     pub genotype_frequency: Option<f64>,
     pub chromosomes_tested: Option<u64>,
-    pub sample_ids: Option<BTreeSet<ObjectId>>,
+    pub sample_ids: Option<Vec<ObjectId>>,
     pub allele_frequency: Option<f64>,
     pub flags: Option<PopulationDataFlags>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct ExtLoc {
     pub id: ObjectId,
     pub location: SeqLoc,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 pub enum VariantRefMethod {
     Unknown,
     BacAcgh,
@@ -920,7 +1050,7 @@ pub enum VariantRefMethod {
     OeaAssembly,
     OligoAcgh,
     PairedEnd,
-    PCR,
+    Pcr,
     Qpcr,
     ReadDepth,
     Roma,
@@ -935,7 +1065,8 @@ pub enum VariantRefMethod {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 pub enum VariationRefDataSetType {
     Unknown,
     Compound,
@@ -950,14 +1081,16 @@ pub enum VariationRefDataSetType {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct VariationRefDataSet {
+    #[serde(rename="type")]
     pub r#type: VariationRefDataSetType,
-    pub variations: BTreeSet<VariationRef>,
+    pub variations: Vec<VariationRef>,
     pub name: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum VariationRefData {
     Unknown,
 
@@ -974,7 +1107,7 @@ pub enum VariationRefData {
     /// location of the set equals to the union of member locations
     Set(Vec<VariationRefDataSet>),
 
-    Variations(BTreeSet<VariationRef>),
+    Variations(Vec<VariationRef>),
 
     /// variant is a complex and un-described change at the location
     ///
@@ -982,14 +1115,16 @@ pub enum VariationRefData {
     Complex,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// see http://www.hgvs.org/mutnomen/recs-prot.html
 pub struct VariationFrameshift {
     pub phase: Option<i64>,
     pub x_length: Option<i64>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct VariationLossOfHeterozygosity {
     /// in germline comparison, it will be reference genome assembly
     /// (default) or referenece/normal population. In somatic mutation,
@@ -1000,7 +1135,8 @@ pub struct VariationLossOfHeterozygosity {
     pub test: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum VariationConsequence {
     Unknown,
 
@@ -1020,15 +1156,16 @@ pub enum VariationConsequence {
     LossOfHeterozygosity(VariationLossOfHeterozygosity),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SomaticOriginCondition {
     pub description: Option<String>,
 
     /// reference to BioTerm / other descriptive database
-    pub object_id: Option<BTreeSet<DbTag>>,
+    pub object_id: Option<Vec<DbTag>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct VariationSomaticOrigin {
     /// description of the somatic origin itself
     pub source: Option<SubSource>,
@@ -1037,7 +1174,8 @@ pub struct VariationSomaticOrigin {
     pub condition: Option<SomaticOriginCondition>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// reference to SNP
 ///
 /// This object relates three IDs:
@@ -1054,32 +1192,33 @@ pub struct VariationRef {
     pub id: Option<DbTag>,
     pub parent_id: Option<DbTag>,
     pub sample_id: Option<ObjectId>,
-    pub other_ids: Option<BTreeSet<DbTag>>,
+    pub other_ids: Option<Vec<DbTag>>,
 
     /// names and synonyms
     /// some variants have well-known canonical names and possible
     /// accepted synonyms
     pub name: Option<String>,
-    pub synonyms: Option<BTreeSet<String>>,
+    pub synonyms: Option<Vec<String>>,
 
     /// tag for comment and descriptions
     pub description: Option<String>,
 
     /// phenotype
-    pub phenotype: Option<BTreeSet<Phenotype>>,
+    pub phenotype: Option<Vec<Phenotype>>,
 
     /// sequencing / acquisition method
-    pub method: Option<BTreeSet<VariantRefMethod>>,
+    pub method: Option<Vec<VariantRefMethod>>,
 
     /// variant properties bitflags
     pub variant_prop: Option<VariantProperties>,
 
     pub data: VariationRefData,
-    pub consequence: Option<BTreeSet<VariationConsequence>>,
-    pub somatic_origin: Option<BTreeSet<VariationSomaticOrigin>>,
+    pub consequence: Option<Vec<VariationConsequence>>,
+    pub somatic_origin: Option<Vec<VariationSomaticOrigin>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum DeltaSeq {
     Literal(SeqLiteral),
     Loc(SeqLoc),
@@ -1088,7 +1227,8 @@ pub enum DeltaSeq {
     This,
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
 pub enum DeltaAction {
     #[default]
     /// replace len(seq) positions starting with location.start with seq
@@ -1108,7 +1248,8 @@ pub enum DeltaAction {
     InsBefore,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct DeltaItem {
     pub seq: Option<DeltaSeq>,
 
@@ -1122,7 +1263,8 @@ pub struct DeltaItem {
     pub action: DeltaAction,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 pub enum VariationInstType {
     /// `delta=None`
     Unknown,
@@ -1139,11 +1281,12 @@ pub enum VariationInstType {
     /// validation to be established in [`VariantProperties`]. The strict
     /// definition of SNP is an SNV with an established population frequency
     /// of at least 1% in at least 1 population.
-    SNV,
+    Snv,
 
     /// `delta=[morph of length >1]`
-    MNP,
+    Mnp,
 
+    #[serde(rename="delins")]
     /// `delta=[del, ins]`
     DelIns,
 
@@ -1164,7 +1307,7 @@ pub enum VariationInstType {
     Transposon,
 
     /// `delta=[del, ins= 'this' with fuzzy multiplier]`
-    CNV,
+    Cnv,
 
     /// `delta=[ins.seq= upstream location on the same strand]`
     DirectCopy,
@@ -1202,7 +1345,8 @@ pub enum VariationInstType {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// Used to label items in a [`VariationRef`] package
 pub enum VariationInstObservation {
     /// represents the asserted base at a position
@@ -1215,8 +1359,9 @@ pub enum VariationInstObservation {
     Variant = 4,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct VariationInst {
+    #[serde(rename="type")]
     pub r#type: VariationInstType,
 
     /// sequence that replaces the location, in biological order
@@ -1228,7 +1373,8 @@ pub struct VariationInst {
     pub observation: Option<VariationInstObservation>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum RSiteRef {
     /// may be unparsable
     Str(String),
@@ -1238,7 +1384,8 @@ pub enum RSiteRef {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// Represents RNA feature types
 pub enum RnaRefType {
     Unknown,
@@ -1267,7 +1414,8 @@ pub enum RnaRefType {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum RnaRefExt {
     /// for naming "other" type
     Name(String),
@@ -1279,14 +1427,16 @@ pub enum RnaRefExt {
     Gen(RnaGen),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct RnaRef {
+    #[serde(rename="type")]
     pub r#type: RnaRefType,
     pub pseudo: Option<bool>,
     pub ext: Option<RnaRefExt>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum TRnaExtAa {
     IUPACAa(u64),
     NCBIEaa(u64),
@@ -1294,20 +1444,20 @@ pub enum TRnaExtAa {
     NCBIStdAa(u64),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// tRNA feature extensions
 pub struct TRnaExt {
     /// transported amino acid
     pub aa: TRnaExtAa,
 
     /// codon(s) as in [`GeneticCode`]
-    pub codon: Option<BTreeSet<u64>>,
+    pub codon: Option<Vec<u64>>,
 
     /// location of anticodon
     pub anticodon: Option<SeqLoc>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct RnaGen {
     /// for ncRNA's, the class of non-coding RNA
     ///
@@ -1320,7 +1470,7 @@ pub struct RnaGen {
     pub quals: Option<RnaQualSet>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct RnaQual {
     pub qual: String,
     pub val: String,
@@ -1328,7 +1478,8 @@ pub struct RnaQual {
 
 pub type RnaQualSet = Vec<RnaQual>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct GeneRef {
     /// official gene symbol
     pub locus: Option<String>,
@@ -1346,10 +1497,10 @@ pub struct GeneRef {
     pub pseudo: bool, // TODO: default false
 
     /// ids in other dbases
-    pub db: Option<BTreeSet<DbTag>>,
+    pub db: Option<Vec<DbTag>>,
 
     /// synonyms for locus
-    pub syn: Option<BTreeSet<String>>,
+    pub syn: Option<Vec<String>>,
 
     /// systematic gene name (eg: MI0001, ORF0069)
     pub locus_tag: Option<String>,
@@ -1357,14 +1508,15 @@ pub struct GeneRef {
     pub formal_name: Option<GeneNomenclature>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 pub enum GeneNomenclatureStatus {
     Unknown,
     Official,
     Interim,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct GeneNomenclature {
     pub status: GeneNomenclatureStatus,
     pub symbol: Option<String>,
@@ -1372,7 +1524,7 @@ pub struct GeneNomenclature {
     pub source: Option<DbTag>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// Reference to an organism
 ///
 /// Defines only the organism. Lower levels of detail for biological molecules
@@ -1385,18 +1537,58 @@ pub struct OrgRef {
     pub common: Option<String>,
 
     /// unstructured modifiers
-    pub r#mod: Option<BTreeSet<String>>,
+    pub r#mod: Option<Vec<String>>,
 
     /// ids in taxonomic or culture databases
-    pub db: Option<BTreeSet<DbTag>>,
+    pub db: Option<Vec<DbTag>>,
 
     /// synonyms for `taxname` or common
-    pub syn: Option<BTreeSet<String>>,
+    pub syn: Option<Vec<String>>,
 
     pub orgname: Option<OrgName>,
 }
 
-#[derive(PartialEq, Debug)]
+impl XMLElement for OrgRef {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Org-ref")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut org_ref = OrgRef::default();
+
+        let taxname_element = BytesStart::new("Org-ref_taxname");
+        let db_element = BytesStart::new("Org-ref_db");
+        let orgname_element = BytesStart::new("Org-ref_orgname");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    try_field(&name, &taxname_element, &mut org_ref.taxname, reader);
+
+                    if name == db_element.name() {
+                        org_ref.db = DbTag::vec_from_reader(reader, db_element.to_end()).into();
+                    }
+                    if name == orgname_element.name() {
+                        org_ref.orgname = OrgName::from_reader(reader).into();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        org_ref.into()
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum OrgNameChoice {
     /// genus/species type name
     Binomial(BinomialOrgName),
@@ -1414,13 +1606,43 @@ pub enum OrgNameChoice {
     Partial(PartialOrgName),
 }
 
-#[derive(PartialEq, Debug)]
+impl XMLElement for OrgNameChoice {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("OrgName_name")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variants
+        let binomial_element = BytesStart::new("OrgName_name_binomial");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == binomial_element.name() {
+                        return Self::Binomial(BinomialOrgName::from_reader(reader).unwrap()).into()
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None;
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct OrgName {
     pub name: Option<OrgNameChoice>,
 
     /// attribution of name
     pub attrib: Option<String>,
 
+    #[serde(rename="mod")]
     pub r#mod: Option<Vec<OrgMod>>,
 
     /// lineage with semicolon separators
@@ -1442,66 +1664,147 @@ pub struct OrgName {
     pub pgcode: Option<u64>,
 }
 
-#[derive(PartialEq, Debug)]
-pub enum OrgModSubType {
-    Strain = 2,
-    SubStrain,
-    Type,
-    SubType,
-    Variety,
-    Serotype,
-    Serogroup,
-    Serovar,
-    Cultivar,
-    Pathovar,
-    Chemovar,
-    Biovar,
-    Biotype,
-    Group,
-    SubGroup,
-    Isolate,
-    Common,
-    Acronym,
+impl XMLElement for OrgName {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("OrgName")
+    }
 
-    /// chromosome dosage of hybrid
-    Dosage,
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut org_name = OrgName::default();
 
-    /// natural host of this specimen
-    NatHost,
+        let name_element = BytesStart::new("OrgName_name");
+        let attrib_element = BytesStart::new("OrgName_attrib");
+        let mod_element = BytesStart::new("OrgName_mod");
+        let lineage_element = BytesStart::new("OrgName_lineage");
+        let gcode_element = BytesStart::new("OrgName_gcode");
+        let div_element = BytesStart::new("OrgName_div");
 
-    SubSpecies,
-    SpecimenVoucher,
-    Authority,
-    Forma,
-    FormaSpecialis,
-    Ecotype,
-    Synonym,
-    Anamorph,
-    Breed,
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
 
-    /// used by taxonomy database
-    GbAcronym,
+                    if name == name_element.name() {
+                        org_name.name = OrgNameChoice::from_reader(reader);
+                    }
 
-    /// used by taxonomy database
-    GbAnamorph,
+                    try_field(&name, &attrib_element, &mut org_name.attrib, reader);
 
-    /// used by taxonomy database
-    GbSynonym,
+                    if name == mod_element.name() {
+                        org_name.r#mod = OrgMod::vec_from_reader(reader, mod_element.to_end()).into();
+                    }
 
-    CultureCollection,
-    BioMaterial,
-    MetagenomeSource,
-    TypeMaterial,
+                    try_field(&name, &lineage_element, &mut org_name.lineage, reader);
 
-    /// code of nomenclature in subname (B,P,V,Z or combination)
-    Nomenclature,
+                    if name == gcode_element.name() {
+                        if let Event::Text(text) = reader.read_event().unwrap() {
+                            org_name.gcode = atoi::<u64>(text.as_ref())
+                        }
+                        else {
+                        }
+                    }
 
-    OldLineage = 253,
-    OldName = 254,
-    Other = 255,
+                    try_field(&name, &div_element, &mut org_name.div, reader)
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        return org_name.into()
+    }
 }
 
-#[derive(PartialEq, Debug)]
+
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+    #[repr(u8)]
+    pub enum OrgModSubType {
+        Strain = 2,
+
+        SubStrain,
+
+        Type,
+
+        SubType,
+
+        Variety,
+        Serotype,
+        Serogroup,
+        Serovar,
+        Cultivar,
+        Pathovar,
+        Chemovar,
+        Biovar,
+        Biotype,
+        Group,
+        SubGroup,
+        Isolate,
+        Common,
+        Acronym,
+
+        /// chromosome dosage of hybrid
+        Dosage,
+
+        /// natural host of this specimen
+        NatHost,
+
+        SubSpecies,
+        SpecimenVoucher,
+        Authority,
+        Forma,
+        FormaSpecialis,
+        Ecotype,
+        Synonym,
+        Anamorph,
+        Breed,
+
+        /// used by taxonomy database
+        GbAcronym,
+
+        /// used by taxonomy database
+        GbAnamorph,
+
+        /// used by taxonomy database
+        GbSynonym,
+
+        CultureCollection,
+        BioMaterial,
+        MetagenomeSource,
+        TypeMaterial,
+
+        /// code of nomenclature in subname (B,P,V,Z or combination)
+        Nomenclature,
+
+        OldLineage = 253,
+        OldName = 254,
+        Other = 255,
+    }
+}
+
+impl XMLElement for OrgModSubType {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("OrgMod_subtype")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Text(text) => {
+                    return Self::from_u8(atoi::<u8>(text.as_ref()).unwrap())
+                }
+                _ => ()
+            }
+        }
+
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct OrgMod {
     pub subtype: OrgModSubType,
     pub subname: String,
@@ -1510,7 +1813,49 @@ pub struct OrgMod {
     pub attrib: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+impl XMLElement for OrgMod {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("OrgMod")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut subtype = None;
+        let mut subname = None;
+        let mut attrib = None;
+
+        let subtype_element = BytesStart::new("OrgMod_subtype");
+        let subname_element = BytesStart::new("OrgMod_subname");
+        let attrib_element = BytesStart::new("OrgMod_attrib");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == subtype_element.name() {
+                        subtype = OrgModSubType::from_reader(reader);
+                    }
+
+                    try_field(&name, &subname_element, &mut subname, reader);
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        Self {
+            subtype: subtype.unwrap(),
+            subname: subname.unwrap(),
+            attrib
+        }.into()
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct BinomialOrgName {
     /// required
     pub genus: String,
@@ -1520,13 +1865,48 @@ pub struct BinomialOrgName {
     pub subspecies: Option<String>,
 }
 
+impl XMLElement for BinomialOrgName {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("BinomialOrgName")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut binomial = BinomialOrgName::default();
+
+        let genus_element = BytesStart::new("BinomialOrgName_genus");
+        let species_element = BytesStart::new("BinomialOrgName_species");
+        let subspecies_element = BytesStart::new("BinomialOrgName_subspecies");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    try_field(&name, &genus_element, &mut binomial.genus, reader);
+                    try_field(&name, &species_element, &mut binomial.species, reader);
+                    try_field(&name, &subspecies_element, &mut binomial.subspecies, reader);
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        binomial.into()
+    }
+}
+
 /// the first value will be used to assign division
 pub type MultiOrgName = Vec<OrgName>;
 
 /// used when genus not known
 pub type PartialOrgName = Vec<TaxElement>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 pub enum TaxElementFixedLevel {
     /// level must be set in string
     Other,
@@ -1536,44 +1916,67 @@ pub enum TaxElementFixedLevel {
     Class,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct TaxElement {
     pub fixed_level: TaxElementFixedLevel,
     pub level: Option<String>,
     pub name: String,
 }
 
-#[derive(PartialEq, Debug, Default)]
-/// biological context from which a molecule came from
-pub enum BioSourceGenome {
-    #[default]
-    Unknown,
-    Genomic,
-    Chloroplast,
-    Chromoplast,
-    Kinetoplast,
-    Mitochondrion,
-    Plastid,
-    Macronuclear,
-    Extrachrom,
-    Plasmid,
-    Transposon,
-    INsertionSeq,
-    Cyanelle,
-    Proviral,
-    Virion,
-    Nucleomorph,
-    Apicoplast,
-    Leucoplast,
-    Proplastid,
-    EndogenousVirus,
-    Hydrogenosome,
-    Chromosome,
-    PlasmidInMitochondrion,
-    PlasmidInPlastid,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    /// biological context from which a molecule came from
+    pub enum BioSourceGenome {
+        #[default]
+        Unknown,
+        Genomic,
+        Chloroplast,
+        Chromoplast,
+        Kinetoplast,
+        Mitochondrion,
+        Plastid,
+        Macronuclear,
+        Extrachrom,
+        Plasmid,
+        Transposon,
+        InsertionSeq,
+        Cyanelle,
+        Proviral,
+        Virion,
+        Nucleomorph,
+        Apicoplast,
+        Leucoplast,
+        Proplastid,
+        EndogenousVirus,
+        Hydrogenosome,
+        Chromosome,
+        PlasmidInMitochondrion,
+        PlasmidInPlastid,
+    }
 }
 
-#[derive(PartialEq, Debug, Default)]
+
+impl XMLElement for BioSourceGenome {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("BioSource_genome")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Text(text) => {
+                    return BioSourceGenome::from_u8(atoi::<u8>(text.as_ref()).unwrap())
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
 pub enum BioSourceOrigin {
     #[default]
     Unknown,
@@ -1596,7 +1999,8 @@ pub enum BioSourceOrigin {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 pub struct BioSource {
     /// biological context
     pub genome: BioSourceGenome,
@@ -1614,15 +2018,68 @@ pub struct BioSource {
     pub pcr_primers: Option<PCRReationSet>,
 }
 
-pub type PCRReationSet = BTreeSet<PCRReaction>;
-#[derive(PartialEq, Debug)]
+impl XMLElement for BioSource {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("BioSource")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut genome = BioSourceGenome::default();
+        let mut origin = BioSourceOrigin::default();
+        let mut org = OrgRef::default();
+        let mut subtype = None;
+        let mut is_focus = None;
+        let mut pcr_primers = None;
+
+        let genome_element = BytesStart::new("BioSource_genome");
+        let origin_element = BytesStart::new("BioSource_origin");
+        let org_element = BytesStart::new("BioSource_org");
+        let subtype_element = BytesStart::new("BioSource_subtype");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == genome_element.name() {
+                        genome = BioSourceGenome::from_reader(reader).unwrap();
+                    }
+                    else if name == org_element.name() {
+                        org = OrgRef::from_reader(reader).unwrap();
+                    }
+                    else if name == subtype_element.name() {
+                        subtype = SubSource::vec_from_reader(reader, subtype_element.to_end()).into();
+                   }
+                }
+                Event::End(e) => {
+                    if e.name() == Self::start_bytes().to_end().name() {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        Self {
+            genome,
+            origin,
+            org,
+            subtype,
+            is_focus,
+            pcr_primers
+        }.into()
+    }
+}
+
+pub type PCRReationSet = Vec<PCRReaction>;
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PCRReaction {
     pub forward: Option<PCRPrimerSet>,
     pub reverse: Option<PCRPrimerSet>,
 }
 
-pub type PCRPrimerSet = BTreeSet<PCRPrimer>;
-#[derive(PartialEq, Debug)]
+pub type PCRPrimerSet = Vec<PCRPrimer>;
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PCRPrimer {
     pub seq: Option<PCRPrimerSeq>,
     pub name: Option<PCRPrimerName>,
@@ -1630,68 +2087,88 @@ pub struct PCRPrimer {
 pub type PCRPrimerSeq = String;
 pub type PCRPrimerName = String;
 
-#[derive(PartialEq, Debug)]
-pub enum SubSourceSubType {
-    Chromosome = 1,
-    Map,
-    Clone,
-    Subclone,
-    Haplotype,
-    Genotype,
-    Sex,
-    CellLine,
-    CellType,
-    TissueType,
-    CloneLib,
-    DevStage,
-    Frequency,
-    Germline,
-    Rearranged,
-    LabHost,
-    PopVariant,
-    TissueLib,
-    PlasmidName,
-    TransposonName,
-    InsertionSeqName,
-    PlastidName,
-    Country,
-    Segment,
-    EndogenousVirusName,
-    Transgenic,
-    EnvironmentalSample,
-    IsolationSource,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+    #[repr(u8)]
+    pub enum SubSourceSubType {
+        Chromosome = 1,
+        Map,
+        Clone,
+        Subclone,
+        Haplotype,
+        Genotype,
+        Sex,
+        CellLine,
+        CellType,
+        TissueType,
+        CloneLib,
+        DevStage,
+        Frequency,
+        Germline,
+        Rearranged,
+        LabHost,
+        PopVariant,
+        TissueLib,
+        PlasmidName,
+        TransposonName,
+        InsertionSeqName,
+        PlastidName,
+        Country,
+        Segment,
+        EndogenousVirusName,
+        Transgenic,
+        EnvironmentalSample,
+        IsolationSource,
 
-    /// +/- decimal degrees
-    LatLon,
+        /// +/- decimal degrees
+        LatLon,
 
-    /// DD-MMM-YYYY format
-    CollectionDate,
+        /// DD-MMM-YYYY format
+        CollectionDate,
 
-    /// name of person who collected sample
-    CollectedBy,
+        /// name of person who collected sample
+        CollectedBy,
 
-    /// name of person who identified sample
-    IdentifiedBy,
+        /// name of person who identified sample
+        IdentifiedBy,
 
-    /// sequence (possibly more than one; semicolon-separated)
-    FwdPrimerSeq,
+        /// sequence (possibly more than one; semicolon-separated)
+        FwdPrimerSeq,
 
-    /// sequence (possibly more than one; semicolon-separated)
-    RevPrimerSeq,
+        /// sequence (possibly more than one; semicolon-separated)
+        RevPrimerSeq,
 
-    FwdPrimerName,
-    RevPrimerName,
-    Metagenomic,
-    MatingType,
-    LinkageGroup,
-    Haplogroup,
-    WholeReplicon,
-    Phenotype,
-    Altitude,
-    Other = 255,
+        FwdPrimerName,
+        RevPrimerName,
+        Metagenomic,
+        MatingType,
+        LinkageGroup,
+        Haplogroup,
+        WholeReplicon,
+        Phenotype,
+        Altitude,
+        Other = 255,
+    }
 }
 
-#[derive(PartialEq, Debug)]
+impl XMLElement for SubSourceSubType {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("SubSource_subtype")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Text(text) => {
+                    return SubSourceSubType::from_u8(atoi::<u8>(text.as_ref()).unwrap())
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct SubSource {
     pub subtype: SubSourceSubType,
     pub name: String,
@@ -1700,10 +2177,54 @@ pub struct SubSource {
     pub attrib: Option<String>,
 }
 
-#[derive(PartialEq, Debug, Default)]
+impl XMLElement for SubSource {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("SubSource")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut subtype = None;
+        let mut name = String::new();
+        let mut attrib = None;
+
+        let subtype_element = BytesStart::new("SubSource_subtype");
+        let name_element = BytesStart::new("SubSource_name");
+        let attrib_element = BytesStart::new("SubSource_attrib");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let qname = e.name();
+
+                    if qname == subtype_element.name() {
+                        subtype = SubSourceSubType::from_reader(reader);
+                    }
+
+                    try_field(&qname, &name_element, &mut name, reader);
+                }
+                Event::End(e) => {
+                    if e.name() == Self::start_bytes().to_end().name() {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        Self {
+            subtype: subtype.unwrap(),
+            name,
+            attrib
+        }.into()
+    }
+}
+
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
 pub enum ProtRefProcessingStatus {
     #[default]
     NotSet,
+
     PreProtein,
     Mature,
     SignalPeptide,
@@ -1711,29 +2232,31 @@ pub enum ProtRefProcessingStatus {
     ProPeptide,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Reference to a protein name
 pub struct ProtRef {
     /// protein name
-    pub name: Option<BTreeSet<String>>,
+    pub name: Option<Vec<String>>,
 
     /// description (instead of name)
     pub desc: Option<String>,
 
     /// E.C. number(s)
-    pub ec: Option<BTreeSet<String>>,
+    pub ec: Option<Vec<String>>,
 
     /// activities
-    pub activity: Option<BTreeSet<String>>,
+    pub activity: Option<Vec<String>>,
 
     /// id's in other dbases
-    pub db: Option<BTreeSet<DbTag>>,
+    pub db: Option<Vec<DbTag>>,
 
     /// processing status
     pub processed: ProtRefProcessingStatus,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 pub enum TxSystem {
     Unknown,
 
@@ -1745,6 +2268,7 @@ pub enum TxSystem {
 
     /// eukaryotic Pol III
     Pol3,
+
     Bacterial,
     Viral,
 
@@ -1755,7 +2279,8 @@ pub enum TxSystem {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// Represents type of transcription initiation site (TIS)
 pub enum InitType {
     Unknown,
@@ -1770,7 +2295,8 @@ pub enum InitType {
     Region,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Transcription Initiation Site feature data block
 pub struct TxInit {
     /// descriptive name of initiation site
@@ -1807,10 +2333,11 @@ pub struct TxInit {
     pub location_accurate: bool, // TODO: default false
 
     pub inittype: InitType,
-    pub evidence: Option<BTreeSet<TxEvidence>>,
+    pub evidence: Option<Vec<TxEvidence>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 pub enum TxEvidenceExpCode {
     Unknown,
 
@@ -1849,7 +2376,8 @@ pub enum TxEvidenceExpCode {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
 pub enum TxEvidenceExpressionSystem {
     Unknown,
     #[default]
@@ -1861,7 +2389,8 @@ pub enum TxEvidenceExpressionSystem {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct TxEvidence {
     pub exp_code: TxEvidenceExpCode,
     pub expression_system: TxEvidenceExpressionSystem,

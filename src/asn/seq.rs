@@ -4,6 +4,8 @@
 //!
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
+use quick_xml::events::{BytesStart, Event};
+use quick_xml::Reader;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
 use crate::r#pub::PubEquiv;
 use crate::seqalign::SeqAlign;
@@ -15,9 +17,12 @@ use crate::seqfeat::{
 use crate::seqloc::{SeqId, SeqLoc};
 use crate::seqres::SeqGraph;
 use crate::seqtable::SeqTable;
-use std::collections::BTreeSet;
+use serde::{Serialize, Deserialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
+use crate::XMLElement;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Single continuous biological sequence.
 ///
 /// It can be nucleic acid or protein. It can be fully instantiated (ie: data
@@ -44,13 +49,71 @@ pub struct BioSeq {
     /// descriptors
     pub descr: Option<SeqDescr>,
     /// the sequence data
-    pub inst: SeqInst,
+    pub inst: Option<SeqInst>, // TODO: temporary `Option`
     pub annot: Option<Vec<SeqAnnot>>,
 }
 
-pub type SeqDescr = BTreeSet<SeqDesc>;
+impl XMLElement for BioSeq {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Bioseq")
+    }
 
-#[derive(PartialEq, Debug)]
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut id = Vec::new();
+        let mut descr = None;
+        let mut inst = None;
+        let mut annot = None;
+
+        let id_elem = BytesStart::new("Bioseq_id");
+        let descr_elem = BytesStart::new("Bioseq_descr");
+        let inst_elem = BytesStart::new("Bioseq_inst");
+        let annot_elem = BytesStart::new("Bioseq_annot");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    if e.name() == id_elem.name() {
+                        id = SeqId::vec_from_reader(reader, id_elem.to_end());
+                    }
+                    else if e.name() == descr_elem.name() {
+                        descr = SeqDescr::from_reader(reader);
+                    }
+                }
+                Event::End(e) => {
+                    if e.name() == Self::start_bytes().to_end().name() {
+                        break;
+                    }
+                }
+                Event::Eof => {
+                    break;
+                }
+                _ => ()
+            }
+        }
+
+        Self {
+            id,
+            descr,
+            inst,
+            annot
+        }.into()
+    }
+}
+
+pub type SeqDescr = Vec<SeqDesc>;
+
+impl XMLElement for SeqDescr {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-descr")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        return SeqDesc::vec_from_reader(reader, Self::start_bytes().to_end()).into()
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// # Note
 /// `MolType`, `Modif`, `Method`, and `Org` are consolidated and expanded
 /// in [`OrgRef`]`, [`BioSource`], and [`MolInfo`] in this specification.
@@ -117,12 +180,47 @@ pub enum SeqDesc {
     ModelEv(ModelEvidenceSupport),
 }
 
+impl XMLElement for SeqDesc {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seqdesc")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        // variants
+        let source_element = BytesStart::new("Seqdesc_source");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+                    if name == source_element.name() {
+                        return Self::Source(BioSource::from_reader(reader).unwrap()).into()
+                    }
+                }
+                Event::End(e) => {
+                    // this occurs for a SeqDesc variant that does not yet have a parsing implementation
+                    if Self::is_end(&e) {
+                        return None;
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
 #[allow(non_camel_case_types)]
-#[derive(PartialEq, Debug, Default)]
-/// Represents type of biomolecule
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
+/// Internal representation of biomolecular type for [`MolInfo`]
 ///
 /// # Notes
-/// Non-camelcase types look cleaner for names with "RNA"/"DNA"
+///
+/// - Non-camelcase types look cleaner for names with "RNA"/"DNA", therefore non-CamelCase names
+///   have been explicitly allowed
+///
+/// - Original implementation lists this as `INTEGER`, therefore it is assumed that
+///   serialized representation is an integer
 pub enum BioMol {
     #[default]
     Unknown,
@@ -151,7 +249,14 @@ pub enum BioMol {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(PartialEq, Debug, Default)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
+/// Internal representation of molecular technique for [`MolInfo`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum MolTech {
     #[default]
     Unknown,
@@ -198,7 +303,7 @@ pub enum MolTech {
     /// barcode of life project
     Barcode,
     /// composite of WGS and HTGS
-    CompositeWH,
+    CompositeWgsHtgs,
     /// transcriptome shotgun assembly
     TSA,
     /// targeted locus sets/studies
@@ -207,13 +312,19 @@ pub enum MolTech {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
 /// Capture sequence completeness.
 ///
 /// Completeness is not indicated in most records. For genomes, assume
 /// the sequences are incomplete unless specifically marked as complete.
 /// For mRNAs, assume the ends are not known exactly unless marked as having
 /// the left or right end.
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum MolCompleteness {
     #[default]
     Unknown,
@@ -227,7 +338,8 @@ pub enum MolCompleteness {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct MolInfo {
     pub bio_mol: BioMol,
     pub tech: MolTech,
@@ -238,10 +350,16 @@ pub struct MolInfo {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// GenInfo Backbone molecule types
 ///
 /// Captures type of molecule represented
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum GIBBMol {
     Unknown,
     Genomic,
@@ -260,8 +378,14 @@ pub enum GIBBMol {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// GenInfo Backbone Modifiers
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum GIBBMod {
     DNA,
     RNA,
@@ -303,11 +427,17 @@ pub enum GIBBMod {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// Sequencing method
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum GIBBMethod {
     /// Conceptual translation
-    ConceptTrans,
+    ConceptTrans = 1,
     /// Peptide was sequenced
     SeqPept,
     /// concept transl. w/ partial pept. seq.
@@ -321,7 +451,8 @@ pub enum GIBBMethod {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Any display numbering system
 pub enum Numbering {
     /// continuous numbering
@@ -334,7 +465,8 @@ pub enum Numbering {
     Real(NumReal),
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 /// continuous display numbering system
 pub struct NumCont {
     /// number assigned to first residue
@@ -350,7 +482,8 @@ pub struct NumCont {
     pub ascending: bool,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// any tags to residues
 pub struct NumEnum {
     /// number of tags to follow
@@ -359,8 +492,14 @@ pub struct NumEnum {
     pub names: Vec<String>,
 }
 
-#[derive(PartialEq, Debug)]
-/// type of reference
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of type of reference for [`NumRef`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum NumRefType {
     NotSet,
     /// by segmented or const seq sources
@@ -369,7 +508,8 @@ pub enum NumRefType {
     Aligns,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Number by reference to other sequences
 pub struct NumRef {
     /// type of reference
@@ -378,7 +518,8 @@ pub struct NumRef {
     pub aligns: Option<SeqAlign>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Mapping to floating point system
 /// from an integer system used by [`BioSeq`]
 /// `position = (a * int_position) + b`
@@ -388,7 +529,8 @@ pub struct NumReal {
     pub units: Option<String>,
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all="kebab-case")]
 /// type of reference in a GenBank record
 pub enum PubDescRefType {
     #[default]
@@ -402,7 +544,8 @@ pub enum PubDescRefType {
     NoTarget,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct PubDesc {
     pub r#pub: PubEquiv,
     pub name: Option<String>,
@@ -428,7 +571,8 @@ pub struct PubDesc {
 /// Cofactor, prosthetic group, inhibitor, etc
 pub type Heterogen = String;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// Representation class for [`SeqInst`]
 ///
 /// Stored by [`SeqInst`] and is independent of [`Mol`]
@@ -466,6 +610,11 @@ pub type Heterogen = String;
 ///          The feature table is part of [`SeqInst`] because for a map, it is
 ///          an essential part of instantiating the map [`BioSeq`], not merely
 ///          annotation on a known sequence.
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum Repr {
     /// empty
     NotSet,
@@ -488,9 +637,15 @@ pub enum Repr {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// molecule class in living organism
 ///  > cdna = rna
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum Mol {
     NotSet,
     DNA,
@@ -501,8 +656,14 @@ pub enum Mol {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug, Default)]
-/// Topology of biomolecule
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
+/// Internal representation of biomolecule topology for [`SeqInst`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum Topology {
     NotSet,
     #[default]
@@ -512,8 +673,14 @@ pub enum Topology {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
-/// Strandedness in living organism
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of strandedness in living organism for [`SeqInst`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum Strand {
     NotSet,
     /// single strand
@@ -524,7 +691,8 @@ pub enum Strand {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Instances of sequences
 ///
 /// Represents things like: is DNA, RNA, or protein? Is it circular or linear?
@@ -560,7 +728,8 @@ pub struct SeqInst {
 
 // Sequence extensions for representing more complex types
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum SeqExt {
     /// segmented sequences
     Seg(SegExt),
@@ -579,7 +748,8 @@ pub type RefExt = SeqLoc;
 pub type MapExt = Vec<SeqFeat>;
 pub type DeltaExt = Vec<DeltaSeq>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum DeltaSeq {
     /// point to a sequence
     Loc(SeqLoc),
@@ -588,7 +758,8 @@ pub enum DeltaSeq {
     Literal(SeqLiteral),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SeqLiteral {
     /// must give a length in residues
     pub length: u64,
@@ -600,30 +771,34 @@ pub struct SeqLiteral {
     pub seq_data: Option<SeqData>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// internal structure for storing sequence history deletion status
 pub enum SeqHistDeleted {
     Bool(bool),
     Date(Date),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Sequence history record
 /// assembly: records how seq was assembled from others
 pub struct SeqHist {
-    pub assembly: Option<BTreeSet<SeqAlign>>,
+    pub assembly: Option<Vec<SeqAlign>>,
     pub replaces: Option<SeqHistRec>,
     pub replaced_by: Option<SeqHistRec>,
     pub deleted: Option<SeqHistDeleted>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SeqHistRec {
     pub date: Option<Date>,
-    pub ids: BTreeSet<SeqId>,
+    pub ids: Vec<SeqId>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Sequence representations
 pub enum SeqData {
     /// IUPAC 1 letter nuc acid code
@@ -660,8 +835,14 @@ pub enum SeqData {
     Gap(SeqGap),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// internal structure for `type` field in [`SeqGap`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum SeqGapType {
     Unknown,
     #[deprecated]
@@ -681,21 +862,30 @@ pub enum SeqGapType {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation for linkage status for [`SeqGap`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum SeqGapLinkage {
     Unlinked,
     Linked,
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SeqGap {
     pub r#type: SeqGapType,
     pub linkage: Option<SeqGapLinkage>,
-    pub linkage_evidence: Option<BTreeSet<LinkageEvidence>>,
+    pub linkage_evidence: Option<Vec<LinkageEvidence>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// internal representation for `type` in [`LinkageEvidence`]
 pub enum LinkageEvidenceType {
     PairedEnds,
@@ -712,7 +902,8 @@ pub enum LinkageEvidenceType {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct LinkageEvidence {
     pub r#type: LinkageEvidenceType,
 }
@@ -762,7 +953,8 @@ pub type NCBIPaa = Vec<u8>;
 /// Codes 0-25, 1 per byte
 pub type NCBIStdAa = Vec<u8>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// This is a replica of [`TextSeqId`]
 ///
 /// This is specific for annotations, and exists to maintain a semantic difference
@@ -774,7 +966,8 @@ pub struct TextAnnotId {
     pub version: Option<u64>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum AnnotId {
     Local(ObjectId),
     NCBI(u64),
@@ -784,7 +977,8 @@ pub enum AnnotId {
 
 pub type AnnotDescr = Vec<AnnotDesc>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub enum AnnotDesc {
     /// a short name for this collection
     Name(String),
@@ -808,8 +1002,14 @@ pub enum AnnotDesc {
     Region(SeqLoc),
 }
 
-#[derive(PartialEq, Debug)]
-/// Class of align [`SeqAnnot`]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of align type for [`SeqAnnot`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum AlignType {
     /// set of alignments to the same sequence
     Ref,
@@ -820,14 +1020,22 @@ pub enum AlignType {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct AlignDef {
     pub align_type: AlignType,
     /// used for the one ref [`SeqId`] for now
-    pub ids: Option<BTreeSet<SeqId>>,
+    pub ids: Option<Vec<SeqId>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of source DB for [`SeqAnnot`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum SeqAnnotDB {
     GenBank,
     EMBL,
@@ -839,27 +1047,36 @@ pub enum SeqAnnotDB {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 /// Internal representation for `data` choice in [`SeqAnnot`]
 pub enum SeqAnnotData {
-    FTable(BTreeSet<SeqFeat>),
-    Align(BTreeSet<SeqAlign>),
-    Graph(BTreeSet<SeqGraph>),
+    FTable(Vec<SeqFeat>),
+    Align(Vec<SeqAlign>),
+    Graph(Vec<SeqGraph>),
+
     /// used for communication between tools
-    IDS(BTreeSet<SeqId>),
+    IDS(Vec<SeqId>),
+
     /// used for communication between tools
-    Locs(BTreeSet<SeqLoc>),
+    Locs(Vec<SeqLoc>),
+
+    #[serde(rename="seq-table")]
     /// features in table form
     SeqTable(SeqTable),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SeqAnnot {
-    pub id: Option<BTreeSet<AnnotId>>,
+    pub id: Option<Vec<AnnotId>>,
     pub db: Option<SeqAnnotDB>,
+
     /// source if `db` [`SeqAnnotDB::Other`]
     pub name: Option<String>,
+
     /// used only for standalone [`SeqAnnot`]'s
     pub desc: Option<AnnotDescr>,
+
     pub data: SeqAnnotData,
 }

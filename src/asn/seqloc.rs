@@ -6,28 +6,103 @@
 //! See [book](https://ncbi.github.io/cxx-toolkit/pages/ch_datamod#ch_datamod._ASN1_Specification_s_8)
 //! for more information on.
 
+use atoi::atoi;
 use crate::biblio::IdPat;
-use crate::general::{Date, IntFuzz, ObjectId};
+use crate::general::{Date, DbTag, IntFuzz, ObjectId};
 use crate::seqfeat::FeatId;
-use std::collections::BTreeSet;
+use serde::{Serialize, Deserialize};
+use serde_repr::{Serialize_repr, Deserialize_repr};
+use quick_xml::events::{BytesEnd, BytesStart, Event};
+use quick_xml::Reader;
+use crate::XMLElement;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="lowercase")]
 pub enum SeqId {
     Local(ObjectId),
+    /// GenInfo backbone sequence id
     GibbSq(i64),
+
+    /// GenInfo backbone molecule type
     GibbMt(i64),
+
+    /// GenINfo import id
     Giim(GiimportId),
+
     Genbank(TextseqId),
     Embl(TextseqId),
     Pir(TextseqId),
     Swissprot(TextseqId),
     Patent(PatentSeqId),
+    /// left for historical reasons, `Other = ReqSeq`
     Other(TextseqId),
+
+    /// for other databases
+    General(DbTag),
+
+    /// GenInfo integrated database
+    Gi(u64),
+
+    /// DDBJ
+    Ddbj(TextseqId),
+
+    /// PRF SEQDB
+    Prf(TextseqId),
+
+    /// PDB sequence
+    Pdb(PDBSeqId),
+
+    /// Third party annot/seq: Genbank
+    Tpg(TextseqId),
+
+    /// Third party annot/seq: EMBL
+    Tpe(TextseqId),
+
+    /// Third party annot/seq: DDBJ
+    Tpd(TextseqId),
+
+    /// internal NCBI genome pipeline
+    Gpipe(TextseqId),
+
+    #[serde(rename="named-annot-track")]
+    /// internal named annotation
+    NamedAnnotTrack(TextseqId),
 }
 
-pub type SeqIdSet = BTreeSet<SeqId>;
+impl XMLElement for SeqId {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-id")
+    }
 
-#[derive(PartialEq, Debug)]
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        // variants
+        let other = BytesStart::new("Seq-id_other");
+        let general = BytesStart::new("Seq-id_general");
+        let gi = BytesStart::new("Seq-id_gi");
+
+        loop {
+            if let Event::Start(e) = reader.read_event().unwrap() {
+                if e.name() == other.name() {
+                    return SeqId::Other(TextseqId::from_reader(reader).unwrap()).into();
+                }
+                else if e.name() == general.name() {
+                    return SeqId::General(DbTag::from_reader(reader).unwrap()).into();
+                }
+                else if e.name() == gi.name() {
+                    if let Event::Text(text) = reader.read_event().unwrap() {
+                        return SeqId::Gi(
+                            atoi(text.as_ref()).expect("Can't parse &[u8] into int")
+                        ).into();
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub type SeqIdSet = Vec<SeqId>;
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PatentSeqId {
     /// number of sequence in patent
     pub seqid: u64,
@@ -36,7 +111,7 @@ pub struct PatentSeqId {
     pub cit: IdPat,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct TextseqId {
     pub name: Option<String>,
     pub accession: Option<String>,
@@ -44,14 +119,73 @@ pub struct TextseqId {
     pub version: Option<u64>,
 }
 
-#[derive(PartialEq, Debug)]
+impl XMLElement for TextseqId {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Textseq-id")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut name = None;
+        let mut accession = None;
+        let mut release = None;
+        let mut version = None;
+
+        let name_element = BytesStart::new("Textseq-id_name");
+        let accession_element = BytesStart::new("Textseq-id_accession");
+        let release_element = BytesStart::new("Textseq-id_release");
+        let version_element = BytesStart::new("Textseq-id_version");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    if e.name() == name_element.name() {
+                        if let Event::Text(text) = reader.read_event().unwrap() {
+                            name = text.escape_ascii().to_string().into();
+                        }
+                    }
+                    else if e.name() == accession_element.name() {
+                        if let Event::Text(text) = reader.read_event().unwrap() {
+                            accession = text.escape_ascii().to_string().into();
+                        }
+                    }
+                    else if e.name() == release_element.name() {
+                        if let Event::Text(text) = reader.read_event().unwrap() {
+                            release = text.escape_ascii().to_string().into();
+                        }
+                    }
+                    else if e.name() == version_element.name() {
+                        if let Event::Text(text) = reader.read_event().unwrap() {
+                            version = atoi(text.as_ref());
+                        }
+                    }
+                }
+                Event::End(e) => {
+                    if e.name() == Self::start_bytes().to_end().name() {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        Self {
+            name,
+            accession,
+            release,
+            version
+        }.into()
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct GiimportId {
     pub id: i64,
     pub db: Option<String>,
     pub release: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct PDBSeqId {
     pub mol: PDBMolId,
     pub rel: Option<Date>,
@@ -61,7 +195,8 @@ pub struct PDBSeqId {
 /// name of mol, should be 4 chars
 pub type PDBMolId = String;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// Defines a location on a [`BioSeq`].
 ///
 /// Class hierarchy makes it possible to use the same type in multiple contexts.
@@ -97,7 +232,8 @@ pub enum SeqLoc {
     Feat(FeatId),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct SeqInterval {
     pub from: i64,
     pub to: i64,
@@ -107,9 +243,9 @@ pub struct SeqInterval {
     pub fuzz_to: Option<IntFuzz>,
 }
 
-pub type PackedSeqInt = BTreeSet<SeqInterval>;
+pub type PackedSeqInt = Vec<SeqInterval>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct SeqPoint {
     pub point: i64,
     pub strand: Option<NaStrand>,
@@ -117,7 +253,8 @@ pub struct SeqPoint {
     pub fuzz: Option<IntFuzz>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 pub struct PackedSeqPnt {
     pub strand: Option<NaStrand>,
     pub id: SeqId,
@@ -125,7 +262,8 @@ pub struct PackedSeqPnt {
     pub points: Vec<i64>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// Strand of nucleic acid
 pub enum NaStrand {
     Unknown,
@@ -138,7 +276,7 @@ pub enum NaStrand {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// bond between residues
 pub struct SeqBond {
     /// connection to at least one residue
@@ -151,4 +289,4 @@ pub struct SeqBond {
 /// this will hold anything
 pub type SeqLocMix = Vec<SeqLoc>;
 /// set of equivalent locations
-pub type SeqLocEquiv = BTreeSet<SeqLoc>;
+pub type SeqLocEquiv = Vec<SeqLoc>;

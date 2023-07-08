@@ -4,9 +4,17 @@
 
 use crate::biblio::{CitArt, PubMedId};
 use crate::general::Date;
-use std::collections::BTreeSet;
+use serde::{Serialize, Deserialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
+/// Internal representation for entry status for [`MedlineEntry`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum MedlineEntryStatus {
     /// record as supplied by publisher
     Publisher = 1,
@@ -19,7 +27,8 @@ pub enum MedlineEntryStatus {
     Medline,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all="kebab-case")]
 /// a MEDLINE or PubMed entry
 pub struct MedlineEntry {
     /// MEDLINE UID, sometimes not yet available from PubMed
@@ -31,29 +40,30 @@ pub struct MedlineEntry {
     /// article citation
     pub cit: CitArt,
 
+    #[serde(rename="abstract")]
     pub r#abstract: Option<String>,
-    pub mesh: Option<BTreeSet<MedlineMesh>>,
-    pub substance: Option<BTreeSet<MedlineRn>>,
-    pub xref: Option<BTreeSet<MedlineSi>>,
+    pub mesh: Option<Vec<MedlineMesh>>,
+    pub substance: Option<Vec<MedlineRn>>,
+    pub xref: Option<Vec<MedlineSi>>,
 
     /// ID Number (grants, contracts)
-    pub idnum: Option<BTreeSet<String>>,
+    pub idnum: Option<Vec<String>>,
 
-    pub gene: Option<BTreeSet<String>>,
+    pub gene: Option<Vec<String>>,
 
     /// MEDLINE records may include the PubMedId
     pub pmid: Option<PubMedId>,
 
     /// may show publication types (review, etc)
-    pub pub_type: Option<BTreeSet<String>>,
+    pub pub_type: Option<Vec<String>>,
 
     /// additional Medline field types
-    pub mlfield: Option<BTreeSet<MedlineField>>,
+    pub mlfield: Option<Vec<MedlineField>>,
 
     pub status: MedlineEntryStatus,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct MedlineMesh {
     // TODO: default false
     /// true if main point (*)
@@ -63,20 +73,27 @@ pub struct MedlineMesh {
     pub term: String,
 
     /// qualifiers
-    pub qual: Option<BTreeSet<MedlineQual>>,
+    pub qual: Option<Vec<MedlineQual>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct MedlineQual {
-    // TODO: default false
+
     /// true if main point
-    pub mp: bool,
+    pub mp: bool,           // TODO: default false
 
     /// the subheading
     pub subh: String,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of cross-ref type for [`MedlineSi`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum MedlineSiType {
     DDBJ = 1,
     /// Carbohydrate Structure Database
@@ -107,7 +124,14 @@ pub enum MedlineSiType {
     GDB,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of type of medline substance record for [`MedlineRn`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum MedlineRnType {
     NameOnly,
 
@@ -118,9 +142,10 @@ pub enum MedlineRnType {
     EC,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Medline substance records
 pub struct MedlineRn {
+    #[serde(rename="type")]
     /// type of record
     pub r#type: MedlineRnType,
 
@@ -131,15 +156,23 @@ pub struct MedlineRn {
     pub name: String,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// medline cross reference records
 pub struct MedlineSi {
     /// type of xref
+    #[serde(rename="type")]
     pub r#type: MedlineSiType,
     pub cit: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of medline field type for [`MedlineField`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum MedlineFieldType {
     /// look in line code
     Other,
@@ -151,8 +184,9 @@ pub enum MedlineFieldType {
     Erratum,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct MedlineField {
+    #[serde(rename="type")]
     /// keyed type
     pub r#type: MedlineFieldType,
 
@@ -163,16 +197,22 @@ pub struct MedlineField {
     pub ids: Option<Vec<DocRef>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum DocRefType {
     Medline = 1,
     PubMed,
     NCBIGi,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// reference to a document
 pub struct DocRef {
+    #[serde(rename="type")]
     pub r#type: DocRefType,
     pub uid: u64,
 }
