@@ -1,7 +1,8 @@
 use std::ops::Not;
 use ncbi::{DataType, get_local_xml, parse_xml};
-use ncbi::general::ObjectId;
-use ncbi::seq::BioSeq;
+use ncbi::general::{DbTag, ObjectId};
+use ncbi::seq::{BioSeq, SeqDesc};
+use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, BioSourceOrigin, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SubSource, SubSourceSubType};
 use ncbi::seqloc::SeqId;
 use ncbi::seqset::{BioSeqSet, SeqEntry};
 
@@ -48,6 +49,7 @@ fn parse_seq() {
 #[test]
 fn parse_bioseq_id() {
     let bioseq = get_bioseq(DATA1);
+
     assert!(bioseq.id.is_empty().not());
     assert_eq!(bioseq.id.len(), 3);
     for id in bioseq.id.iter() {
@@ -74,10 +76,80 @@ fn parse_bioseq_id() {
 }
 
 #[test]
-#[ignore]
 fn parse_bioseq_descr() {
     let bioseq = get_bioseq(DATA1);
+
     assert!(bioseq.descr.is_some());
+    // only BioSource should be parsed
+    assert_eq!(bioseq.descr.unwrap().len(), 1);
+}
+
+#[test]
+fn parse_bioseq_descr_source() {
+    let bioseq = get_bioseq(DATA1);
+
+    let subtype = vec![
+        SubSource {
+            subtype: SubSourceSubType::Country,
+            name: "Australia".to_string(),
+            attrib: None,
+        },
+        SubSource {
+            subtype: SubSourceSubType::IsolationSource,
+            name: "RESIDENTIAL AGED CARE FACILITY".to_string(),
+            attrib: None,
+        },
+        SubSource {
+            subtype: SubSourceSubType::LatLon,
+            name: "34.9285 S 138.6007 E".to_string(),
+            attrib: None,
+        },
+        SubSource {
+            subtype: SubSourceSubType::CollectionDate,
+            name: "2019".to_string(),
+            attrib: None,
+        },
+        SubSource {
+            subtype: SubSourceSubType::CollectedBy,
+            name: "UNIVERSITY OF SOUTH AUSTRALIA".to_string(),
+            attrib: None,
+        },
+    ].into();
+    let expected = BioSource {
+        genome: BioSourceGenome::Genomic,
+        org: OrgRef {
+            taxname: "Klebsiella pneumoniae".to_string().into(),
+            db: vec![DbTag { db: "taxon".to_string(), tag: ObjectId::Id(573) }].into(),
+            orgname: OrgName {
+                name: OrgNameChoice::Binomial(BinomialOrgName {
+                    genus: "Klebsiella".to_string(),
+                    species: "pneumoniae".to_string().into(),
+                    subspecies: None,
+                }).into(),
+                attrib: "specified".to_string().into(),
+                r#mod: vec![OrgMod {
+                    subtype: OrgModSubType::Strain,
+                    subname: "A922".to_string(),
+                    attrib: None,
+                }].into(),
+                lineage: "Bacteria; Pseudomonadota; Gammaproteobacteria; Enterobacterales; Enterobacteriaceae; Klebsiella/Raoultella group; Klebsiella"
+                    .to_string()
+                    .into(),
+                gcode: 11.into(),
+                mgcode: None,
+                div: "BCT".to_string().into(),
+                pgcode: None,
+            }.into(),
+            ..OrgRef::default()
+        },
+        subtype,
+        ..BioSource::default()
+    };
+    for entry in bioseq.descr.unwrap().iter() {
+        if let SeqDesc::Source(source) = entry {
+            assert_eq!(*source, expected)
+        }
+    }
 }
 
 #[test]
