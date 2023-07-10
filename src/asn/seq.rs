@@ -4,6 +4,7 @@
 //!
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
+use enum_primitive::FromPrimitive;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
@@ -19,6 +20,7 @@ use crate::seqres::SeqGraph;
 use crate::seqtable::SeqTable;
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use crate::parsing_utils::get_next_num;
 use crate::XMLElement;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -188,6 +190,7 @@ impl XMLElement for SeqDesc {
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
         // variants
         let source_element = BytesStart::new("Seqdesc_source");
+        let molinfo_element = BytesStart::new("Seqdesc_molinfo");
 
         loop {
             match reader.read_event().unwrap() {
@@ -195,6 +198,9 @@ impl XMLElement for SeqDesc {
                     let name = e.name();
                     if name == source_element.name() {
                         return Self::Source(BioSource::from_reader(reader).unwrap()).into()
+                    }
+                    if name == molinfo_element.name() {
+                        return Self::MolInfo(MolInfo::from_reader(reader).unwrap()).into()
                     }
                 }
                 Event::End(e) => {
@@ -209,107 +215,131 @@ impl XMLElement for SeqDesc {
     }
 }
 
-#[allow(non_camel_case_types)]
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
-#[repr(u8)]
-/// Internal representation of biomolecular type for [`MolInfo`]
-///
-/// # Notes
-///
-/// - Non-camelcase types look cleaner for names with "RNA"/"DNA", therefore non-CamelCase names
-///   have been explicitly allowed
-///
-/// - Original implementation lists this as `INTEGER`, therefore it is assumed that
-///   serialized representation is an integer
-pub enum BioMol {
-    #[default]
-    Unknown,
-    Genomic,
-    PreRNA,
-    /// precursor RNA of any sort
-    mRNA,
-    rRNA,
-    tRNA,
-    snRNA,
-    scRNA,
-    Peptide,
-    OtherGenetic,
-    /// other genetic material
-    Genomic_mRNA,
-    /// reported a mix of genomic dna and cdna sequence
-    cRNA,
-    /// viral RNA genome copy intermediate
-    snoRNA,
-    /// small nucleolar RNA
-    TranscribedRNA,
-    /// transcribed RNA other than existing classes
-    ncRNA,
-    tmRNA,
-    Other = 255,
+enum_from_primitive! {
+    #[allow(non_camel_case_types)]
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    /// Internal representation of biomolecular type for [`MolInfo`]
+    ///
+    /// # Notes
+    ///
+    /// - Non-camelcase types look cleaner for names with "RNA"/"DNA", therefore non-CamelCase names
+    ///   have been explicitly allowed
+    ///
+    /// - Original implementation lists this as `INTEGER`, therefore it is assumed that
+    ///   serialized representation is an integer
+    pub enum BioMol {
+        #[default]
+        Unknown,
+        Genomic,
+        PreRNA,
+        /// precursor RNA of any sort
+        mRNA,
+        rRNA,
+        tRNA,
+        snRNA,
+        scRNA,
+        Peptide,
+        OtherGenetic,
+        /// other genetic material
+        Genomic_mRNA,
+        /// reported a mix of genomic dna and cdna sequence
+        cRNA,
+        /// viral RNA genome copy intermediate
+        snoRNA,
+        /// small nucleolar RNA
+        TranscribedRNA,
+        /// transcribed RNA other than existing classes
+        ncRNA,
+        tmRNA,
+        Other = 255,
+    }
 }
 
-#[allow(non_camel_case_types)]
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
-#[repr(u8)]
-/// Internal representation of molecular technique for [`MolInfo`]
-///
-/// # Note
-///
-/// Original implementation lists this as `INTEGER`, therefore it is assumed that
-/// serialized representation is an integer
-pub enum MolTech {
-    #[default]
-    Unknown,
-    /// standard sequencing
-    Standard,
-    /// Expressed Sequence Tag
-    EST,
-    /// Sequence Tagged Site
-    STS,
-    /// One-pass genomic sequence
-    Survey,
-    /// from genetic mapping techniques
-    GeneMap,
-    /// from physical mapping techniques
-    PhysMap,
-    /// derived from other data, not a primary entity
-    Derived,
-    /// conceptual translation
-    ConceptTrans,
-    /// peptide was sequenced
-    SeqPept,
-    /// concept transl. w/ partial pept. seq.
-    Both,
-    /// sequenced peptide, ordered by overlap
-    SeqPeptOverlap,
-    /// sequenced peptide, ordered by homology
-    SeqPeptHomol,
-    /// conceptual translation. supplied by author
-    ConceptTransA,
-    /// unordered High Throughput sequence contig
-    HTGS1,
-    /// ordered High Throughput sequence contig
-    HTGS2,
-    /// finished High Throughput sequence
-    HTGS3,
-    /// full length insert cDNA
-    FLI_cDNA,
-    /// single genomic reads for coordination
-    HTGS0,
-    /// high throughput cDNA,
-    HTC,
-    /// whole genome shotgun sequencing
-    WGS,
-    /// barcode of life project
-    Barcode,
-    /// composite of WGS and HTGS
-    CompositeWgsHtgs,
-    /// transcriptome shotgun assembly
-    TSA,
-    /// targeted locus sets/studies
-    Targeted,
-    /// use `tech_exp` from [`MolInfo`]
-    Other = 255,
+impl XMLElement for BioMol {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("MolInfo_biomol")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        BioMol::from_u8(get_next_num::<u8>(reader))
+    }
+}
+
+enum_from_primitive! {
+    #[allow(non_camel_case_types)]
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    /// Internal representation of molecular technique for [`MolInfo`]
+    ///
+    /// # Note
+    ///
+    /// Original implementation lists this as `INTEGER`, therefore it is assumed that
+    /// serialized representation is an integer
+    pub enum MolTech {
+        #[default]
+        Unknown,
+        /// standard sequencing
+        Standard,
+        /// Expressed Sequence Tag
+        EST,
+        /// Sequence Tagged Site
+        STS,
+        /// One-pass genomic sequence
+        Survey,
+        /// from genetic mapping techniques
+        GeneMap,
+        /// from physical mapping techniques
+        PhysMap,
+        /// derived from other data, not a primary entity
+        Derived,
+        /// conceptual translation
+        ConceptTrans,
+        /// peptide was sequenced
+        SeqPept,
+        /// concept transl. w/ partial pept. seq.
+        Both,
+        /// sequenced peptide, ordered by overlap
+        SeqPeptOverlap,
+        /// sequenced peptide, ordered by homology
+        SeqPeptHomol,
+        /// conceptual translation. supplied by author
+        ConceptTransA,
+        /// unordered High Throughput sequence contig
+        HTGS1,
+        /// ordered High Throughput sequence contig
+        HTGS2,
+        /// finished High Throughput sequence
+        HTGS3,
+        /// full length insert cDNA
+        FLI_cDNA,
+        /// single genomic reads for coordination
+        HTGS0,
+        /// high throughput cDNA,
+        HTC,
+        /// whole genome shotgun sequencing
+        WGS,
+        /// barcode of life project
+        Barcode,
+        /// composite of WGS and HTGS
+        CompositeWgsHtgs,
+        /// transcriptome shotgun assembly
+        TSA,
+        /// targeted locus sets/studies
+        Targeted,
+        /// use `tech_exp` from [`MolInfo`]
+        Other = 255,
+    }
+}
+
+impl XMLElement for MolTech {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("MolInfo_tech")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        MolTech::from_u8(get_next_num::<u8>(reader))
+    }
 }
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
@@ -338,7 +368,7 @@ pub enum MolCompleteness {
     Other = 255,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all="kebab-case")]
 pub struct MolInfo {
     pub bio_mol: BioMol,
@@ -347,6 +377,43 @@ pub struct MolInfo {
     pub tech_exp: Option<String>,
     pub completeness: MolCompleteness,
     pub gb_mol_type: Option<String>,
+}
+
+impl XMLElement for MolInfo {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("MolInfo")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut mol_info = Self::default();
+
+
+        let bio_mol_element = BytesStart::new("MolInfo_biomol");
+        let tech_element = BytesStart::new("MolInfo_tech");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == bio_mol_element.name() {
+                        mol_info.bio_mol = BioMol::from_reader(reader).unwrap();
+                    }
+                    if name == tech_element.name() {
+                        mol_info.tech = MolTech::from_reader(reader).unwrap();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        mol_info.into()
+    }
 }
 
 #[allow(non_camel_case_types)]
