@@ -1,3 +1,7 @@
+use std::ops::AddAssign;
+use atoi::{atoi, FromRadix10Checked, FromRadix10SignedChecked};
+use num::{Bounded, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Integer, Num, One, Zero};
+use num::traits::{NumAssign, NumOps};
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::name::QName;
 use quick_xml::Reader;
@@ -14,6 +18,17 @@ where
         else {
             *field = text.unwrap().into();
         }
+    }
+}
+
+pub fn get_next_num<T>(reader: &mut Reader<&[u8]>) -> T
+where
+    T: FromRadix10SignedChecked {
+    if let Event::Text(text) = reader.read_event().unwrap() {
+        return atoi::<T>(text.as_ref()).expect("Conversion error");
+    }
+    else {
+        panic!("Incorrectly formatted number");
     }
 }
 
