@@ -20,7 +20,7 @@ use crate::seqres::SeqGraph;
 use crate::seqtable::SeqTable;
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use crate::parsing_utils::get_next_num;
+use crate::parsing_utils::{get_next_num, get_next_text};
 use crate::XMLElement;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -192,6 +192,7 @@ impl XMLElement for SeqDesc {
         let source_element = BytesStart::new("Seqdesc_source");
         let molinfo_element = BytesStart::new("Seqdesc_molinfo");
         let pub_element = BytesStart::new("Seqdesc_pub");
+        let comment_element = BytesStart::new("Seqdesc_comment");
 
         loop {
             match reader.read_event().unwrap() {
@@ -205,6 +206,9 @@ impl XMLElement for SeqDesc {
                     }
                     else if name == pub_element.name() {
                         return Self::Pub(PubDesc::from_reader(reader).unwrap()).into()
+                    }
+                    else if name == comment_element.name() {
+                        return Self::Comment(get_next_text(reader).unwrap()).into()
                     }
                 }
                 Event::End(e) => {
