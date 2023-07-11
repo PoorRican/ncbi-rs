@@ -276,7 +276,21 @@ fn parse_bioseq_desc_pub() {
     assert!(has_pub);
 }
 
+#[test]
+fn parse_bioseq_desc_comment() {
+    let bioseq = get_bioseq(DATA1);
 
+    let expected = "The annotation was added by the NCBI Prokaryotic Genome Annotation Pipeline (PGAP). Information about PGAP can be found here: https://www.ncbi.nlm.nih.gov/genome/annotation_prok/".to_string();
+
+    let mut has_comment = false;
+    for entry in bioseq.descr.unwrap().iter() {
+        if let SeqDesc::Comment(comment) = entry {
+            assert_eq!(*comment, expected);
+            has_comment = true;
+        }
+    };
+    assert!(has_comment);
+}
 
 #[test]
 #[ignore]
