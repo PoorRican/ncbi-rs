@@ -301,7 +301,7 @@ pub struct CitSub {
     pub descr: Option<String>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all="kebab-case")]
 /// NOT from ANSI, this is a catchall
 pub struct CitGen {
@@ -389,6 +389,18 @@ pub struct Author {
 
     /// true if [corresponding author](https://scientific-publishing.webshop.elsevier.com/publication-recognition/what-corresponding-author/)
     pub is_corr: Option<bool>,
+}
+
+impl Author {
+    pub fn new(name: PersonId) -> Self {
+        Self {
+            name,
+            level: None,
+            role: None,
+            affil: None,
+            is_corr: None
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]

@@ -1,7 +1,10 @@
 use std::ops::Not;
+use quick_xml::se::to_string;
 use ncbi::{DataType, get_local_xml, parse_xml};
-use ncbi::general::{DbTag, ObjectId};
-use ncbi::seq::{BioMol, BioSeq, Mol, MolInfo, MolTech, SeqDesc};
+use ncbi::biblio::{AuthList, AuthListNames, Author, CitGen, CitSub, CitSubMedium};
+use ncbi::general::{Date, DateStd, DbTag, NameStd, ObjectId, PersonId};
+use ncbi::r#pub::{Pub, PubEquiv};
+use ncbi::seq::{BioMol, BioSeq, Mol, MolInfo, MolTech, PubDesc, SeqDesc};
 use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, BioSourceOrigin, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SubSource, SubSourceSubType};
 use ncbi::seqloc::SeqId;
 use ncbi::seqset::{BioSeqSet, SeqEntry};
@@ -176,6 +179,101 @@ fn parse_bioseq_desc_molinfo() {
     }
     assert!(has_mol_info);
 }
+
+#[test]
+fn parse_bioseq_desc_pub() {
+    let bioseq = get_bioseq(DATA1);
+
+    let authors = [
+        ("Blaikie", "Jack", "J.M"),
+        ("Sapula", "Sylvia", "S.A."),
+        ("Amsalu", "Anteneh", "A."),
+        ("Siderius", "Naomi", "N.L."),
+        ("Hart", "Bradley", "B.J."),
+        ("Venter", "Henrietta", "H."),
+    ];
+    let authors = authors
+        .iter()
+        .map(|author| {
+            Author::new(
+                PersonId::Name(
+                    NameStd {
+                        last: author.0.to_string(),
+                        first: author.1.to_string().into(),
+                        initials: author.2.to_string().into(),
+                        ..NameStd::default()
+                    })
+            )
+        });
+
+    let sub_authors = vec![Pub::Sub(CitSub {
+        authors: AuthList {
+            names: AuthListNames::Std(
+                authors.clone().collect::<Vec<Author>>().into()),
+            affil: None
+        },
+        imp: None,
+        medium: CitSubMedium::Paper,
+        date: Date::Date(DateStd {
+            year: 2023,
+            month: 3.into(),
+            day: 28.into(),
+            ..DateStd::default()
+        }).into(),
+        descr: None,
+    })];
+
+    let expected1 = PubDesc {
+        r#pub: sub_authors,
+        ..PubDesc::default()
+    };
+
+    let expected2 = PubDesc {
+        r#pub: vec![Pub::Gen(CitGen {
+            cit: "Unpublished".to_string().into(),
+            authors: AuthList {
+                names: AuthListNames::Std(
+                    authors.clone().collect::<Vec<Author>>().into()),
+                affil: Affil::Std(AffilStd {
+                    affil: "University of South Australia".to_string().into(),
+                    div: "Clinical Health Sciences".to_string().into(),
+                    city: "Adelaide".to_string().into(),
+                    sub: "SA".to_string().into(),
+                    country: "Australia".to_string().into(),
+                    street: "Cnr North Terrace and Frome Rd".to_string().into(),
+                    postal_code: "5001".to_string().into(),
+                    ..AffilStd::default()
+                }).into()
+            }.into(),
+            title: "The resistome of Klebsiella pneumoniae complex isolates recovered from Residential Aged Care Facilities"
+                .to_string()
+                .into(),
+            ..CitGen::default()
+        })],
+        ..PubDesc::default()
+    };
+
+    let mut has_pub = false;
+    let mut pub_checks = (false, false);
+    for entry in bioseq.descr.unwrap().iter() {
+        if let SeqDesc::Pub(desc) = entry {
+            if has_pub == false {
+                has_pub = true;
+            }
+
+            if *desc == expected1 {
+                pub_checks.0 = true;
+            }
+            else if *desc == expected2 {
+                pub_checks.1 = true;
+            }
+        }
+    }
+    assert!(pub_checks.0 | pub_checks.1);
+    assert!(has_pub);
+}
+
+
 
 #[test]
 #[ignore]

@@ -611,7 +611,7 @@ pub enum PubDescRefType {
     NoTarget,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all="kebab-case")]
 pub struct PubDesc {
     pub r#pub: PubEquiv,

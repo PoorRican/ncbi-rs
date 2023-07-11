@@ -150,7 +150,7 @@ pub enum PersonId {
     Consortium(String),
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// structured names
 pub struct NameStd {
     pub last: String,
