@@ -1,9 +1,13 @@
 //! Bibliographic data elements
 //! Adapted from ["biblio.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/biblio/biblio.asn)
 
+use quick_xml::events::{BytesStart, Event};
+use quick_xml::Reader;
 use crate::general::{Date, DbTag, PersonId};
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use crate::parsing_utils::{get_next_text, try_field};
+use crate::XMLElement;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
@@ -261,7 +265,7 @@ pub struct CitLet {
     pub r#type: CitLetType,
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
 #[repr(u8)]
 /// Internal representation for medium of submission for `medium` in [`CitSub`]
 ///
@@ -270,6 +274,7 @@ pub struct CitLet {
 /// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
 /// serialized representation is an integer
 pub enum CitSubMedium {
+    #[default]
     Paper = 1,
     Tape,
     Floppy,
@@ -301,6 +306,58 @@ pub struct CitSub {
     pub descr: Option<String>,
 }
 
+impl CitSub {
+    pub fn new(authors: AuthList) -> Self {
+        Self {
+            authors,
+            imp: None,
+            medium: Default::default(),
+            date: None,
+            descr: None,
+        }
+    }
+}
+
+impl XMLElement for CitSub {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Cit-sub")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let authors_element = BytesStart::new("Cit-sub_authors");
+        let date_element = BytesStart::new("Cit-sub_date");
+
+        let mut cit = CitSub::new(
+            AuthList {
+                names: AuthListNames::Std(vec![]), affil: None
+            }
+        );
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == authors_element.name() {
+                        cit.authors = AuthList::from_reader(reader).unwrap();
+                    }
+                    if name == date_element.name() {
+                        cit.date = Date::from_reader(reader);
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        break;
+                    }
+                }
+                _ => ()
+            }
+        }
+
+        cit.into()
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all="kebab-case")]
 /// NOT from ANSI, this is a catchall
@@ -329,6 +386,45 @@ pub struct CitGen {
     pub pmid: Option<PubMedId>,
 }
 
+impl XMLElement for CitGen {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Cit-gen")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut gen = CitGen::default();
+
+        // elements
+        let cit_element = BytesStart::new("Cit-gen_cit");
+        let authors_element = BytesStart::new("Cit-gen_authors");
+        let title_element = BytesStart::new("Cit-gen_title");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == cit_element.name() {
+                        gen.cit = get_next_text(reader);
+                    }
+                    else if name == authors_element.name() {
+                        gen.authors = AuthList::from_reader(reader);
+                    }
+                    else if name == title_element.name() {
+                        gen.title = get_next_text(reader)
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return gen.into();
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum AuthListNames {
@@ -342,13 +438,86 @@ pub enum AuthListNames {
     Str(Vec<String>),
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+/// Explicit definition instead of using derive
+///
+/// This default is not in original NCBI spec,
+/// therefore, it is subject to change
+impl Default for AuthListNames {
+    fn default() -> Self {
+        Self::Str(vec![])
+    }
+}
+
+impl XMLElement for AuthListNames {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Auth-list_names")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variants
+        let std_element = BytesStart::new("Auth-list_names_std");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == std_element.name() {
+                        return Self::Std(Author::vec_from_reader(reader, Self::start_bytes().to_end())).into()
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// authorship group
 pub struct AuthList {
     pub names: AuthListNames,
 
     /// author affiliation
     pub affil: Option<Affil>,
+}
+
+impl XMLElement for AuthList {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Auth-list")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut list = AuthList::default();
+
+        let names_element = BytesStart::new("Auth-list_names");
+        let affil_element = BytesStart::new("Auth-list_affil");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == names_element.name() {
+                        list.names = AuthListNames::from_reader(reader).unwrap();
+                    }
+                    else if name == affil_element.name() {
+                        list.affil = Affil::from_reader(reader)
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return list.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
 }
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
@@ -403,7 +572,37 @@ impl Author {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+impl XMLElement for Author {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Author")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut author = Author::new(PersonId::default());
+
+        let name_element = BytesStart::new("Author_name");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == name_element.name() {
+                        author.name = PersonId::from_reader(reader).unwrap();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return author.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all="kebab-case")]
 /// std representation for affiliations
 pub struct AffilStd {
@@ -431,6 +630,47 @@ pub struct AffilStd {
     pub postal_code: Option<String>,
 }
 
+impl XMLElement for AffilStd {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Affil_std")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut affil = AffilStd::default();
+
+        // elements
+        let affil_element = BytesStart::new("Affil_std_affil");
+        let div_element = BytesStart::new("Affil_std_div");
+        let city_element = BytesStart::new("Affil_std_city");
+        let sub_element = BytesStart::new("Affil_std_sub");
+        let country_element = BytesStart::new("Affil_std_country");
+        let street_element = BytesStart::new("Affil_std_street");
+        let postal_code_element = BytesStart::new("Affil_std_postal-code");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    try_field(&name, &affil_element, &mut affil.affil, reader);
+                    try_field(&name, &div_element, &mut affil.div, reader);
+                    try_field(&name, &city_element, &mut affil.city, reader);
+                    try_field(&name, &sub_element, &mut affil.sub, reader);
+                    try_field(&name, &country_element, &mut affil.country, reader);
+                    try_field(&name, &street_element, &mut affil.street, reader);
+                    try_field(&name, &postal_code_element, &mut affil.postal_code, reader);
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return affil.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
 pub enum Affil {
@@ -439,6 +679,36 @@ pub enum Affil {
 
     /// std representation
     Std(AffilStd),
+}
+
+impl XMLElement for Affil {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Affil")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variants
+        let str_element = BytesStart::new("Affil_str");
+        let std_element = BytesStart::new("Affil_std");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == std_element.name() {
+                        return Self::Std(AffilStd::from_reader(reader).unwrap()).into()
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]

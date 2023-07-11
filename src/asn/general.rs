@@ -2,10 +2,12 @@
 //!
 //! As per [general.asn](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/asn_spec/general.asn.html)
 
+use std::fs::read;
 use atoi::atoi;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Serialize, Deserialize};
+use crate::parsing_utils::{get_next_num, try_field};
 use crate::XMLElement;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -31,6 +33,35 @@ impl Default for Date {
     }
 }
 
+impl XMLElement for Date {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Date")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variants
+        let std_element = BytesStart::new("Date-std");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == std_element.name() {
+                        return Date::Date(DateStd::from_reader(reader).unwrap()).into();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// NOTE: this is NOT a unix tm struct
 pub struct DateStd {
@@ -48,6 +79,45 @@ pub struct DateStd {
     pub minute: Option<u8>,
     /// second of minute (0-59)
     pub second: Option<u8>,
+}
+
+impl XMLElement for DateStd {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Date-std")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut date = Self::default();
+
+        // elements
+        let year_element = BytesStart::new("Date-std_year");
+        let month_element = BytesStart::new("Date-std_month");
+        let day_element = BytesStart::new("Date-std_day");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == year_element.name() {
+                        date.year = get_next_num::<u16>(reader);
+                    }
+                    if name == month_element.name() {
+                        date.month = get_next_num::<u8>(reader).into();
+                    }
+                    if name == day_element.name() {
+                        date.day = get_next_num::<u8>(reader).into();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return date.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -150,6 +220,41 @@ pub enum PersonId {
     Consortium(String),
 }
 
+impl Default for PersonId {
+    fn default() -> Self {
+        Self::Str(String::default())
+    }
+}
+
+impl XMLElement for PersonId {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Person-id")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variants
+        let name_element = BytesStart::new("Person-id_name");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == name_element.name() {
+                        return PersonId::Name(NameStd::from_reader(reader).unwrap()).into()
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// structured names
 pub struct NameStd {
@@ -168,6 +273,40 @@ pub struct NameStd {
 
     /// Dr., Sister, etc
     pub title: Option<String>,
+}
+
+impl XMLElement for NameStd {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Name-std")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut name_std = NameStd::default();
+
+        // elements
+        let last_element = BytesStart::new("Name-std_last");
+        let first_element = BytesStart::new("Name-std_first");
+        let initials_element = BytesStart::new("Name-std_initials");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    try_field(&name, &last_element, &mut name_std.last, reader);
+                    try_field(&name, &first_element, &mut name_std.first, reader);
+                    try_field(&name, &initials_element, &mut name_std.initials, reader);
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return name_std.into()
+                    }
+                }
+                _ => ()
+            }
+
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]

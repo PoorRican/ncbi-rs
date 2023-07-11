@@ -8,7 +8,7 @@ use enum_primitive::FromPrimitive;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
-use crate::r#pub::PubEquiv;
+use crate::r#pub::{Pub, PubEquiv};
 use crate::seqalign::SeqAlign;
 use crate::seqblock::{EMBLBlock, GBBlock, PDBBlock, PIRBlock, PRFBlock, SPBlock};
 use crate::seqfeat::{
@@ -191,6 +191,7 @@ impl XMLElement for SeqDesc {
         // variants
         let source_element = BytesStart::new("Seqdesc_source");
         let molinfo_element = BytesStart::new("Seqdesc_molinfo");
+        let pub_element = BytesStart::new("Seqdesc_pub");
 
         loop {
             match reader.read_event().unwrap() {
@@ -199,8 +200,11 @@ impl XMLElement for SeqDesc {
                     if name == source_element.name() {
                         return Self::Source(BioSource::from_reader(reader).unwrap()).into()
                     }
-                    if name == molinfo_element.name() {
+                    else if name == molinfo_element.name() {
                         return Self::MolInfo(MolInfo::from_reader(reader).unwrap()).into()
+                    }
+                    else if name == pub_element.name() {
+                        return Self::Pub(PubDesc::from_reader(reader).unwrap()).into()
                     }
                 }
                 Event::End(e) => {
@@ -633,6 +637,37 @@ pub struct PubDesc {
     pub comment: Option<String>,
     /// type of reference in a GenBank record
     pub ref_type: PubDescRefType,
+}
+
+impl XMLElement for PubDesc {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Pubdesc")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut desc = Self::default();
+
+        // elements
+        let pub_element = BytesStart::new("Pubdesc_pub");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == pub_element.name() {
+                        desc.r#pub = PubEquiv::from_reader(reader).unwrap();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return desc.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
 }
 
 /// Cofactor, prosthetic group, inhibitor, etc
