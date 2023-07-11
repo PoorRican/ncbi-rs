@@ -2,7 +2,7 @@ use std::ops::Not;
 use quick_xml::se::to_string;
 use ncbi::{DataType, get_local_xml, parse_xml};
 use ncbi::biblio::{Affil, AffilStd, AuthList, AuthListNames, Author, CitGen, CitSub, CitSubMedium};
-use ncbi::general::{Date, DateStd, DbTag, NameStd, ObjectId, PersonId};
+use ncbi::general::{Date, DateStd, DbTag, NameStd, ObjectId, PersonId, UserData, UserField, UserObject};
 use ncbi::r#pub::{Pub, PubEquiv};
 use ncbi::seq::{BioMol, BioSeq, Mol, MolInfo, MolTech, PubDesc, SeqDesc};
 use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, BioSourceOrigin, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SubSource, SubSourceSubType};
@@ -290,6 +290,262 @@ fn parse_bioseq_desc_comment() {
         }
     };
     assert!(has_comment);
+}
+
+#[test]
+fn parse_bioseq_desc_user() {
+    let bioseq = get_bioseq(DATA1);
+
+    let expected1 = UserObject {
+        class: None,
+        r#type: ObjectId::Str("DBLink".to_string()),
+        data: vec![
+            UserField {
+                label: ObjectId::Str("BioSample".to_string()),
+                num: 1.into(),
+                data: UserData::Strs(vec!["SAMN33942939".to_string()]),
+            },
+            UserField {
+                label: ObjectId::Str("BioProject".to_string()),
+                num: 1.into(),
+                data: UserData::Strs(vec!["PRJNA224116".to_string()]),
+            },
+            UserField {
+                label: ObjectId::Str("Assembly".to_string()),
+                num: 1.into(),
+                data: UserData::Strs(vec!["GCF_030238925".to_string()]),
+            }
+        ],
+    };
+    let expected2 = UserObject {
+        class: None,
+        r#type: ObjectId::Str("StructuredComment".into()),
+        data: vec![
+            UserField {
+                label: ObjectId::Str("StructuredCommentPrefix".to_string()),
+                num: None,
+                data: UserData::Str("##Genome-Annotation-Data-START##".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Annotation Provider".to_string()),
+                num: None,
+                data: UserData::Str("NCBI RefSeq".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Annotation Date".to_string()),
+                num: None,
+                data: UserData::Str("06/09/2023 17:06:50".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Annotation Pipeline".to_string()),
+                num: None,
+                data: UserData::Str("NCBI Prokaryotic Genome Annotation Pipeline (PGAP)".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Annotation Method".to_string()),
+                num: None,
+                data: UserData::Str("Best-placed reference protein set; GeneMarkS-2+".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Annotation Software".to_string()),
+                num: None,
+                data: UserData::Str("6.5".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Features Annotated".to_string()),
+                num: None,
+                data: UserData::Str("Gene; CDS; rRNA; tRNA; ncRNA".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Genes (total)".to_string()),
+                num: None,
+                data: UserData::Str("5,288".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("CDSs (total)".to_string()),
+                num: None,
+                data: UserData::Str("5,202".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Genes (coding)".to_string()),
+                num: None,
+                data: UserData::Str("5,041".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("CDSs (with proteins)".to_string()),
+                num: None,
+                data: UserData::Str("5,041".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Genes (RNA)".to_string()),
+                num: None,
+                data: UserData::Str("86".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Genes (RNA)".to_string()),
+                num: None,
+                data: UserData::Str("2, 3, 6 (5S, 16S, 23S)".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("complete rRNAs".to_string()),
+                num: None,
+                data: UserData::Str("2 (5S)".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("partial rRNAs".to_string()),
+                num: None,
+                data: UserData::Str("3, 6 (16S, 23S)".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("tRNAs".to_string()),
+                num: None,
+                data: UserData::Str("64".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("ncRNAs".to_string()),
+                num: None,
+                data: UserData::Str("11".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Pseudo Genes (total)".to_string()),
+                num: None,
+                data: UserData::Str("161".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("tRNAs".to_string()),
+                num: None,
+                data: UserData::Str("64".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("CDSs (without protein)".to_string()),
+                num: None,
+                data: UserData::Str("161".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Pseudo Genes (ambiguous residues)".to_string()),
+                num: None,
+                data: UserData::Str("0 of 161".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Pseudo Genes (frameshifted)".to_string()),
+                num: None,
+                data: UserData::Str("59 of 161".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Pseudo Genes (incomplete)".to_string()),
+                num: None,
+                data: UserData::Str("107 of 161".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Pseudo Genes (internal stop)".to_string()),
+                num: None,
+                data: UserData::Str("25 of 161".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("Pseudo Genes (multiple problems)".to_string()),
+                num: None,
+                data: UserData::Str("27 of 161".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("StructuredCommentSuffix".to_string()),
+                num: None,
+                data: UserData::Str("##Genome-Annotation-Data-END##".to_string()),
+            },
+        ],
+    };
+    let expected3 = UserObject {
+        class: None,
+        r#type: ObjectId::Str("RefGeneTracking".to_string()),
+        data: vec![
+            UserField {
+                label: ObjectId::Str("Status".to_string()),
+                num: None,
+                data: UserData::Str("PIPELINE".to_string()),
+            },
+            UserField {
+                label: ObjectId::Str("IdenticalTo".to_string()),
+                num: None,
+                data: UserData::Fields(vec![
+                    UserField {
+                        label: ObjectId::Id(0),
+                        num: None,
+                        data: UserData::Fields(vec![
+                            UserField {
+                                label: ObjectId::Str("accession".to_string()),
+                                num: None,
+                                data: UserData::Str("JARQWN010000024.1".to_string()),
+                            }
+                        ]),
+                    }
+                ]),
+            }
+        ],
+    };
+    let expected4 = UserObject {
+        class: None,
+        r#type: ObjectId::Str("FeatureFetchPolicy".to_string()),
+        data: vec![UserField {
+            label: ObjectId::Str("Policy".to_string()),
+            num: None,
+            data: UserData::Str("OnlyNearFeatures".to_string()),
+        }],
+    };
+    let expected5 = UserObject {
+        class: None,
+        r#type: ObjectId::Str("StructuredComment".to_string()),
+        data: vec![
+            UserField {
+                label: ObjectId::Str("StructuredCommentPrefix".to_string()),
+                num: None,
+                data: UserData::Str("##Genome-Assembly-Data-START##".to_string())
+            },
+            UserField {
+                label: ObjectId::Str("Assembly Method".to_string()),
+                num: None,
+                data: UserData::Str("SPAdes v. 1".to_string())
+            },
+            UserField {
+                label: ObjectId::Str("Genome Representation".to_string()),
+                num: None,
+                data: UserData::Str("Full".to_string())
+            },
+            UserField {
+                label: ObjectId::Str("Expected Final Version".to_string()),
+                num: None,
+                data: UserData::Str("Yes".to_string())
+            },
+            UserField {
+                label: ObjectId::Str("Genome Coverage".to_string()),
+                num: None,
+                data: UserData::Str("100x".to_string())
+            },
+            UserField {
+                label: ObjectId::Str("Sequencing Technology".to_string()),
+                num: None,
+                data: UserData::Str("Illumina HiSeq".to_string())
+            },
+            UserField {
+                label: ObjectId::Str("StructuredCommentSuffix".to_string()),
+                num: None,
+                data: UserData::Str("##Genome-Assembly-Data-END##".to_string())
+            },
+        ],
+    };
+
+    let expected = [expected1, expected2, expected3, expected4, expected5];
+
+    let mut has_user_object = false;
+    for entry in bioseq.descr.unwrap().iter() {
+        if let SeqDesc::User(object) = entry {
+            for exp in expected.iter() {
+                if object.r#type == exp.r#type {
+                    assert_eq!(object, exp)
+                }
+            }
+        }
+    }
+    assert!(has_user_object)
+
 }
 
 #[test]
