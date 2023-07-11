@@ -193,6 +193,7 @@ impl XMLElement for SeqDesc {
         let molinfo_element = BytesStart::new("Seqdesc_molinfo");
         let pub_element = BytesStart::new("Seqdesc_pub");
         let comment_element = BytesStart::new("Seqdesc_comment");
+        let user_element = BytesStart::new("Seqdesc_user");
 
         loop {
             match reader.read_event().unwrap() {
@@ -209,6 +210,9 @@ impl XMLElement for SeqDesc {
                     }
                     else if name == comment_element.name() {
                         return Self::Comment(get_next_text(reader).unwrap()).into()
+                    }
+                    else if name == user_element.name() {
+                        return Self::User(UserObject::from_reader(reader).unwrap()).into()
                     }
                 }
                 Event::End(e) => {

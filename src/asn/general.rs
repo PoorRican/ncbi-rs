@@ -2,12 +2,11 @@
 //!
 //! As per [general.asn](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/asn_spec/general.asn.html)
 
-use std::fs::read;
 use atoi::atoi;
-use quick_xml::events::{BytesStart, Event};
+use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Serialize, Deserialize};
-use crate::parsing_utils::{get_next_num, try_field};
+use crate::parsing_utils::{get_next_num, get_next_text, get_vec, get_vec_num, get_vec_text, try_field};
 use crate::XMLElement;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -125,6 +124,13 @@ impl XMLElement for DateStd {
 pub enum ObjectId {
     Id(u64),
     Str(String),
+}
+
+/// explicitly implemented because a default is not in original spec
+impl Default for ObjectId {
+    fn default() -> Self {
+        Self::Str(String::default())
+    }
 }
 
 impl XMLElement for ObjectId {
@@ -354,7 +360,7 @@ pub enum IntFuzz {
     Alt(Vec<i64>),
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// a general object for a user defined structured data item
 ///
 /// used by [`SeqFeat`] and [`SeqDescr`]
@@ -368,6 +374,45 @@ pub struct UserObject {
 
     /// the object itself
     pub data: Vec<UserField>,
+}
+
+impl XMLElement for UserObject {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("User-object")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut object = Self::default();
+
+        // elements
+        let class_element = BytesStart::new("User-object_class");
+        let data_element = BytesStart::new("User-object_data");
+        let type_element = BytesStart::new("User-object_type");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    try_field(&name, &class_element, &mut object.class, reader);
+
+                    if name == type_element.name() {
+                        object.r#type = ObjectId::from_reader(reader).unwrap();
+                    }
+
+                    else if name == data_element.name() {
+                        object.data = UserField::vec_from_reader(reader, data_element.to_end());
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return object.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -387,7 +432,123 @@ pub enum UserData {
     Objects(Vec<UserObject>),
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+impl UserData {
+    fn parse_strs(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+
+        let end = BytesEnd::new("User-field_data_strs");
+
+        let items = get_vec_text(reader, &end);
+
+        return Self::Strs(items).into()
+    }
+
+    fn parse_ints(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let end = BytesEnd::new("User-field_data_ints");
+
+        let items = get_vec_num(reader, &end);
+
+        return Self::Ints(items).into()
+    }
+
+    fn parse_reals(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        unimplemented!()
+    }
+
+    fn parse_fields(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let end = BytesEnd::new("User-field_data_fields");
+
+        return Self::Fields(
+            get_vec(
+                reader,
+                &UserField::start_bytes(),
+                &UserField::from_reader, &end
+            )
+        ).into()
+    }
+
+    fn parse_objects(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let end = BytesEnd::new("User-field_data_fields");
+
+        return Self::Objects(
+            get_vec(
+                reader,
+                &UserObject::start_bytes(),
+                &UserObject::from_reader, &end
+            )
+        ).into()
+    }
+}
+
+/// explicitly implemented because a default is not in original spec
+impl Default for UserData {
+    fn default() -> Self {
+        Self::Str(String::default())
+    }
+}
+
+impl XMLElement for UserData {
+    /// This enumerated value is not enclosed by a tag
+    fn start_bytes() -> BytesStart<'static> {
+        unimplemented!()
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variants
+        let str_element = BytesStart::new("User-field_data_str");
+        let int_element = BytesStart::new("User-field_data_int");
+        let real_element = BytesStart::new("User-field_data_real");
+        let bool_element = BytesStart::new("User-field_data_bool");
+        let object_element = BytesStart::new("User-field_data_object");
+        let strs_element = BytesStart::new("User-field_data_strs");
+        let ints_element = BytesStart::new("User-field_data_ints");
+        let reals_element = BytesStart::new("User-field_data_reals");
+        let fields_element = BytesStart::new("User-field_data_fields");
+        let objects_element = BytesStart::new("User-field_data_str");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == str_element.name() {
+                        return Self::Str(get_next_text(reader).unwrap()).into();
+                    }
+                    if name == int_element.name() {
+                        let num = get_next_num::<i64>(reader);
+                        return Self::Int(num).into();
+                    }
+                    if name == real_element.name() {
+                        unimplemented!()
+                    }
+                    if name == bool_element.name() {
+                        unimplemented!()
+                    }
+                    if name == object_element.name() {
+                        return Self::Object(UserObject::from_reader(reader).unwrap()).into();
+                    }
+                    if name == strs_element.name() {
+                        return Self::parse_strs(reader)
+                    }
+                    if name == ints_element.name() {
+                        return Self::parse_ints(reader)
+                    }
+                    if name == reals_element.name() {
+                        return Self::parse_reals(reader)
+                    }
+                    if name == fields_element.name() {
+                        return Self::parse_fields(reader)
+                    }
+                    if name == objects_element.name() {
+                        return Self::parse_objects(reader)
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct UserField {
     /// field label
     pub label: ObjectId,
@@ -395,4 +556,43 @@ pub struct UserField {
     pub num: Option<i64>,
     /// field contents
     pub data: UserData,
+}
+
+impl XMLElement for UserField {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("User-field")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut field = Self::default();
+
+        // elements
+        let label_element = BytesStart::new("User-field_label");
+        let num_element = BytesStart::new("User-field_num");
+        let data_element = BytesStart::new("User-field_data");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == label_element.name() {
+                        field.label = ObjectId::from_reader(reader).unwrap();
+                    }
+                    else if name == num_element.name() {
+                        field.num = get_next_num::<i64>(reader).into();
+                    }
+                    else if name == data_element.name() {
+                        field.data = UserData::from_reader(reader).unwrap();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return field.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
 }

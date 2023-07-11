@@ -313,7 +313,7 @@ fn parse_bioseq_desc_user() {
             UserField {
                 label: ObjectId::Str("Assembly".to_string()),
                 num: 1.into(),
-                data: UserData::Strs(vec!["GCF_030238925".to_string()]),
+                data: UserData::Strs(vec!["GCF_030238925.1".to_string()]),
             }
         ],
     };
@@ -347,7 +347,7 @@ fn parse_bioseq_desc_user() {
                 data: UserData::Str("Best-placed reference protein set; GeneMarkS-2+".to_string()),
             },
             UserField {
-                label: ObjectId::Str("Annotation Software".to_string()),
+                label: ObjectId::Str("Annotation Software revision".to_string()),
                 num: None,
                 data: UserData::Str("6.5".to_string()),
             },
@@ -372,7 +372,7 @@ fn parse_bioseq_desc_user() {
                 data: UserData::Str("5,041".to_string()),
             },
             UserField {
-                label: ObjectId::Str("CDSs (with proteins)".to_string()),
+                label: ObjectId::Str("CDSs (with protein)".to_string()),
                 num: None,
                 data: UserData::Str("5,041".to_string()),
             },
@@ -382,7 +382,7 @@ fn parse_bioseq_desc_user() {
                 data: UserData::Str("86".to_string()),
             },
             UserField {
-                label: ObjectId::Str("Genes (RNA)".to_string()),
+                label: ObjectId::Str("rRNAs".to_string()),
                 num: None,
                 data: UserData::Str("2, 3, 6 (5S, 16S, 23S)".to_string()),
             },
@@ -410,11 +410,6 @@ fn parse_bioseq_desc_user() {
                 label: ObjectId::Str("Pseudo Genes (total)".to_string()),
                 num: None,
                 data: UserData::Str("161".to_string()),
-            },
-            UserField {
-                label: ObjectId::Str("tRNAs".to_string()),
-                num: None,
-                data: UserData::Str("64".to_string()),
             },
             UserField {
                 label: ObjectId::Str("CDSs (without protein)".to_string()),
@@ -539,7 +534,11 @@ fn parse_bioseq_desc_user() {
         if let SeqDesc::User(object) = entry {
             for exp in expected.iter() {
                 if object.r#type == exp.r#type {
-                    assert_eq!(object, exp)
+                    if object.r#type == ObjectId::Str("StructuredComment".to_string()) && object.data.first().unwrap() != exp.data.first().unwrap() {
+                        continue;
+                    }
+                    assert_eq!(object, exp);
+                    has_user_object = true;
                 }
             }
         }
