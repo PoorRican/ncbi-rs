@@ -1,7 +1,7 @@
 use std::ops::Not;
 use quick_xml::se::to_string;
 use ncbi::{DataType, get_local_xml, parse_xml};
-use ncbi::biblio::{AuthList, AuthListNames, Author, CitGen, CitSub, CitSubMedium};
+use ncbi::biblio::{Affil, AffilStd, AuthList, AuthListNames, Author, CitGen, CitSub, CitSubMedium};
 use ncbi::general::{Date, DateStd, DbTag, NameStd, ObjectId, PersonId};
 use ncbi::r#pub::{Pub, PubEquiv};
 use ncbi::seq::{BioMol, BioSeq, Mol, MolInfo, MolTech, PubDesc, SeqDesc};
@@ -185,7 +185,7 @@ fn parse_bioseq_desc_pub() {
     let bioseq = get_bioseq(DATA1);
 
     let authors = [
-        ("Blaikie", "Jack", "J.M"),
+        ("Blaikie", "Jack", "J.M."),
         ("Sapula", "Sylvia", "S.A."),
         ("Amsalu", "Anteneh", "A."),
         ("Siderius", "Naomi", "N.L."),
@@ -210,7 +210,16 @@ fn parse_bioseq_desc_pub() {
         authors: AuthList {
             names: AuthListNames::Std(
                 authors.clone().collect::<Vec<Author>>().into()),
-            affil: None
+            affil: Affil::Std(AffilStd {
+                    affil: "University of South Australia".to_string().into(),
+                    div: "Clinical Health Sciences".to_string().into(),
+                    city: "Adelaide".to_string().into(),
+                    sub: "SA".to_string().into(),
+                    country: "Australia".to_string().into(),
+                    street: "Cnr North Terrace and Frome Rd".to_string().into(),
+                    postal_code: "5001".to_string().into(),
+                    ..AffilStd::default()
+                }).into()
         },
         imp: None,
         medium: CitSubMedium::Paper,
@@ -234,16 +243,7 @@ fn parse_bioseq_desc_pub() {
             authors: AuthList {
                 names: AuthListNames::Std(
                     authors.clone().collect::<Vec<Author>>().into()),
-                affil: Affil::Std(AffilStd {
-                    affil: "University of South Australia".to_string().into(),
-                    div: "Clinical Health Sciences".to_string().into(),
-                    city: "Adelaide".to_string().into(),
-                    sub: "SA".to_string().into(),
-                    country: "Australia".to_string().into(),
-                    street: "Cnr North Terrace and Frome Rd".to_string().into(),
-                    postal_code: "5001".to_string().into(),
-                    ..AffilStd::default()
-                }).into()
+                affil: None,
             }.into(),
             title: "The resistome of Klebsiella pneumoniae complex isolates recovered from Residential Aged Care Facilities"
                 .to_string()
@@ -254,22 +254,25 @@ fn parse_bioseq_desc_pub() {
     };
 
     let mut has_pub = false;
-    let mut pub_checks = (false, false);
     for entry in bioseq.descr.unwrap().iter() {
         if let SeqDesc::Pub(desc) = entry {
+            let expected =
+                match desc.r#pub
+                    .first()
+                    .unwrap() {
+                Pub::Gen(_) => &expected2,
+                Pub::Sub(_) => &expected1,
+                _ => panic!("Encountered unexpected type")
+            };
+            assert_eq!(desc, expected);
+
             if has_pub == false {
                 has_pub = true;
             }
 
-            if *desc == expected1 {
-                pub_checks.0 = true;
-            }
-            else if *desc == expected2 {
-                pub_checks.1 = true;
-            }
         }
     }
-    assert!(pub_checks.0 | pub_checks.1);
+
     assert!(has_pub);
 }
 
