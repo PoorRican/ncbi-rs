@@ -83,8 +83,7 @@ fn parse_bioseq_descr() {
     let bioseq = get_bioseq(DATA1);
 
     assert!(bioseq.descr.is_some());
-    // only BioSource should be parsed
-    assert_eq!(bioseq.descr.unwrap().len(), 1);
+    assert_eq!(bioseq.descr.unwrap().len(), 10);
 }
 
 #[test]

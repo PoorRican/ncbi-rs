@@ -7,63 +7,93 @@ use quick_xml::name::QName;
 use quick_xml::Reader;
 use crate::XMLElement;
 
-pub fn try_field<T>(current: &QName, element: &BytesStart, field: &mut T, reader: &mut Reader<&[u8]>)
+/// [`Reader`] that returns bytes
+///
+/// Used when XML is read from Entrez or file.
+pub type XmlReader<'a> = Reader<&'a [u8]>;
+
+/// Parses a single [`BytesText`] event and sets external variable
+///
+/// # Arguments
+///
+/// - `current`: name of current [`BytesStart`]. Used to check if XML data should be parsed.
+/// - `element`: start element that encapsulates desired text
+/// - `to`: external variable to parse to
+/// - `reader`: [`XmlReader`]
+///
+/// # Panics
+///
+/// Panics when [`try_next_string()`] returns `None`
+pub fn parse_next_string_into<T>(current: &QName, element: &BytesStart, to: &mut T, reader: &mut XmlReader)
 where
     T: From<String> {
     if *current == element.name() {
-        let text = get_next_text(reader);
-        if text.is_none() {
-            bad_element_formatting(element);
-        }
-        else {
-            *field = text.unwrap().into();
+        let text = try_next_string(reader);
+        if text.is_some() {
+            *to = text.unwrap().into();
         }
     }
 }
 
-fn parse_num<T>(text: &[u8]) -> T
+/// Parse the given bytes into an integer
+///
+/// # Panics
+///
+/// Panics when [`atoi`] returns `None`
+fn parse_int<T>(text: &[u8]) -> T
 where
     T: FromRadix10SignedChecked
 {
     atoi::<T>(text.as_ref()).expect("Conversion error")
 }
 
-fn parse_text(text: &[u8]) -> String {
+/// Parse the given bytes into a [`String`]
+fn parse_string(text: &[u8]) -> String {
     text.escape_ascii().to_string()
 }
 
-pub fn get_next_num<T>(reader: &mut Reader<&[u8]>) -> T
+/// Parses the next [`Event::Text`] as an integer
+pub fn try_next_int<T>(reader: &mut XmlReader) -> Option<T>
 where
     T: FromRadix10SignedChecked {
     if let Event::Text(text) = reader.read_event().unwrap() {
-        parse_num(text.deref())
+        Some(parse_int(text.deref()))
     }
     else {
-        panic!("Incorrectly formatted number");
+        None
     }
 }
 
-pub fn get_next_text(reader: &mut Reader<&[u8]>) -> Option<String> {
+/// Parses the next [`Event::Text`] as an integer
+pub fn try_next_string(reader: &mut XmlReader) -> Option<String> {
     if let Event::Text(text) = reader.read_event().unwrap() {
-        return parse_text(text.deref()).into()
+        parse_string(text.deref()).into()
     }
-    return None
+    else {
+        None
+    }
 }
 
-pub fn bad_element_formatting(element: &BytesStart) {
-    panic!("Incorrectly formatted element {}", parse_text(element.name().0));
-}
-
-pub fn get_vec_text(reader: &mut Reader<&[u8]>, end: &BytesEnd) -> Vec<String>
+/// Parse each [`BytesText`] within the enclosed element as a [`String`]
+///
+/// # Parameters
+/// - `reader`: [`XmlReader`]
+/// - `end`: denotes end of container
+///
+/// # Returns
+/// [`String`] objects contained by `end`
+pub fn parse_vec_str_unchecked(reader: &mut XmlReader, end: &BytesEnd) -> Vec<String>
 {
     let mut items = Vec::new();
     loop {
         match reader.read_event().unwrap() {
                 Event::Text(text) => {
+                    // remove whitespace
                     let text =
-                        parse_text(text.deref())
+                        parse_string(text.deref())
                             .trim()
                             .to_string();
+                    // do not add empty or escape codes
                     if !(text == "\\\\n" || text.is_empty()) {
                         items.push(text)
                     }
@@ -78,14 +108,22 @@ pub fn get_vec_text(reader: &mut Reader<&[u8]>, end: &BytesEnd) -> Vec<String>
     }
 }
 
-pub fn get_vec_num<T>(reader: &mut Reader<&[u8]>, end: &BytesEnd) -> Vec<T>
+/// Parse each [`BytesText`] within the enclosed element as an integer
+///
+/// # Parameters
+/// - `reader`: [`XmlReader`]
+/// - `end`: denotes end of container
+///
+/// # Returns
+/// Integers contained by `end`
+pub fn parse_vec_int_unchecked<T>(reader: &mut Reader<&[u8]>, end: &BytesEnd) -> Vec<T>
     where
         T: FromRadix10SignedChecked,
 {
     let mut nums = Vec::new();
     loop {
         match reader.read_event().unwrap() {
-            Event::Text(text) => nums.push(parse_num(text.deref())),
+            Event::Text(text) => nums.push(parse_int(text.deref())),
             Event::End(e) => {
                 if e.name() == end.name() {
                     return nums
@@ -96,7 +134,15 @@ pub fn get_vec_num<T>(reader: &mut Reader<&[u8]>, end: &BytesEnd) -> Vec<T>
     }
 }
 
-pub fn get_vec<T, F>(reader: &mut Reader<&[u8]>, item_element: &BytesStart, parser: &F, end: &BytesEnd) -> Vec<T>
+/// Attempt to parse each [`BytesStart`] within the enclosed element as an object
+///
+/// # Parameters
+/// - `reader`: [`XmlReader`]
+/// - `end`: denotes end of container
+///
+/// # Returns
+/// Parsed object contained by `end`
+pub fn get_vec_node<T, F>(reader: &mut Reader<&[u8]>, item_element: &BytesStart, parser: &F, end: &BytesEnd) -> Vec<T>
     where
         F: Fn(&mut Reader<&[u8]>) -> Option<T>
 {

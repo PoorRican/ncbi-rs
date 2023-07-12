@@ -20,7 +20,7 @@ use crate::seqres::SeqGraph;
 use crate::seqtable::SeqTable;
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use crate::parsing_utils::{get_next_num, get_next_text};
+use crate::parsing_utils::{try_next_int, try_next_string};
 use crate::XMLElement;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -209,7 +209,7 @@ impl XMLElement for SeqDesc {
                         return Self::Pub(PubDesc::from_reader(reader).unwrap()).into()
                     }
                     else if name == comment_element.name() {
-                        return Self::Comment(get_next_text(reader).unwrap()).into()
+                        return Self::Comment(try_next_string(reader).unwrap()).into()
                     }
                     else if name == user_element.name() {
                         return Self::User(UserObject::from_reader(reader).unwrap()).into()
@@ -274,7 +274,7 @@ impl XMLElement for BioMol {
     }
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
-        BioMol::from_u8(get_next_num::<u8>(reader))
+        BioMol::from_u8(try_next_int::<u8>(reader).unwrap())
     }
 }
 
@@ -350,7 +350,7 @@ impl XMLElement for MolTech {
     }
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
-        MolTech::from_u8(get_next_num::<u8>(reader))
+        MolTech::from_u8(try_next_int::<u8>(reader).unwrap())
     }
 }
 

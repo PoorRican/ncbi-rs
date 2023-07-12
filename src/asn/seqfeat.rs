@@ -64,7 +64,7 @@ use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use crate::parsing_utils::{get_next_num, try_field};
+use crate::parsing_utils::{try_next_int, parse_next_string_into};
 use crate::XMLElement;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -1565,7 +1565,7 @@ impl XMLElement for OrgRef {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    try_field(&name, &taxname_element, &mut org_ref.taxname, reader);
+                    parse_next_string_into(&name, &taxname_element, &mut org_ref.taxname, reader);
 
                     if name == db_element.name() {
                         org_ref.db = DbTag::vec_from_reader(reader, db_element.to_end()).into();
@@ -1688,19 +1688,19 @@ impl XMLElement for OrgName {
                         org_name.name = OrgNameChoice::from_reader(reader);
                     }
 
-                    try_field(&name, &attrib_element, &mut org_name.attrib, reader);
+                    parse_next_string_into(&name, &attrib_element, &mut org_name.attrib, reader);
 
                     if name == mod_element.name() {
                         org_name.r#mod = OrgMod::vec_from_reader(reader, mod_element.to_end()).into();
                     }
 
-                    try_field(&name, &lineage_element, &mut org_name.lineage, reader);
+                    parse_next_string_into(&name, &lineage_element, &mut org_name.lineage, reader);
 
                     if name == gcode_element.name() {
-                        org_name.gcode = Some(get_next_num::<u64>(reader));
+                        org_name.gcode = try_next_int::<u64>(reader);
                     }
 
-                    try_field(&name, &div_element, &mut org_name.div, reader)
+                    parse_next_string_into(&name, &div_element, &mut org_name.div, reader)
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -1832,7 +1832,7 @@ impl XMLElement for OrgMod {
                         subtype = OrgModSubType::from_reader(reader);
                     }
 
-                    try_field(&name, &subname_element, &mut subname, reader);
+                    parse_next_string_into(&name, &subname_element, &mut subname, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -1878,9 +1878,9 @@ impl XMLElement for BinomialOrgName {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    try_field(&name, &genus_element, &mut binomial.genus, reader);
-                    try_field(&name, &species_element, &mut binomial.species, reader);
-                    try_field(&name, &subspecies_element, &mut binomial.subspecies, reader);
+                    parse_next_string_into(&name, &genus_element, &mut binomial.genus, reader);
+                    parse_next_string_into(&name, &species_element, &mut binomial.species, reader);
+                    parse_next_string_into(&name, &subspecies_element, &mut binomial.subspecies, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -2196,7 +2196,7 @@ impl XMLElement for SubSource {
                         subtype = SubSourceSubType::from_reader(reader);
                     }
 
-                    try_field(&qname, &name_element, &mut name, reader);
+                    parse_next_string_into(&qname, &name_element, &mut name, reader);
                 }
                 Event::End(e) => {
                     if e.name() == Self::start_bytes().to_end().name() {
