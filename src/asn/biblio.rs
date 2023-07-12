@@ -6,7 +6,7 @@ use quick_xml::Reader;
 use crate::general::{Date, DbTag, PersonId};
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use crate::parsing_utils::{try_next_string, parse_next_string_into};
+use crate::parsing_utils::{try_next_string, parse_next_string_to};
 use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -653,13 +653,13 @@ impl XMLElement for AffilStd {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_next_string_into(&name, &affil_element, &mut affil.affil, reader);
-                    parse_next_string_into(&name, &div_element, &mut affil.div, reader);
-                    parse_next_string_into(&name, &city_element, &mut affil.city, reader);
-                    parse_next_string_into(&name, &sub_element, &mut affil.sub, reader);
-                    parse_next_string_into(&name, &country_element, &mut affil.country, reader);
-                    parse_next_string_into(&name, &street_element, &mut affil.street, reader);
-                    parse_next_string_into(&name, &postal_code_element, &mut affil.postal_code, reader);
+                    parse_next_string_to(&name, &affil_element, &mut affil.affil, reader);
+                    parse_next_string_to(&name, &div_element, &mut affil.div, reader);
+                    parse_next_string_to(&name, &city_element, &mut affil.city, reader);
+                    parse_next_string_to(&name, &sub_element, &mut affil.sub, reader);
+                    parse_next_string_to(&name, &country_element, &mut affil.country, reader);
+                    parse_next_string_to(&name, &street_element, &mut affil.street, reader);
+                    parse_next_string_to(&name, &postal_code_element, &mut affil.postal_code, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {

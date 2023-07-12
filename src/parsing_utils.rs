@@ -14,17 +14,15 @@ pub type XmlReader<'a> = Reader<&'a [u8]>;
 
 /// Parses a single [`BytesText`] event and sets external variable
 ///
+/// Used for building structs.
+///
 /// # Arguments
 ///
 /// - `current`: name of current [`BytesStart`]. Used to check if XML data should be parsed.
 /// - `element`: start element that encapsulates desired text
 /// - `to`: external variable to parse to
 /// - `reader`: [`XmlReader`]
-///
-/// # Panics
-///
-/// Panics when [`try_next_string()`] returns `None`
-pub fn parse_next_string_into<T>(current: &QName, element: &BytesStart, to: &mut T, reader: &mut XmlReader)
+pub fn parse_next_string_to<T>(current: &QName, element: &BytesStart, to: &mut T, reader: &mut XmlReader)
 where
     T: From<String> {
     if *current == element.name() {
@@ -32,6 +30,47 @@ where
         if text.is_some() {
             *to = text.unwrap().into();
         }
+    }
+}
+
+/// Parses a single [`BytesText`] event and sets external variable
+///
+/// Used for building structs.
+///
+/// # Arguments
+///
+/// - `current`: name of current [`BytesStart`]. Used to check if XML data should be parsed.
+/// - `element`: start element that encapsulates desired value
+/// - `to`: external variable to parse integer into
+/// - `reader`: [`XmlReader`]
+pub fn parse_next_int_to<T>(current: &QName, element: &BytesStart, to: &mut T, reader: &mut XmlReader)
+where
+T: FromRadix10SignedChecked,
+{
+    if *current == element.name() {
+        let text = try_next_int(reader);
+        if text.is_some() {
+            *to = text.unwrap();
+        }
+    }
+}
+
+/// Parses a single [`BytesText`] event and sets external variable
+///
+/// Used for building structs.
+///
+/// # Arguments
+///
+/// - `current`: name of current [`BytesStart`]. Used to check if XML data should be parsed.
+/// - `element`: start element that encapsulates desired value
+/// - `to`: external variable to parse integer into
+/// - `reader`: [`XmlReader`]
+pub fn parse_next_int_to_option<T>(current: &QName, element: &BytesStart, to: &mut Option<T>, reader: &mut XmlReader)
+    where
+        T: FromRadix10SignedChecked,
+{
+    if *current == element.name() {
+        *to = try_next_int(reader);
     }
 }
 
@@ -144,7 +183,7 @@ pub fn parse_vec_int_unchecked<T>(reader: &mut Reader<&[u8]>, end: &BytesEnd) ->
 /// Parsed object contained by `end`
 pub fn get_vec_node<T, F>(reader: &mut Reader<&[u8]>, item_element: &BytesStart, parser: &F, end: &BytesEnd) -> Vec<T>
     where
-        F: Fn(&mut Reader<&[u8]>) -> Option<T>
+        F: Fn(&mut XmlReader) -> Option<T>
 {
     let mut items = Vec::new();
     loop {
@@ -161,5 +200,12 @@ pub fn get_vec_node<T, F>(reader: &mut Reader<&[u8]>, item_element: &BytesStart,
             }
             _ => ()
         }
+    }
+}
+
+/// Used for parsing nodes denoted by `element` and setting `to`
+pub fn try_node_to<T: XMLElement>(current: &QName, element: &BytesStart, to: &mut T, reader: &mut XmlReader) {
+    if *current == element.name() {
+        *to = T::from_reader(reader).unwrap()
     }
 }
