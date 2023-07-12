@@ -90,7 +90,7 @@ fn parse_bioseq_descr() {
     let bioseq = get_bioseq(DATA1);
 
     assert!(bioseq.descr.is_some());
-    assert_eq!(bioseq.descr.unwrap().len(), 10);
+    assert_eq!(bioseq.descr.unwrap().len(), 11);
 }
 
 #[test]
