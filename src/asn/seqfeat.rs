@@ -64,7 +64,7 @@ use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use crate::parsing_utils::{try_next_int, parse_next_string_to};
+use crate::parsing_utils::{next_int, parse_next_string_to};
 use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -1697,7 +1697,7 @@ impl XMLElement for OrgName {
                     parse_next_string_to(&name, &lineage_element, &mut org_name.lineage, reader);
 
                     if name == gcode_element.name() {
-                        org_name.gcode = try_next_int::<u64>(reader);
+                        org_name.gcode = next_int::<u64>(reader);
                     }
 
                     parse_next_string_to(&name, &div_element, &mut org_name.div, reader)

@@ -2,11 +2,12 @@
 //!
 //! As per [general.asn](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/asn_spec/general.asn.html)
 
+use std::ops::Deref;
 use atoi::atoi;
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Serialize, Deserialize};
-use crate::parsing_utils::{try_next_int, try_next_string, get_vec_node, parse_vec_int_unchecked, parse_vec_str_unchecked, parse_next_string_to, parse_next_int_to, parse_next_int_to_option, try_node_to};
+use crate::parsing_utils::{next_int, next_string, get_vec_node, parse_vec_int_unchecked, parse_vec_str_unchecked, parse_next_string_to, parse_next_int_to, parse_next_int_to_option, try_node_to, to_int, to_string, try_node_to_vec};
 use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -98,15 +99,9 @@ impl XMLElement for DateStd {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    if name == year_element.name() {
-                        date.year = try_next_int(reader).unwrap();
-                    }
-                    if name == month_element.name() {
-                        date.month = try_next_int(reader);
-                    }
-                    if name == day_element.name() {
-                        date.day = try_next_int(reader).into();
-                    }
+                    parse_next_int_to(&name, &year_element, &mut date.year, reader);
+                    parse_next_int_to_option(&name, &month_element, &mut date.month, reader);
+                    parse_next_int_to_option(&name, &day_element, &mut date.day, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -148,13 +143,13 @@ impl XMLElement for ObjectId {
                 if e.name() == id_element.name() {
                     if let Event::Text(text) = reader.read_event().unwrap() {
                         return ObjectId::Id(
-                            atoi(text.as_ref()).expect("Can't parse &[u8] into int")
+                            to_int(text.deref())
                         ).into();
                     }
                 }
                 else if e.name() == str_element.name() {
                     if let Event::Text(text) = reader.read_event().unwrap() {
-                        return ObjectId::Str(text.escape_ascii().to_string()).into()
+                        return ObjectId::Str(to_string(text.deref())).into()
                     }
                 }
             }
@@ -396,14 +391,8 @@ impl XMLElement for UserObject {
                     let name = e.name();
 
                     parse_next_string_to(&name, &class_element, &mut object.class, reader);
-
-                    if name == type_element.name() {
-                        object.r#type = ObjectId::from_reader(reader).unwrap();
-                    }
-
-                    else if name == data_element.name() {
-                        object.data = UserField::vec_from_reader(reader, data_element.to_end());
-                    }
+                    try_node_to(&name, &type_element, &mut object.r#type, reader);
+                    try_node_to_vec(&name, &data_element, &mut object.data, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -512,10 +501,10 @@ impl XMLElement for UserData {
                     let name = e.name();
 
                     if name == str_element.name() {
-                        return Self::Str(try_next_string(reader).unwrap()).into();
+                        return Self::Str(next_string(reader).unwrap()).into();
                     }
                     if name == int_element.name() {
-                        return Self::Int(try_next_int::<i64>(reader).unwrap()).into();
+                        return Self::Int(next_int::<i64>(reader).unwrap()).into();
                     }
                     if name == real_element.name() {
                         unimplemented!()

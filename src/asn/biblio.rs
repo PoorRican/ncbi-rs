@@ -6,7 +6,7 @@ use quick_xml::Reader;
 use crate::general::{Date, DbTag, PersonId};
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use crate::parsing_utils::{try_next_string, parse_next_string_to};
+use crate::parsing_utils::{next_string, parse_next_string_to, try_node_to, try_node_to_option};
 use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -338,12 +338,8 @@ impl XMLElement for CitSub {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    if name == authors_element.name() {
-                        cit.authors = AuthList::from_reader(reader).unwrap();
-                    }
-                    if name == date_element.name() {
-                        cit.date = Date::from_reader(reader);
-                    }
+                    try_node_to(&name, &authors_element, &mut cit.authors, reader);
+                    try_node_to_option(&name, &authors_element, &mut cit.date, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -404,15 +400,9 @@ impl XMLElement for CitGen {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    if name == cit_element.name() {
-                        gen.cit = try_next_string(reader);
-                    }
-                    else if name == authors_element.name() {
-                        gen.authors = AuthList::from_reader(reader);
-                    }
-                    else if name == title_element.name() {
-                        gen.title = try_next_string(reader)
-                    }
+                    parse_next_string_to(&name, &cit_element, &mut gen.cit, reader);
+                    parse_next_string_to(&name, &title_element, &mut gen.title, reader);
+                    try_node_to_option(&name, &authors_element, &mut gen.authors, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -502,12 +492,8 @@ impl XMLElement for AuthList {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    if name == names_element.name() {
-                        list.names = AuthListNames::from_reader(reader).unwrap();
-                    }
-                    else if name == affil_element.name() {
-                        list.affil = Affil::from_reader(reader)
-                    }
+                    try_node_to(&name, &names_element, &mut list.names, reader);
+                    try_node_to_option(&name, &affil_element, &mut list.affil, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -587,9 +573,7 @@ impl XMLElement for Author {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    if name == name_element.name() {
-                        author.name = PersonId::from_reader(reader).unwrap();
-                    }
+                    try_node_to(&name, &name_element, &mut author.name, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
