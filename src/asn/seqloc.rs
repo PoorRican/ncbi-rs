@@ -8,16 +8,16 @@
 
 use crate::biblio::IdPat;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId};
+use crate::parsing_utils::{parse_int_to_option, parse_string_to, read_int, read_node};
 use crate::seqfeat::FeatId;
-use serde::{Serialize, Deserialize};
-use serde_repr::{Serialize_repr, Deserialize_repr};
+use crate::{XMLElement, XMLElementVec};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
-use crate::{XMLElement, XMLElementVec};
-use crate::parsing_utils::{parse_int_to_option, parse_string_to, read_int, read_node};
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum SeqId {
     Local(ObjectId),
     /// GenInfo backbone sequence id
@@ -64,7 +64,7 @@ pub enum SeqId {
     /// internal NCBI genome pipeline
     Gpipe(TextseqId),
 
-    #[serde(rename="named-annot-track")]
+    #[serde(rename = "named-annot-track")]
     /// internal named annotation
     NamedAnnotTrack(TextseqId),
 }
@@ -87,9 +87,8 @@ impl XMLElement for SeqId {
                 }
                 if e.name() == general_element.name() {
                     return SeqId::General(read_node(reader).unwrap()).into();
-                }
-                else if e.name() == gi_element.name() {
-                    return SeqId::Gi(read_int(reader).unwrap()).into()
+                } else if e.name() == gi_element.name() {
+                    return SeqId::Gi(read_int(reader).unwrap()).into();
                 }
             }
         }
@@ -141,10 +140,10 @@ impl XMLElement for TextseqId {
                 }
                 Event::End(e) => {
                     if e.name() == Self::start_bytes().to_end().name() {
-                        return id.into()
+                        return id.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -158,7 +157,7 @@ pub struct GiimportId {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct PDBSeqId {
     pub mol: PDBMolId,
     pub rel: Option<Date>,
@@ -169,7 +168,7 @@ pub struct PDBSeqId {
 pub type PDBMolId = String;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Defines a location on a [`BioSeq`].
 ///
 /// Class hierarchy makes it possible to use the same type in multiple contexts.
@@ -206,7 +205,7 @@ pub enum SeqLoc {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqInterval {
     pub from: i64,
     pub to: i64,
@@ -227,7 +226,7 @@ pub struct SeqPoint {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct PackedSeqPnt {
     pub strand: Option<NaStrand>,
     pub id: SeqId,

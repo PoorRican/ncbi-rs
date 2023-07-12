@@ -4,8 +4,8 @@
 //! from the NCBI C++ Toolkit.
 
 use crate::general::{Date, DbTag, ObjectId};
-use crate::seqloc::{SeqId};
-use serde::{Serialize, Deserialize};
+use crate::seqloc::SeqId;
+use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
@@ -38,7 +38,7 @@ pub enum EMBLDbNameCode {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum EMBLDbName {
     Code(EMBLDbNameCode),
     Name(String),
@@ -122,7 +122,7 @@ pub enum SPBlockClass {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// SWISSPROT specific descriptions
 pub struct SPBlock {
     pub class: SPBlockClass,
@@ -157,7 +157,7 @@ pub struct SPBlock {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// PIR specific descriptions
 pub struct PIRBlock {
     /// had punctuation in sequence?
@@ -185,7 +185,7 @@ pub struct PIRBlock {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct GBBlock {
     pub extra_accessions: Option<Vec<String>>,
     /// source line
@@ -207,7 +207,7 @@ pub struct GBBlock {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Protein Research Foundation specific definition
 pub struct PRFBlock {
     pub extra_src: Option<PRFExtraSrc>,
@@ -224,7 +224,7 @@ pub struct PRFExtraSrc {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// PDB specific descriptions
 pub struct PDBBlock {
     /// deposition date: month,year

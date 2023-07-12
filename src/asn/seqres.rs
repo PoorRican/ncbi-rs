@@ -3,10 +3,10 @@
 //! Adapted from ["seqres.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqres/seqres.asn)
 
 use crate::seqloc::SeqLoc;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum SeqGraphChoice {
     Real(RealGraph),
     Int(IntGraph),
@@ -14,7 +14,7 @@ pub enum SeqGraphChoice {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// For values mapped by residue or range to sequence
 pub struct SeqGraph {
     pub title: Option<String>,
@@ -39,7 +39,7 @@ pub struct SeqGraph {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct Graph<T> {
     /// top of graph
     pub max: T,

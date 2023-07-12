@@ -4,27 +4,26 @@
 //!
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
-use enum_primitive::FromPrimitive;
-use quick_xml::events::{BytesStart, Event};
-use quick_xml::Reader;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
+use crate::parsing_utils::{
+    parse_node_to, parse_node_to_option, parse_vec_node_to, read_int, read_node, read_string,
+};
 use crate::r#pub::PubEquiv;
 use crate::seqalign::SeqAlign;
 use crate::seqblock::{EMBLBlock, GBBlock, PDBBlock, PIRBlock, PRFBlock, SPBlock};
-use crate::seqfeat::{
-    BioSource, ModelEvidenceSupport, OrgRef,
-    SeqFeat,
-};
+use crate::seqfeat::{BioSource, ModelEvidenceSupport, OrgRef, SeqFeat};
 use crate::seqloc::{SeqId, SeqLoc};
 use crate::seqres::SeqGraph;
 use crate::seqtable::SeqTable;
-use serde::{Serialize, Deserialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
-use crate::parsing_utils::{parse_node_to, parse_node_to_option, parse_vec_node_to, read_int, read_node, read_string};
 use crate::{XMLElement, XMLElementVec};
+use enum_primitive::FromPrimitive;
+use quick_xml::events::{BytesStart, Event};
+use quick_xml::Reader;
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Single continuous biological sequence.
 ///
 /// It can be nucleic acid or protein. It can be fully instantiated (ie: data
@@ -78,10 +77,10 @@ impl XMLElement for BioSeq {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return bioseq.into()
+                        return bioseq.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -95,12 +94,12 @@ impl XMLElement for SeqDescr {
     }
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
-        return SeqDesc::vec_from_reader(reader, Self::start_bytes().to_end()).into()
+        return SeqDesc::vec_from_reader(reader, Self::start_bytes().to_end()).into();
     }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// # Note
 /// `MolType`, `Modif`, `Method`, and `Org` are consolidated and expanded
 /// in [`OrgRef`]`, [`BioSource`], and [`MolInfo`] in this specification.
@@ -185,19 +184,15 @@ impl XMLElement for SeqDesc {
                 Event::Start(e) => {
                     let name = e.name();
                     if name == source_element.name() {
-                        return Self::Source(read_node(reader).unwrap()).into()
-                    }
-                    else if name == molinfo_element.name() {
-                        return Self::MolInfo(read_node(reader).unwrap()).into()
-                    }
-                    else if name == pub_element.name() {
-                        return Self::Pub(read_node(reader).unwrap()).into()
-                    }
-                    else if name == comment_element.name() {
-                        return Self::Comment(read_string(reader).unwrap()).into()
-                    }
-                    else if name == user_element.name() {
-                        return Self::User(read_node(reader).unwrap()).into()
+                        return Self::Source(read_node(reader).unwrap()).into();
+                    } else if name == molinfo_element.name() {
+                        return Self::MolInfo(read_node(reader).unwrap()).into();
+                    } else if name == pub_element.name() {
+                        return Self::Pub(read_node(reader).unwrap()).into();
+                    } else if name == comment_element.name() {
+                        return Self::Comment(read_string(reader).unwrap()).into();
+                    } else if name == user_element.name() {
+                        return Self::User(read_node(reader).unwrap()).into();
                     }
                 }
                 Event::End(e) => {
@@ -206,7 +201,7 @@ impl XMLElement for SeqDesc {
                         return None;
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -259,7 +254,10 @@ impl XMLElement for BioMol {
         BytesStart::new("MolInfo_biomol")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         BioMol::from_u8(read_int::<u8>(reader).unwrap())
     }
 }
@@ -335,7 +333,10 @@ impl XMLElement for MolTech {
         BytesStart::new("MolInfo_tech")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         MolTech::from_u8(read_int::<u8>(reader).unwrap())
     }
 }
@@ -367,7 +368,7 @@ pub enum MolCompleteness {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct MolInfo {
     pub bio_mol: BioMol,
     pub tech: MolTech,
@@ -382,9 +383,11 @@ impl XMLElement for MolInfo {
         BytesStart::new("MolInfo")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let mut mol_info = Self::default();
-
 
         let bio_mol_element = BytesStart::new("MolInfo_biomol");
         let tech_element = BytesStart::new("MolInfo_tech");
@@ -399,10 +402,10 @@ impl XMLElement for MolInfo {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return mol_info.into()
+                        return mol_info.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -511,7 +514,7 @@ pub enum GIBBMethod {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Any display numbering system
 pub enum Numbering {
     /// continuous numbering
@@ -525,7 +528,7 @@ pub enum Numbering {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// continuous display numbering system
 pub struct NumCont {
     /// number assigned to first residue
@@ -542,7 +545,7 @@ pub struct NumCont {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// any tags to residues
 pub struct NumEnum {
     /// number of tags to follow
@@ -568,7 +571,7 @@ pub enum NumRefType {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Number by reference to other sequences
 pub struct NumRef {
     /// type of reference
@@ -578,7 +581,7 @@ pub struct NumRef {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Mapping to floating point system
 /// from an integer system used by [`BioSeq`]
 /// `position = (a * int_position) + b`
@@ -589,7 +592,7 @@ pub struct NumReal {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// type of reference in a GenBank record
 pub enum PubDescRefType {
     #[default]
@@ -604,7 +607,7 @@ pub enum PubDescRefType {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct PubDesc {
     pub r#pub: PubEquiv,
     pub name: Option<String>,
@@ -632,7 +635,10 @@ impl XMLElement for PubDesc {
         BytesStart::new("Pubdesc")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let mut desc = Self::default();
 
         // elements
@@ -647,10 +653,10 @@ impl XMLElement for PubDesc {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return desc.into()
+                        return desc.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -780,7 +786,7 @@ pub enum Strand {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Instances of sequences
 ///
 /// Represents things like: is DNA, RNA, or protein? Is it circular or linear?
@@ -817,7 +823,7 @@ pub struct SeqInst {
 // Sequence extensions for representing more complex types
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum SeqExt {
     /// segmented sequences
     Seg(SegExt),
@@ -837,7 +843,7 @@ pub type MapExt = Vec<SeqFeat>;
 pub type DeltaExt = Vec<DeltaSeq>;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum DeltaSeq {
     /// point to a sequence
     Loc(SeqLoc),
@@ -847,7 +853,7 @@ pub enum DeltaSeq {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqLiteral {
     /// must give a length in residues
     pub length: u64,
@@ -860,7 +866,7 @@ pub struct SeqLiteral {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// internal structure for storing sequence history deletion status
 pub enum SeqHistDeleted {
     Bool(bool),
@@ -868,7 +874,7 @@ pub enum SeqHistDeleted {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Sequence history record
 /// assembly: records how seq was assembled from others
 pub struct SeqHist {
@@ -879,14 +885,14 @@ pub struct SeqHist {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqHistRec {
     pub date: Option<Date>,
     pub ids: Vec<SeqId>,
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Sequence representations
 pub enum SeqData {
     /// IUPAC 1 letter nuc acid code
@@ -965,7 +971,7 @@ pub enum SeqGapLinkage {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqGap {
     pub r#type: SeqGapType,
     pub linkage: Option<SeqGapLinkage>,
@@ -991,7 +997,7 @@ pub enum LinkageEvidenceType {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct LinkageEvidence {
     pub r#type: LinkageEvidenceType,
 }
@@ -1042,7 +1048,7 @@ pub type NCBIPaa = Vec<u8>;
 pub type NCBIStdAa = Vec<u8>;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// This is a replica of [`TextSeqId`]
 ///
 /// This is specific for annotations, and exists to maintain a semantic difference
@@ -1055,7 +1061,7 @@ pub struct TextAnnotId {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum AnnotId {
     Local(ObjectId),
     NCBI(u64),
@@ -1066,7 +1072,7 @@ pub enum AnnotId {
 pub type AnnotDescr = Vec<AnnotDesc>;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum AnnotDesc {
     /// a short name for this collection
     Name(String),
@@ -1109,7 +1115,7 @@ pub enum AlignType {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct AlignDef {
     pub align_type: AlignType,
     /// used for the one ref [`SeqId`] for now
@@ -1136,7 +1142,7 @@ pub enum SeqAnnotDB {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 /// Internal representation for `data` choice in [`SeqAnnot`]
 pub enum SeqAnnotData {
     FTable(Vec<SeqFeat>),
@@ -1149,13 +1155,13 @@ pub enum SeqAnnotData {
     /// used for communication between tools
     Locs(Vec<SeqLoc>),
 
-    #[serde(rename="seq-table")]
+    #[serde(rename = "seq-table")]
     /// features in table form
     SeqTable(SeqTable),
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqAnnot {
     pub id: Option<Vec<AnnotId>>,
     pub db: Option<SeqAnnotDB>,

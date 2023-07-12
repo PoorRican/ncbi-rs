@@ -6,7 +6,7 @@
 //! increase continuously. So IUPAC codes, which are upper case letters will
 //! always have 65 0 cells before the code begins. This allows all codes to do
 //! indexed lookups.
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
@@ -43,7 +43,7 @@ pub enum SeqCodeType {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// for tables of sequence mappings
 pub struct SeqMapTable {
     /// code to map from
@@ -59,7 +59,7 @@ pub struct SeqMapTable {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// internal representation of map index
 pub struct SeqCodeTableCell {
     /// the printed symbol or letter
@@ -69,7 +69,7 @@ pub struct SeqCodeTableCell {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// for names of coded values
 pub struct SeqCodeTable {
     /// name of code

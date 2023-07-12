@@ -3,7 +3,9 @@ use quick_xml::Reader;
 
 pub trait XMLElement {
     fn start_bytes() -> BytesStart<'static>;
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized;
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized;
 
     fn is_end(element: &BytesEnd) -> bool {
         element.name() == Self::start_bytes().name()
@@ -14,7 +16,7 @@ pub trait XMLElementVec: XMLElement {
     fn vec_from_reader<'a, E>(reader: &mut Reader<&[u8]>, end: E) -> Vec<Self>
     where
         E: Into<Option<BytesEnd<'a>>>,
-        Self: Sized
+        Self: Sized,
     {
         let binding = Self::start_bytes();
         let end = end.into().unwrap_or(binding.to_end());

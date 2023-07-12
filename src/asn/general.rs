@@ -2,14 +2,18 @@
 //!
 //! As per [general.asn](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/asn_spec/general.asn.html)
 
+use crate::parsing_utils::{
+    parse_int_to, parse_int_to_option, parse_node_to, parse_string_to, parse_vec_node,
+    parse_vec_node_to, read_int, read_node, read_string, read_vec_int_unchecked,
+    read_vec_str_unchecked,
+};
+use crate::{XMLElement, XMLElementVec};
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::Reader;
-use serde::{Serialize, Deserialize};
-use crate::parsing_utils::{read_int, read_string, parse_vec_node, read_vec_int_unchecked, read_vec_str_unchecked, parse_string_to, parse_int_to, parse_int_to_option, parse_node_to, parse_vec_node_to, read_node};
-use crate::{XMLElement, XMLElementVec};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 /// Model precise timestamp or an un-parsed string
 ///
 /// The string form is a fall-back for when the input data cannot be parsed
@@ -22,12 +26,10 @@ pub enum Date {
 
 impl Default for Date {
     fn default() -> Self {
-        Self::Date(
-            DateStd {
-                year: 2023,
-                ..DateStd::default()
-            }
-        )
+        Self::Date(DateStd {
+            year: 2023,
+            ..DateStd::default()
+        })
     }
 }
 
@@ -36,7 +38,10 @@ impl XMLElement for Date {
         BytesStart::new("Date")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         // variants
         let std_element = BytesStart::new("Date-std");
 
@@ -51,10 +56,10 @@ impl XMLElement for Date {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return None
+                        return None;
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -84,7 +89,10 @@ impl XMLElement for DateStd {
         BytesStart::new("Date-std")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let mut date = Self::default();
 
         // elements
@@ -103,10 +111,10 @@ impl XMLElement for DateStd {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return date.into()
+                        return date.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -139,10 +147,10 @@ impl XMLElement for ObjectId {
         loop {
             if let Event::Start(e) = reader.read_event().unwrap() {
                 if e.name() == id_element.name() {
-                    return ObjectId::Id(read_int(reader).unwrap()).into()
+                    return ObjectId::Id(read_int(reader).unwrap()).into();
                 }
                 if e.name() == str_element.name() {
-                    return ObjectId::Str(read_string(reader).unwrap()).into()
+                    return ObjectId::Str(read_string(reader).unwrap()).into();
                 }
             }
         }
@@ -178,10 +186,10 @@ impl XMLElement for DbTag {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return tag.into()
+                        return tag.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -189,7 +197,7 @@ impl XMLElement for DbTag {
 impl XMLElementVec for DbTag {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 /// define a std element for people
 pub enum PersonId {
     /// any defined database tag
@@ -215,7 +223,10 @@ impl XMLElement for PersonId {
         BytesStart::new("Person-id")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         // variants
         let name_element = BytesStart::new("Person-id_name");
 
@@ -225,15 +236,15 @@ impl XMLElement for PersonId {
                     let name = e.name();
 
                     if name == name_element.name() {
-                        return PersonId::Name(read_node(reader).unwrap()).into()
+                        return PersonId::Name(read_node(reader).unwrap()).into();
                     }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return None
+                        return None;
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -264,7 +275,10 @@ impl XMLElement for NameStd {
         BytesStart::new("Name-std")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let mut name_std = NameStd::default();
 
         // elements
@@ -283,12 +297,11 @@ impl XMLElement for NameStd {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return name_std.into()
+                        return name_std.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
-
         }
     }
 }
@@ -300,7 +313,7 @@ pub struct Range {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum FuzzLimit {
     /// unknown
     Unk,
@@ -325,10 +338,10 @@ pub enum FuzzLimit {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 /// Communicate uncertainties in integer values
 pub enum IntFuzz {
-    #[serde(rename="p-m")]
+    #[serde(rename = "p-m")]
     /// plus or minus fixed amount
     PM(i64),
 
@@ -346,7 +359,7 @@ pub struct UserObject {
     /// endeavor which designed this object
     pub class: Option<String>,
 
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     /// type of object within class
     pub r#type: ObjectId,
 
@@ -359,7 +372,10 @@ impl XMLElement for UserObject {
         BytesStart::new("User-object")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let mut object = Self::default();
 
         // elements
@@ -378,10 +394,10 @@ impl XMLElement for UserObject {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return object.into()
+                        return object.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -389,7 +405,7 @@ impl XMLElement for UserObject {
 impl XMLElementVec for UserObject {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum UserData {
     Str(String),
     Int(i64),
@@ -406,41 +422,51 @@ pub enum UserData {
 }
 
 impl UserData {
-    fn parse_strs(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
-
+    fn parse_strs(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let end = BytesEnd::new("User-field_data_strs");
 
         let items = read_vec_str_unchecked(reader, &end);
 
-        return Self::Strs(items).into()
+        return Self::Strs(items).into();
     }
 
-    fn parse_ints(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn parse_ints(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let end = BytesEnd::new("User-field_data_ints");
 
         let items = read_vec_int_unchecked(reader, &end);
 
-        return Self::Ints(items).into()
+        return Self::Ints(items).into();
     }
 
-    fn parse_reals(_reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn parse_reals(_reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         unimplemented!()
     }
 
-    fn parse_fields(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn parse_fields(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let end = BytesEnd::new("User-field_data_fields");
 
-        return Self::Fields(
-            parse_vec_node(reader, end)
-        ).into()
+        return Self::Fields(parse_vec_node(reader, end)).into();
     }
 
-    fn parse_objects(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn parse_objects(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let end = BytesEnd::new("User-field_data_fields");
 
-        return Self::Objects(
-            parse_vec_node(reader, end)
-        ).into()
+        return Self::Objects(parse_vec_node(reader, end)).into();
     }
 }
 
@@ -457,7 +483,10 @@ impl XMLElement for UserData {
         unimplemented!()
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         // variants
         let str_element = BytesStart::new("User-field_data_str");
         let int_element = BytesStart::new("User-field_data_int");
@@ -491,22 +520,22 @@ impl XMLElement for UserData {
                         return Self::Object(read_node(reader).unwrap()).into();
                     }
                     if name == strs_element.name() {
-                        return Self::parse_strs(reader)
+                        return Self::parse_strs(reader);
                     }
                     if name == ints_element.name() {
-                        return Self::parse_ints(reader)
+                        return Self::parse_ints(reader);
                     }
                     if name == reals_element.name() {
-                        return Self::parse_reals(reader)
+                        return Self::parse_reals(reader);
                     }
                     if name == fields_element.name() {
-                        return Self::parse_fields(reader)
+                        return Self::parse_fields(reader);
                     }
                     if name == objects_element.name() {
-                        return Self::parse_objects(reader)
+                        return Self::parse_objects(reader);
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -527,7 +556,10 @@ impl XMLElement for UserField {
         BytesStart::new("User-field")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let mut field = Self::default();
 
         // elements
@@ -546,10 +578,10 @@ impl XMLElement for UserField {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return field.into()
+                        return field.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }

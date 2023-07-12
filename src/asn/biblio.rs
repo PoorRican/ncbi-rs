@@ -1,16 +1,18 @@
 //! Bibliographic data elements
 //! Adapted from ["biblio.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/biblio/biblio.asn)
 
+use crate::general::{Date, DbTag, PersonId};
+use crate::parsing_utils::{
+    parse_node_to, parse_node_to_option, parse_string_to, parse_vec_node, read_node, read_string,
+};
+use crate::{XMLElement, XMLElementVec};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
-use crate::general::{Date, DbTag, PersonId};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use crate::parsing_utils::{parse_string_to, parse_node_to, parse_node_to_option, read_node, parse_vec_node, read_string};
-use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 /// represents multiple ways to id an article
 pub enum ArticleId {
     PubMed(PubMedId),
@@ -105,7 +107,7 @@ pub struct PubStatusDate {
 pub type PubStatusDateSet = Vec<PubStatusDate>;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 /// journal or book
 pub enum CitArtFrom {
     Journal(CitJour),
@@ -161,7 +163,7 @@ pub struct CitProc {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Patent citation
 pub struct CitPat {
     pub title: String,
@@ -199,7 +201,7 @@ pub struct CitPat {
     /// priorities
     pub priority: Option<Vec<PatentPriority>>,
 
-    #[serde(rename="abstract")]
+    #[serde(rename = "abstract")]
     /// abstract of patent
     pub r#abstract: Option<String>,
 }
@@ -217,7 +219,7 @@ pub struct PatentPriority {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum IdPatChoice {
     /// patent document number
     Number(String),
@@ -227,7 +229,7 @@ pub enum IdPatChoice {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// identifies a patent
 pub struct IdPat {
     /// patent document country
@@ -252,7 +254,7 @@ pub enum CitLetType {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// cite a letter, thesis, or manuscript
 pub struct CitLet {
     /// same fields as a book
@@ -261,7 +263,7 @@ pub struct CitLet {
     /// manuscript identifier
     pub man_id: Option<String>,
 
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub r#type: CitLetType,
 }
 
@@ -323,15 +325,17 @@ impl XMLElement for CitSub {
         BytesStart::new("Cit-sub")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let authors_element = BytesStart::new("Cit-sub_authors");
         let date_element = BytesStart::new("Cit-sub_date");
 
-        let mut cit = CitSub::new(
-            AuthList {
-                names: AuthListNames::Std(vec![]), affil: None
-            }
-        );
+        let mut cit = CitSub::new(AuthList {
+            names: AuthListNames::Std(vec![]),
+            affil: None,
+        });
 
         loop {
             match reader.read_event().unwrap() {
@@ -346,7 +350,7 @@ impl XMLElement for CitSub {
                         break;
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
 
@@ -355,7 +359,7 @@ impl XMLElement for CitSub {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// NOT from ANSI, this is a catchall
 pub struct CitGen {
     /// anything, not parsable
@@ -387,7 +391,10 @@ impl XMLElement for CitGen {
         BytesStart::new("Cit-gen")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let mut gen = CitGen::default();
 
         // elements
@@ -409,14 +416,14 @@ impl XMLElement for CitGen {
                         return gen.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum AuthListNames {
     /// full citations
     Std(Vec<Author>),
@@ -443,7 +450,10 @@ impl XMLElement for AuthListNames {
         BytesStart::new("Auth-list_names")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         // variants
         let std_element = BytesStart::new("Auth-list_names_std");
 
@@ -453,15 +463,15 @@ impl XMLElement for AuthListNames {
                     let name = e.name();
 
                     if name == std_element.name() {
-                        return Self::Std(parse_vec_node(reader, std_element.to_end())).into()
+                        return Self::Std(parse_vec_node(reader, std_element.to_end())).into();
                     }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return None
+                        return None;
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -481,7 +491,10 @@ impl XMLElement for AuthList {
         BytesStart::new("Auth-list")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let mut list = AuthList::default();
 
         let names_element = BytesStart::new("Auth-list_names");
@@ -497,10 +510,10 @@ impl XMLElement for AuthList {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return list.into()
+                        return list.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -531,7 +544,7 @@ pub enum AuthorRole {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct Author {
     /// author, primary, or secondary
     pub name: PersonId,
@@ -553,7 +566,7 @@ impl Author {
             level: None,
             role: None,
             affil: None,
-            is_corr: None
+            is_corr: None,
         }
     }
 }
@@ -563,7 +576,10 @@ impl XMLElement for Author {
         BytesStart::new("Author")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let mut author = Author::new(PersonId::default());
 
         let name_element = BytesStart::new("Author_name");
@@ -577,10 +593,10 @@ impl XMLElement for Author {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return author.into()
+                        return author.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -588,7 +604,7 @@ impl XMLElement for Author {
 impl XMLElementVec for Author {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// std representation for affiliations
 pub struct AffilStd {
     /// Author Affiliation, Name
@@ -620,7 +636,10 @@ impl XMLElement for AffilStd {
         BytesStart::new("Affil_std")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let mut affil = AffilStd::default();
 
         // elements
@@ -647,17 +666,17 @@ impl XMLElement for AffilStd {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return affil.into()
+                        return affil.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum Affil {
     /// unparsed string
     Str(String),
@@ -671,7 +690,10 @@ impl XMLElement for Affil {
         BytesStart::new("Affil")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         // variants
         let str_element = BytesStart::new("Affil_str");
         let std_element = BytesStart::new("Affil_std");
@@ -682,25 +704,25 @@ impl XMLElement for Affil {
                     let name = e.name();
 
                     if name == std_element.name() {
-                        return Self::Std(read_node(reader).unwrap()).into()
+                        return Self::Std(read_node(reader).unwrap()).into();
                     }
                     if name == str_element.name() {
-                        return Self::Str(read_string(reader).unwrap()).into()
+                        return Self::Str(read_string(reader).unwrap()).into();
                     }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return None
+                        return None;
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 /// title group
 ///
 /// # Variants
@@ -726,7 +748,7 @@ pub enum TitleItem {
     /// Valid:  J
     Jta(String),
 
-    #[serde(rename="iso-jta")]
+    #[serde(rename = "iso-jta")]
     /// Title, MEDLINE jta
     /// Valid:  J
     IsoJta(String),
@@ -773,7 +795,7 @@ pub enum ImprintPrePub {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct Imprint {
     /// date of publication
     pub date: Date,
@@ -783,7 +805,7 @@ pub struct Imprint {
     pub pages: Option<String>,
     pub section: Option<String>,
 
-    #[serde(rename="pub")]
+    #[serde(rename = "pub")]
     /// publisher, required for book
     pub r#pub: Option<Affil>,
 
@@ -837,7 +859,7 @@ pub enum CitRetractType {
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct CitRetract {
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     /// retraction of an entry
     pub r#type: CitRetractType,
 

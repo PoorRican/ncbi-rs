@@ -4,19 +4,18 @@
 //!
 //! Adapted from ["pub.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/pub/pub.asn)
 
-use quick_xml::events::{BytesStart, Event};
-use quick_xml::Reader;
 use crate::biblio::{
-    CitArt, CitBook, CitGen, CitJour, CitLet, CitPat, CitProc, CitSub, IdPat,
-    PubMedId,
+    CitArt, CitBook, CitGen, CitJour, CitLet, CitPat, CitProc, CitSub, IdPat, PubMedId,
 };
 use crate::medline::MedlineEntry;
-use serde::{Serialize, Deserialize};
-use crate::{XMLElement, XMLElementVec};
 use crate::parsing_utils::read_node;
+use crate::{XMLElement, XMLElementVec};
+use quick_xml::events::{BytesStart, Event};
+use quick_xml::Reader;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum Pub {
     /// general or generic unparsed
     Gen(CitGen),
@@ -55,7 +54,10 @@ impl XMLElement for Pub {
         BytesStart::new("Pub")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         // variants
         let sub_element = BytesStart::new("Pub_sub");
         let gen_element = BytesStart::new("Pub_gen");
@@ -66,24 +68,17 @@ impl XMLElement for Pub {
                     let name = e.name();
 
                     if name == sub_element.name() {
-                        return Pub::Sub(
-                            read_node(reader)
-                                .unwrap())
-                            .into()
-                    }
-                    else if name == gen_element.name() {
-                        return Pub::Gen(
-                            read_node(reader)
-                                .unwrap())
-                            .into()
+                        return Pub::Sub(read_node(reader).unwrap()).into();
+                    } else if name == gen_element.name() {
+                        return Pub::Gen(read_node(reader).unwrap()).into();
                     }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return None
+                        return None;
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -97,13 +92,16 @@ impl XMLElement for PubEquiv {
         BytesStart::new("Pub-equiv")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
-        return Pub::vec_from_reader(reader, Self::start_bytes().to_end()).into()
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        return Pub::vec_from_reader(reader, Self::start_bytes().to_end()).into();
     }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum PubSet {
     Pub(Vec<Pub>),
     Medline(Vec<MedlineEntry>),

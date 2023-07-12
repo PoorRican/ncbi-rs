@@ -1,12 +1,19 @@
-use std::ops::Not;
-use ncbi::{DataType, get_local_xml, parse_xml};
-use ncbi::biblio::{Affil, AffilStd, AuthList, AuthListNames, Author, CitGen, CitSub, CitSubMedium};
-use ncbi::general::{Date, DateStd, DbTag, NameStd, ObjectId, PersonId, UserData, UserField, UserObject};
+use ncbi::biblio::{
+    Affil, AffilStd, AuthList, AuthListNames, Author, CitGen, CitSub, CitSubMedium,
+};
+use ncbi::general::{
+    Date, DateStd, DbTag, NameStd, ObjectId, PersonId, UserData, UserField, UserObject,
+};
 use ncbi::r#pub::Pub;
 use ncbi::seq::{BioMol, BioSeq, MolInfo, MolTech, PubDesc, SeqDesc};
-use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SubSource, SubSourceSubType};
+use ncbi::seqfeat::{
+    BinomialOrgName, BioSource, BioSourceGenome, OrgMod, OrgModSubType, OrgName, OrgNameChoice,
+    OrgRef, SubSource, SubSourceSubType,
+};
 use ncbi::seqloc::SeqId;
 use ncbi::seqset::{BioSeqSet, SeqEntry};
+use ncbi::{get_local_xml, parse_xml, DataType};
+use std::ops::Not;
 
 const DATA1: &str = "tests/data/2519734237.xml";
 
@@ -15,7 +22,7 @@ fn get_bioseq(path: &str) -> BioSeq {
     let entry = set.seq_set.get(0).unwrap();
     match entry {
         SeqEntry::Seq(data) => return data.clone(),
-        _ => panic!("Entry is not Bioseq")
+        _ => panic!("Entry is not Bioseq"),
     }
 }
 
@@ -23,9 +30,8 @@ fn get_seq_set(path: &str) -> BioSeqSet {
     let data = get_local_xml(path);
     let parsed = parse_xml(data.as_str()).unwrap();
     if let DataType::BioSeqSet(set) = parsed {
-        return set
-    }
-    else {
+        return set;
+    } else {
         panic!("No Bioseq set found")
     }
 }
@@ -44,7 +50,7 @@ fn parse_seq() {
     let entry = data.seq_set.get(0).unwrap();
     match entry {
         SeqEntry::Seq(_) => assert!(true),
-        _ => assert!(false)
+        _ => assert!(false),
     }
 }
 
@@ -60,19 +66,21 @@ fn parse_bioseq_id() {
                 assert_eq!(tag.db.as_str(), "WGS:NZ_JARQWN01");
                 if let ObjectId::Str(s) = &tag.tag {
                     assert_eq!(s.as_str(), "NODE_24_length_86489_cov_60.972353")
-                }
-                else {
+                } else {
                     assert!(false);
                 }
-            },
+            }
             SeqId::Other(text) => {
-                assert_eq!(text.accession.as_ref().unwrap().as_str(), "NZ_JARQWN010000024");
+                assert_eq!(
+                    text.accession.as_ref().unwrap().as_str(),
+                    "NZ_JARQWN010000024"
+                );
                 assert_eq!(*text.version.as_ref().unwrap(), 1);
                 assert!(text.name.is_none());
                 assert!(text.release.is_none());
             }
             SeqId::Gi(gi) => assert_eq!(*gi, 2519734237),
-            _ => ()
+            _ => (),
         }
     }
 }
@@ -89,7 +97,7 @@ fn parse_bioseq_descr() {
 fn parse_bioseq_descr_source() {
     let bioseq = get_bioseq(DATA1);
 
-    let subtype = vec![
+    let subtype = Some(vec![
         SubSource {
             subtype: SubSourceSubType::Country,
             name: "Australia".to_string(),
@@ -115,7 +123,7 @@ fn parse_bioseq_descr_source() {
             name: "UNIVERSITY OF SOUTH AUSTRALIA".to_string(),
             attrib: None,
         },
-    ].into();
+    ]);
     let expected = BioSource {
         genome: BioSourceGenome::Genomic,
         org: OrgRef {
@@ -190,34 +198,29 @@ fn parse_bioseq_desc_pub() {
         ("Hart", "Bradley", "B.J."),
         ("Venter", "Henrietta", "H."),
     ];
-    let authors = authors
-        .iter()
-        .map(|author| {
-            Author::new(
-                PersonId::Name(
-                    NameStd {
-                        last: author.0.to_string(),
-                        first: author.1.to_string().into(),
-                        initials: author.2.to_string().into(),
-                        ..NameStd::default()
-                    })
-            )
-        });
+    let authors = authors.iter().map(|author| {
+        Author::new(PersonId::Name(NameStd {
+            last: author.0.to_string(),
+            first: author.1.to_string().into(),
+            initials: author.2.to_string().into(),
+            ..NameStd::default()
+        }))
+    });
 
     let sub_authors = vec![Pub::Sub(CitSub {
         authors: AuthList {
-            names: AuthListNames::Std(
-                authors.clone().collect::<Vec<Author>>().into()),
+            names: AuthListNames::Std(authors.clone().collect::<Vec<Author>>().into()),
             affil: Affil::Std(AffilStd {
-                    affil: "University of South Australia".to_string().into(),
-                    div: "Clinical Health Sciences".to_string().into(),
-                    city: "Adelaide".to_string().into(),
-                    sub: "SA".to_string().into(),
-                    country: "Australia".to_string().into(),
-                    street: "Cnr North Terrace and Frome Rd".to_string().into(),
-                    postal_code: "5001".to_string().into(),
-                    ..AffilStd::default()
-                }).into()
+                affil: "University of South Australia".to_string().into(),
+                div: "Clinical Health Sciences".to_string().into(),
+                city: "Adelaide".to_string().into(),
+                sub: "SA".to_string().into(),
+                country: "Australia".to_string().into(),
+                street: "Cnr North Terrace and Frome Rd".to_string().into(),
+                postal_code: "5001".to_string().into(),
+                ..AffilStd::default()
+            })
+            .into(),
         },
         imp: None,
         medium: CitSubMedium::Paper,
@@ -226,7 +229,8 @@ fn parse_bioseq_desc_pub() {
             month: 3.into(),
             day: 28.into(),
             ..DateStd::default()
-        }).into(),
+        })
+        .into(),
         descr: None,
     })];
 
@@ -254,20 +258,16 @@ fn parse_bioseq_desc_pub() {
     let mut has_pub = false;
     for entry in bioseq.descr.unwrap().iter() {
         if let SeqDesc::Pub(desc) = entry {
-            let expected =
-                match desc.r#pub
-                    .first()
-                    .unwrap() {
+            let expected = match desc.r#pub.first().unwrap() {
                 Pub::Gen(_) => &expected2,
                 Pub::Sub(_) => &expected1,
-                _ => panic!("Encountered unexpected type")
+                _ => panic!("Encountered unexpected type"),
             };
             assert_eq!(desc, expected);
 
             if has_pub == false {
                 has_pub = true;
             }
-
         }
     }
 
@@ -286,7 +286,7 @@ fn parse_bioseq_desc_comment() {
             assert_eq!(*comment, expected);
             has_comment = true;
         }
-    };
+    }
     assert!(has_comment);
 }
 
@@ -312,7 +312,7 @@ fn parse_bioseq_desc_user() {
                 label: ObjectId::Str("Assembly".to_string()),
                 num: 1.into(),
                 data: UserData::Strs(vec!["GCF_030238925.1".to_string()]),
-            }
+            },
         ],
     };
     let expected2 = UserObject {
@@ -337,7 +337,9 @@ fn parse_bioseq_desc_user() {
             UserField {
                 label: ObjectId::Str("Annotation Pipeline".to_string()),
                 num: None,
-                data: UserData::Str("NCBI Prokaryotic Genome Annotation Pipeline (PGAP)".to_string()),
+                data: UserData::Str(
+                    "NCBI Prokaryotic Genome Annotation Pipeline (PGAP)".to_string(),
+                ),
             },
             UserField {
                 label: ObjectId::Str("Annotation Method".to_string()),
@@ -458,20 +460,16 @@ fn parse_bioseq_desc_user() {
             UserField {
                 label: ObjectId::Str("IdenticalTo".to_string()),
                 num: None,
-                data: UserData::Fields(vec![
-                    UserField {
-                        label: ObjectId::Id(0),
+                data: UserData::Fields(vec![UserField {
+                    label: ObjectId::Id(0),
+                    num: None,
+                    data: UserData::Fields(vec![UserField {
+                        label: ObjectId::Str("accession".to_string()),
                         num: None,
-                        data: UserData::Fields(vec![
-                            UserField {
-                                label: ObjectId::Str("accession".to_string()),
-                                num: None,
-                                data: UserData::Str("JARQWN010000024.1".to_string()),
-                            }
-                        ]),
-                    }
-                ]),
-            }
+                        data: UserData::Str("JARQWN010000024.1".to_string()),
+                    }]),
+                }]),
+            },
         ],
     };
     let expected4 = UserObject {
@@ -490,37 +488,37 @@ fn parse_bioseq_desc_user() {
             UserField {
                 label: ObjectId::Str("StructuredCommentPrefix".to_string()),
                 num: None,
-                data: UserData::Str("##Genome-Assembly-Data-START##".to_string())
+                data: UserData::Str("##Genome-Assembly-Data-START##".to_string()),
             },
             UserField {
                 label: ObjectId::Str("Assembly Method".to_string()),
                 num: None,
-                data: UserData::Str("SPAdes v. 1".to_string())
+                data: UserData::Str("SPAdes v. 1".to_string()),
             },
             UserField {
                 label: ObjectId::Str("Genome Representation".to_string()),
                 num: None,
-                data: UserData::Str("Full".to_string())
+                data: UserData::Str("Full".to_string()),
             },
             UserField {
                 label: ObjectId::Str("Expected Final Version".to_string()),
                 num: None,
-                data: UserData::Str("Yes".to_string())
+                data: UserData::Str("Yes".to_string()),
             },
             UserField {
                 label: ObjectId::Str("Genome Coverage".to_string()),
                 num: None,
-                data: UserData::Str("100x".to_string())
+                data: UserData::Str("100x".to_string()),
             },
             UserField {
                 label: ObjectId::Str("Sequencing Technology".to_string()),
                 num: None,
-                data: UserData::Str("Illumina HiSeq".to_string())
+                data: UserData::Str("Illumina HiSeq".to_string()),
             },
             UserField {
                 label: ObjectId::Str("StructuredCommentSuffix".to_string()),
                 num: None,
-                data: UserData::Str("##Genome-Assembly-Data-END##".to_string())
+                data: UserData::Str("##Genome-Assembly-Data-END##".to_string()),
             },
         ],
     };
@@ -532,7 +530,9 @@ fn parse_bioseq_desc_user() {
         if let SeqDesc::User(object) = entry {
             for exp in expected.iter() {
                 if object.r#type == exp.r#type {
-                    if object.r#type == ObjectId::Str("StructuredComment".to_string()) && object.data.first().unwrap() != exp.data.first().unwrap() {
+                    if object.r#type == ObjectId::Str("StructuredComment".to_string())
+                        && object.data.first().unwrap() != exp.data.first().unwrap()
+                    {
                         continue;
                     }
                     assert_eq!(object, exp);
@@ -542,7 +542,6 @@ fn parse_bioseq_desc_user() {
         }
     }
     assert!(has_user_object)
-
 }
 
 #[test]

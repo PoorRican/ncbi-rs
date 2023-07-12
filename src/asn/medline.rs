@@ -4,7 +4,7 @@
 
 use crate::biblio::{CitArt, PubMedId};
 use crate::general::Date;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
@@ -28,7 +28,7 @@ pub enum MedlineEntryStatus {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// a MEDLINE or PubMed entry
 pub struct MedlineEntry {
     /// MEDLINE UID, sometimes not yet available from PubMed
@@ -40,7 +40,7 @@ pub struct MedlineEntry {
     /// article citation
     pub cit: CitArt,
 
-    #[serde(rename="abstract")]
+    #[serde(rename = "abstract")]
     pub r#abstract: Option<String>,
     pub mesh: Option<Vec<MedlineMesh>>,
     pub substance: Option<Vec<MedlineRn>>,
@@ -78,9 +78,8 @@ pub struct MedlineMesh {
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct MedlineQual {
-
     /// true if main point
-    pub mp: bool,           // TODO: default false
+    pub mp: bool, // TODO: default false
 
     /// the subheading
     pub subh: String,
@@ -145,7 +144,7 @@ pub enum MedlineRnType {
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Medline substance records
 pub struct MedlineRn {
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     /// type of record
     pub r#type: MedlineRnType,
 
@@ -160,7 +159,7 @@ pub struct MedlineRn {
 /// medline cross reference records
 pub struct MedlineSi {
     /// type of xref
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub r#type: MedlineSiType,
     pub cit: Option<String>,
 }
@@ -186,7 +185,7 @@ pub enum MedlineFieldType {
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct MedlineField {
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     /// keyed type
     pub r#type: MedlineFieldType,
 
@@ -212,7 +211,7 @@ pub enum DocRefType {
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// reference to a document
 pub struct DocRef {
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub r#type: DocRefType,
     pub uid: u64,
 }

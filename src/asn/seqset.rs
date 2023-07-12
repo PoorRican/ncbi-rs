@@ -3,14 +3,14 @@
 //! Adapted from ["seqset.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqset/seqset.asn)
 //! from the NCBI C++ Toolkit
 
+use crate::general::{Date, DbTag, ObjectId};
+use crate::parsing_utils::{parse_vec_node_to, read_node};
+use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
+use crate::{XMLElement, XMLElementVec};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
-use crate::general::{Date, DbTag, ObjectId};
-use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
-use serde::{Serialize, Deserialize};
-use serde_repr::{Serialize_repr, Deserialize_repr};
-use crate::{XMLElement, XMLElementVec};
-use crate::parsing_utils::{parse_vec_node_to, read_node};
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
 #[repr(u8)]
@@ -130,10 +130,10 @@ impl XMLElement for BioSeqSet {
                 }
                 Event::End(e) => {
                     if e.name() == Self::start_bytes().to_end().name() {
-                        return set.into()
+                        return set.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -160,22 +160,16 @@ impl XMLElement for SeqEntry {
                     let name = e.name();
 
                     if name == seq.name() {
-                        return Self::Seq(
-                            read_node(reader)
-                                .unwrap())
-                            .into();
+                        return Self::Seq(read_node(reader).unwrap()).into();
                     }
                     if name == set.name() {
-                        return Self::Set(
-                            read_node(reader)
-                                .unwrap())
-                            .into();
+                        return Self::Set(read_node(reader).unwrap()).into();
                     }
                 }
                 Event::End(e) => {
                     // correctly escape "Seq-entry"
                     if Self::is_end(&e) {
-                        return None
+                        return None;
                     }
                 }
                 _ => (),

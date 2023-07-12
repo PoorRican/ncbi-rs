@@ -1,8 +1,8 @@
-use std::fs;
-use quick_xml::events::Event;
-use quick_xml::Reader;
 use crate::seqset::BioSeqSet;
 use crate::XMLElement;
+use quick_xml::events::Event;
+use quick_xml::Reader;
+use std::fs;
 
 const BASE: &str = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/";
 
@@ -36,7 +36,7 @@ pub enum EntrezDb {
     Snp,
     Sra,
     Structure,
-    Taxonomy
+    Taxonomy,
 }
 impl EntrezDb {
     pub fn as_str(&self) -> &str {
@@ -67,7 +67,7 @@ impl EntrezDb {
             Self::Snp => "snp",
             Self::Sra => "sra",
             Self::Structure => "structure",
-            Self::Taxonomy => "taxonomy"
+            Self::Taxonomy => "taxonomy",
         }
     }
 }
@@ -100,7 +100,7 @@ pub fn build_fetch_url(db: EntrezDb, id: &str, r#type: &str, mode: &str) -> Stri
 pub enum DataType {
     BioSeqSet(BioSeqSet),
     /// placeholder for other types
-    EtAl
+    EtAl,
 }
 
 pub fn parse_xml(response: &str) -> Result<DataType, ()> {
@@ -114,34 +114,27 @@ pub fn parse_xml(response: &str) -> Result<DataType, ()> {
                 }
             }
             Event::Eof => break,
-            _ => ()
+            _ => (),
         }
     }
-    return Err(())
+    return Err(());
 }
 
 pub fn get_local_xml(path: &str) -> String {
     let file = fs::read(path);
-    return
-        file.unwrap()
-            .escape_ascii()
-            .to_string()
+    return file.unwrap().escape_ascii().to_string();
 }
 
 pub fn fetch_data(db: EntrezDb, id: &str, r#type: &str, mode: &str) -> DataType {
     let url = build_fetch_url(db, id, r#type, mode);
-    let response =
-        reqwest::blocking::get(url)
-            .unwrap()
-            .text()
-            .unwrap();
+    let response = reqwest::blocking::get(url).unwrap().text().unwrap();
     parse_xml(response.as_str()).unwrap()
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::{build_fetch_url, build_search_url, get_local_xml, parse_xml, DataType, EntrezDb};
     use std::fs;
-    use crate::{build_fetch_url, build_search_url, DataType, EntrezDb, get_local_xml, parse_xml};
 
     #[test]
     fn search_url() {
@@ -159,10 +152,9 @@ mod tests {
         let data = get_local_xml("tests/data/2519734237.xml");
         match parse_xml(data.as_str()).unwrap() {
             DataType::BioSeqSet(_) => (),
-            _ => assert!(false)
+            _ => assert!(false),
         }
     }
-
 
     #[test]
     fn test_article_set() {
@@ -170,13 +162,8 @@ mod tests {
         let db = EntrezDb::PubMed;
 
         let url = build_fetch_url(db, id, "xml", "xml");
-        let _ =
-            reqwest::blocking::get(url)
-                .unwrap()
-                .text()
-                .unwrap();
+        let _ = reqwest::blocking::get(url).unwrap().text().unwrap();
         //let expected = from_str(text.as_str()).unwrap();
         //assert!(expected.is_empty().not())
     }
-
 }

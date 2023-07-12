@@ -2,9 +2,9 @@
 //!
 //! Adapted from ["seqtable.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/C_DOC/lxr/source/asn/seqtable.asn)
 
-use crate::seqloc::{SeqId, SeqLoc, SeqInterval};
-use serde::{Serialize, Deserialize};
-use serde_repr::{Serialize_repr, Deserialize_repr};
+use crate::seqloc::{SeqId, SeqInterval, SeqLoc};
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
 #[repr(u8)]
@@ -53,7 +53,7 @@ pub enum ColumnInfoFieldId {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Unsure on how this object is used
 ///
 /// Nor do I know of any examples of the use of `field_name`. It *could*
@@ -146,7 +146,7 @@ pub struct BVectorData {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum SeqTableMultiData {
     /// a set of 4-byte integers, one per row
     Int(Vec<u32>),
@@ -189,21 +189,21 @@ pub enum SeqTableMultiData {
     ///     see include/util/bitset/bm.h
     BitVector(BVectorData),
 
-    #[serde(rename="int1")]
+    #[serde(rename = "int1")]
     /// a set of signed 1-byte integers encoded as sequential octets
     Int1(Vec<u8>),
 
-    #[serde(rename="int2")]
+    #[serde(rename = "int2")]
     /// a set of signed 2-byte integers
     Int2(Vec<u16>),
 
-    #[serde(rename="int3")]
+    #[serde(rename = "int3")]
     /// a set of signed 8-byte integers
     Int8(Vec<u64>),
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum SeqTableSingleData {
     Int(u64),
     Real(f64),
@@ -217,7 +217,7 @@ pub enum SeqTableSingleData {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum SeqTableSparseIndex {
     /// Indexes of rows with values
     Indexes(Vec<u64>),
@@ -236,7 +236,7 @@ pub enum SeqTableSparseIndex {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqTableColumn {
     /// column description or reference to previously defined info
     pub header: SeqTableColumnInfo,
@@ -255,7 +255,7 @@ pub struct SeqTableColumn {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqTable {
     /// type of features in this table
     ///

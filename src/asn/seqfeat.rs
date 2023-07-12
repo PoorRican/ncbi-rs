@@ -52,22 +52,25 @@
 //! cases, the [`SeqFeat`] can be marked with an "exception" flag to indicate
 //! that the data is correct but may not behave as expected.
 
+use crate::biblio::{PubMedId, DOI};
+use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
+use crate::parsing_utils::{
+    parse_int_to_option, parse_node_to, parse_node_to_option, parse_string_to,
+    parse_vec_node_to_option, read_int, read_node,
+};
+use crate::r#pub::PubSet;
+use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
+use crate::seqloc::{GiimportId, SeqId, SeqLoc};
+use crate::{XMLElement, XMLElementVec};
 use bitflags::bitflags;
 use enum_primitive::FromPrimitive;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
-use crate::biblio::{DOI, PubMedId};
-use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
-use crate::r#pub::PubSet;
-use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
-use crate::seqloc::{GiimportId, SeqId, SeqLoc};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use crate::parsing_utils::{read_int, parse_string_to, parse_node_to, parse_node_to_option, parse_vec_node_to_option, parse_int_to_option, read_node};
-use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 /// Feature identifiers
 pub enum FeatId {
     /// GenInfo backbone
@@ -100,7 +103,7 @@ pub enum SeqFeatExpEvidence {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Sequence feature generalization
 pub struct SeqFeat {
     pub id: Option<FeatId>,
@@ -232,7 +235,7 @@ pub enum PSecStr {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum SeqFeatData {
     Gene(GeneRef),
     Org(OrgRef),
@@ -266,11 +269,11 @@ pub enum SeqFeatData {
     /// a numbering system
     Num(Numbering),
 
-    #[serde(rename="psec-str")]
+    #[serde(rename = "psec-str")]
     /// protein secondary structure
     PSecStr(PSecStr),
 
-    #[serde(rename="non-std-residue")]
+    #[serde(rename = "non-std-residue")]
     /// non-standard residue here in seq
     NonStdResidue(String),
 
@@ -289,7 +292,7 @@ pub struct SeqFeatXref {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqFeatSupport {
     pub experiment: Option<Vec<ExperimentSupport>>,
     pub inference: Option<Vec<InferenceSupport>>,
@@ -358,10 +361,10 @@ pub enum InferenceSupportType {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct InferenceSupport {
     pub category: Option<EvidenceCategory>,
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub r#type: InferenceSupportType,
     pub other_type: Option<String>,
     // TODO: default to false
@@ -372,7 +375,7 @@ pub struct InferenceSupport {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct ModelEvidenceItem {
     pub id: SeqId,
     pub exon_count: Option<u64>,
@@ -384,7 +387,7 @@ pub struct ModelEvidenceItem {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct ModelEvidenceSupport {
     pub method: Option<String>,
     pub mrna: Option<Vec<ModelEvidenceItem>>,
@@ -417,14 +420,13 @@ pub enum CdRegionFrame {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Instructions to translate from a nucleic acid to a peptide
 pub struct CdRegion {
     /// just an ORF ?
     pub orf: Option<bool>,
 
     pub frame: CdRegionFrame,
-
 
     /// supposed to translate, but doesn't
     pub conflict: Option<bool>,
@@ -457,7 +459,7 @@ pub struct CdRegion {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 /// Storage type for genetic code data
 ///
 /// I do not know what purpose the "start" variants [`Self::SNcbiStdAa`],
@@ -491,7 +493,7 @@ pub enum GeneticCodeOpt {
 pub type GeneticCode = Vec<GeneticCodeOpt>;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 /// the amino acid that is the exception
 pub enum CodeBreakAA {
     /// ASCII value of [`crate::asn::NCBIEaa`] code
@@ -569,7 +571,7 @@ pub enum CloneRefPlacementMethod {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Specification of clone features
 pub struct CloneRef {
     /// official clone symbol
@@ -578,9 +580,8 @@ pub struct CloneRef {
     /// library name
     pub library: Option<String>,
 
-
-    pub concordant: bool,       // TODO: default to false
-    pub unique: bool,           // TODO: default to false
+    pub concordant: bool, // TODO: default to false
+    pub unique: bool,     // TODO: default to false
     pub placement_method: Option<CloneRefPlacementMethod>,
     pub clone_seq: Option<CloneSeqSet>,
 }
@@ -664,9 +665,9 @@ pub enum CloneSeqSupport {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct CloneSeq {
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub r#type: CloneSeqType,
     pub confidence: Option<CloneSeqConfidence>,
 
@@ -682,26 +683,26 @@ pub struct CloneSeq {
 }
 
 bitflags! {
-    #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-    pub struct VariantResourceLink: u8 {
-        /// Clinical, Pubmed, Cited
-        const Preserved = 1;
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+pub struct VariantResourceLink: u8 {
+    /// Clinical, Pubmed, Cited
+    const Preserved = 1;
 
-        /// Provisional third party annotations
-        const Provisional = 2;
+    /// Provisional third party annotations
+    const Provisional = 2;
 
-        /// has 3D structure in SNP3D table
-        const Has3D = 4;
+    /// has 3D structure in SNP3D table
+    const Has3D = 4;
 
-        /// SNP -> SubSNP -> Batch link_out
-        const SubmitterLinkout = 8;
+    /// SNP -> SubSNP -> Batch link_out
+    const SubmitterLinkout = 8;
 
-        /// Clinical if LSDB, OMIM, TPA, Diagnostic
-        const Clinical = 16;
+    /// Clinical if LSDB, OMIM, TPA, Diagnostic
+    const Clinical = 16;
 
-        /// Marker exists on high density genotyping kit
-        const GenotypeKit = 32;
-    }}
+    /// Marker exists on high density genotyping kit
+    const GenotypeKit = 32;
+}}
 
 bitflags! {
     #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -878,7 +879,7 @@ pub enum VariantConfidence {
     Other = 255,
 }
 
-bitflags!{
+bitflags! {
     #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
     /// origin of this allele, if known
     ///
@@ -919,7 +920,7 @@ pub enum VariantAlleleState {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Specification of variation features
 ///
 /// The intention is to provide information to clients that reflect internal
@@ -994,7 +995,7 @@ pub enum PhenotypeClinicalSignificance {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct Phenotype {
     pub source: Option<String>,
     pub term: Option<String>,
@@ -1015,7 +1016,7 @@ bitflags! {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct PopulationData {
     /// assayed population (eg: HAPMAP-CEU)
     pub population: String,
@@ -1082,14 +1083,14 @@ pub enum VariationRefDataSetType {
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct VariationRefDataSet {
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub r#type: VariationRefDataSetType,
     pub variations: Vec<VariationRef>,
     pub name: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum VariationRefData {
     Unknown,
 
@@ -1115,7 +1116,7 @@ pub enum VariationRefData {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// see http://www.hgvs.org/mutnomen/recs-prot.html
 pub struct VariationFrameshift {
     pub phase: Option<i64>,
@@ -1123,7 +1124,7 @@ pub struct VariationFrameshift {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct VariationLossOfHeterozygosity {
     /// in germline comparison, it will be reference genome assembly
     /// (default) or referenece/normal population. In somatic mutation,
@@ -1135,7 +1136,7 @@ pub struct VariationLossOfHeterozygosity {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum VariationConsequence {
     Unknown,
 
@@ -1156,7 +1157,7 @@ pub enum VariationConsequence {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct SomaticOriginCondition {
     pub description: Option<String>,
 
@@ -1174,7 +1175,7 @@ pub struct VariationSomaticOrigin {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// reference to SNP
 ///
 /// This object relates three IDs:
@@ -1217,7 +1218,7 @@ pub struct VariationRef {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum DeltaSeq {
     Literal(SeqLiteral),
     Loc(SeqLoc),
@@ -1248,7 +1249,7 @@ pub enum DeltaAction {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct DeltaItem {
     pub seq: Option<DeltaSeq>,
 
@@ -1256,7 +1257,7 @@ pub struct DeltaItem {
     ///
     /// This allows describing CNV/SSR where delta=self  with a
     /// multiplier which specifies the count of the repeat unit.
-    pub multiplier: Option<i64>,        // assumed 1 if not specified
+    pub multiplier: Option<i64>, // assumed 1 if not specified
     pub multiplier_fuzz: Option<IntFuzz>,
 
     pub action: DeltaAction,
@@ -1285,7 +1286,7 @@ pub enum VariationInstType {
     /// `delta=[morph of length >1]`
     Mnp,
 
-    #[serde(rename="delins")]
+    #[serde(rename = "delins")]
     /// `delta=[del, ins]`
     DelIns,
 
@@ -1360,7 +1361,7 @@ pub enum VariationInstObservation {
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct VariationInst {
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub r#type: VariationInstType,
 
     /// sequence that replaces the location, in biological order
@@ -1373,7 +1374,7 @@ pub struct VariationInst {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum RSiteRef {
     /// may be unparsable
     Str(String),
@@ -1414,7 +1415,7 @@ pub enum RnaRefType {
 
 #[allow(non_camel_case_types)]
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum RnaRefExt {
     /// for naming "other" type
     Name(String),
@@ -1428,14 +1429,14 @@ pub enum RnaRefExt {
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct RnaRef {
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub r#type: RnaRefType,
     pub pseudo: Option<bool>,
     pub ext: Option<RnaRefExt>,
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum TRnaExtAa {
     IUPACAa(u64),
     NCBIEaa(u64),
@@ -1478,7 +1479,7 @@ pub struct RnaQual {
 pub type RnaQualSet = Vec<RnaQual>;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct GeneRef {
     /// official gene symbol
     pub locus: Option<String>,
@@ -1570,17 +1571,17 @@ impl XMLElement for OrgRef {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return org_ref.into()
+                        return org_ref.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum OrgNameChoice {
     /// genus/species type name
     Binomial(BinomialOrgName),
@@ -1603,7 +1604,10 @@ impl XMLElement for OrgNameChoice {
         BytesStart::new("OrgName_name")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         // variants
         let binomial_element = BytesStart::new("OrgName_name_binomial");
 
@@ -1613,7 +1617,7 @@ impl XMLElement for OrgNameChoice {
                     let name = e.name();
 
                     if name == binomial_element.name() {
-                        return Self::Binomial(read_node(reader).unwrap()).into()
+                        return Self::Binomial(read_node(reader).unwrap()).into();
                     }
                 }
                 Event::End(e) => {
@@ -1621,7 +1625,7 @@ impl XMLElement for OrgNameChoice {
                         return None;
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -1634,7 +1638,7 @@ pub struct OrgName {
     /// attribution of name
     pub attrib: Option<String>,
 
-    #[serde(rename="mod")]
+    #[serde(rename = "mod")]
     pub r#mod: Option<Vec<OrgMod>>,
 
     /// lineage with semicolon separators
@@ -1661,7 +1665,10 @@ impl XMLElement for OrgName {
         BytesStart::new("OrgName")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let mut org_name = OrgName::default();
 
         let name_element = BytesStart::new("OrgName_name");
@@ -1685,15 +1692,14 @@ impl XMLElement for OrgName {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return org_name.into()
+                        return org_name.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
 }
-
 
 enum_from_primitive! {
     #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
@@ -1773,7 +1779,10 @@ impl XMLElement for OrgModSubType {
         BytesStart::new("OrgMod_subtype")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         Self::from_u8(read_int(reader).unwrap())
     }
 }
@@ -1792,7 +1801,10 @@ impl XMLElement for OrgMod {
         BytesStart::new("OrgMod")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let mut r#mod = Self::default();
 
         let subtype_element = BytesStart::new("OrgMod_subtype");
@@ -1810,10 +1822,10 @@ impl XMLElement for OrgMod {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return r#mod.into()
+                        return r#mod.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -1835,7 +1847,10 @@ impl XMLElement for BinomialOrgName {
         BytesStart::new("BinomialOrgName")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
         let mut binomial = BinomialOrgName::default();
 
         let genus_element = BytesStart::new("BinomialOrgName_genus");
@@ -1853,10 +1868,10 @@ impl XMLElement for BinomialOrgName {
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        return binomial.into()
+                        return binomial.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -1880,7 +1895,7 @@ pub enum TaxElementFixedLevel {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct TaxElement {
     pub fixed_level: TaxElementFixedLevel,
     pub level: Option<String>,
@@ -1920,7 +1935,6 @@ enum_from_primitive! {
     }
 }
 
-
 impl XMLElement for BioSourceGenome {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("BioSource_genome")
@@ -1956,7 +1970,7 @@ pub enum BioSourceOrigin {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct BioSource {
     /// biological context
     pub genome: BioSourceGenome,
@@ -1998,10 +2012,10 @@ impl XMLElement for BioSource {
                 }
                 Event::End(e) => {
                     if e.name() == Self::start_bytes().to_end().name() {
-                        return source.into()
+                        return source.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -2136,10 +2150,10 @@ impl XMLElement for SubSource {
                 }
                 Event::End(e) => {
                     if e.name() == Self::start_bytes().to_end().name() {
-                        return source.into()
+                        return source.into();
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -2160,7 +2174,7 @@ pub enum ProtRefProcessingStatus {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Reference to a protein name
 pub struct ProtRef {
     /// protein name
@@ -2223,7 +2237,7 @@ pub enum InitType {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Transcription Initiation Site feature data block
 pub struct TxInit {
     /// descriptive name of initiation site
@@ -2254,7 +2268,7 @@ pub struct TxInit {
     pub txorg: Option<OrgRef>,
 
     /// mapping precise or approx
-    pub mapping_precise: bool,   // TODO: default false
+    pub mapping_precise: bool, // TODO: default false
 
     /// does [`SeqLoc`] reflect mapping
     pub location_accurate: bool, // TODO: default false
@@ -2317,22 +2331,10 @@ pub enum TxEvidenceExpressionSystem {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct TxEvidence {
     pub exp_code: TxEvidenceExpCode,
     pub expression_system: TxEvidenceExpressionSystem,
     pub low_prec_data: bool, // TODO: default false
     pub from_homolog: bool,  // TODO: default false
 }
-
-
-
-
-
-
-
-
-
-
-
-

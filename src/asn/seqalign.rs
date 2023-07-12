@@ -4,7 +4,7 @@
 
 use crate::general::{ObjectId, UserObject};
 use crate::seqloc::{NaStrand, SeqId, SeqLoc};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
 pub type SeqAlignSet = Vec<SeqAlign>;
@@ -32,7 +32,7 @@ pub enum SeqAlignType {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum SeqAlignSegs {
     DenDiag(Vec<DenseDiag>),
     DenSeg(DenseSeg),
@@ -45,7 +45,7 @@ pub enum SeqAlignSegs {
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct SeqAlign {
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub r#type: SeqAlignType,
     /// dimensionality
     pub dim: Option<u64>,
@@ -155,14 +155,14 @@ pub struct StdSeg {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum SplicedSegProduct {
     Transcript,
     Protein,
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct SplicedSeg {
     /// product is either protein or transcript (cDNA)
     pub product_id: Option<SeqId>,
@@ -204,7 +204,7 @@ pub struct SplicedSeg {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum SplicedSegModifier {
     /// start found for protein/product or genomic alignment
     StartCodonFound(bool),
@@ -214,7 +214,7 @@ pub enum SplicedSegModifier {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Complete or partial exon
 ///
 /// Two consecutive [`SplicedExon`]'s may belong to one exon
@@ -255,7 +255,7 @@ pub struct SplicedExon {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum ProductPos {
     NucPos(u64),
     ProtPos(ProtPos),
@@ -274,7 +274,7 @@ pub struct ProtPos {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// Piece of an exon
 ///
 /// Each variant contains lengths given in nucleotide bases
@@ -310,7 +310,7 @@ pub struct SpliceSite {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 /// [`SparseSeg`] follows the semantics of [`DenseSeg`] and is optimized
 /// for representing sparse multiple alignments.
 pub struct SparseSeg {
@@ -326,7 +326,7 @@ pub struct SparseSeg {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub struct SparseAlign {
     pub first_id: SeqId,
     pub second_id: SeqId,
@@ -355,7 +355,7 @@ pub struct SparseSegExt {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum ScoreValue {
     Real(f64),
     Int(i64),
