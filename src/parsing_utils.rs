@@ -26,7 +26,7 @@ pub fn parse_next_string_to<T>(current: &QName, element: &BytesStart, to: &mut T
 where
     T: From<String> {
     if *current == element.name() {
-        let text = next_string(reader);
+        let text = read_string(reader);
         if text.is_some() {
             *to = text.unwrap().into();
         }
@@ -48,7 +48,7 @@ where
 T: FromRadix10SignedChecked,
 {
     if *current == element.name() {
-        let text = next_int(reader);
+        let text = read_int(reader);
         if text.is_some() {
             *to = text.unwrap();
         }
@@ -70,7 +70,7 @@ pub fn parse_next_int_to_option<T>(current: &QName, element: &BytesStart, to: &m
         T: FromRadix10SignedChecked,
 {
     if *current == element.name() {
-        *to = next_int(reader);
+        *to = read_int(reader);
     }
 }
 
@@ -79,7 +79,7 @@ pub fn parse_next_int_to_option<T>(current: &QName, element: &BytesStart, to: &m
 /// # Panics
 ///
 /// Panics when [`atoi`] returns `None`
-pub fn to_int<T>(text: &[u8]) -> T
+pub fn bytes_to_int<T>(text: &[u8]) -> T
 where
     T: FromRadix10SignedChecked
 {
@@ -87,16 +87,16 @@ where
 }
 
 /// Parse the given bytes into a [`String`]
-pub fn to_string(text: &[u8]) -> String {
+pub fn bytes_to_string(text: &[u8]) -> String {
     text.escape_ascii().to_string()
 }
 
 /// Parses the next [`Event::Text`] as an integer
-pub fn next_int<T>(reader: &mut XmlReader) -> Option<T>
+pub fn read_int<T>(reader: &mut XmlReader) -> Option<T>
 where
     T: FromRadix10SignedChecked {
     if let Event::Text(text) = reader.read_event().unwrap() {
-        Some(to_int(text.deref()))
+        Some(bytes_to_int(text.deref()))
     }
     else {
         None
@@ -104,13 +104,17 @@ where
 }
 
 /// Parses the next [`Event::Text`] as an integer
-pub fn next_string(reader: &mut XmlReader) -> Option<String> {
+pub fn read_string(reader: &mut XmlReader) -> Option<String> {
     if let Event::Text(text) = reader.read_event().unwrap() {
-        to_string(text.deref()).into()
+        bytes_to_string(text.deref()).into()
     }
     else {
         None
     }
+}
+
+pub fn read_node<T: XMLElement>(reader: &mut XmlReader) -> Option<T> {
+    T::from_reader(reader)
 }
 
 /// Parse each [`BytesText`] within the enclosed element as a [`String`]
@@ -121,7 +125,7 @@ pub fn next_string(reader: &mut XmlReader) -> Option<String> {
 ///
 /// # Returns
 /// [`String`] objects contained by `end`
-pub fn parse_vec_str_unchecked(reader: &mut XmlReader, end: &BytesEnd) -> Vec<String>
+pub fn read_vec_str_unchecked(reader: &mut XmlReader, end: &BytesEnd) -> Vec<String>
 {
     let mut items = Vec::new();
     loop {
@@ -129,7 +133,7 @@ pub fn parse_vec_str_unchecked(reader: &mut XmlReader, end: &BytesEnd) -> Vec<St
                 Event::Text(text) => {
                     // remove whitespace
                     let text =
-                        to_string(text.deref())
+                        bytes_to_string(text.deref())
                             .trim()
                             .to_string();
                     // do not add empty or escape codes
@@ -155,14 +159,14 @@ pub fn parse_vec_str_unchecked(reader: &mut XmlReader, end: &BytesEnd) -> Vec<St
 ///
 /// # Returns
 /// Integers contained by `end`
-pub fn parse_vec_int_unchecked<T>(reader: &mut Reader<&[u8]>, end: &BytesEnd) -> Vec<T>
+pub fn read_vec_int_unchecked<T>(reader: &mut Reader<&[u8]>, end: &BytesEnd) -> Vec<T>
     where
         T: FromRadix10SignedChecked,
 {
     let mut nums = Vec::new();
     loop {
         match reader.read_event().unwrap() {
-            Event::Text(text) => nums.push(to_int(text.deref())),
+            Event::Text(text) => nums.push(bytes_to_int(text.deref())),
             Event::End(e) => {
                 if e.name() == end.name() {
                     return nums
@@ -181,44 +185,31 @@ pub fn parse_vec_int_unchecked<T>(reader: &mut Reader<&[u8]>, end: &BytesEnd) ->
 ///
 /// # Returns
 /// Parsed object contained by `end`
-pub fn get_vec_node<T, F>(reader: &mut Reader<&[u8]>, item_element: &BytesStart, parser: &F, end: &BytesEnd) -> Vec<T>
-    where
-        F: Fn(&mut XmlReader) -> Option<T>
+pub fn parse_vec_node<'a, T: XMLElementVec, E>(reader: &mut Reader<&[u8]>, end: E) -> Vec<T>
+where
+E: Into<Option<BytesEnd<'a>>>,
 {
-    let mut items = Vec::new();
-    loop {
-        match reader.read_event().unwrap() {
-            Event::Start(e) => {
-                if e.name() == item_element.name() {
-                    items.push(parser(reader).unwrap());
-                }
-            }
-            Event::End(e) => {
-                if e.name() == end.name() {
-                    return items
-                }
-            }
-            _ => ()
+    T::vec_from_reader(reader, end)
+}
+
+/// Used for parsing nodes denoted by `element` and setting to an external variable, `to`
+pub fn parse_node_to<T: XMLElement>(current: &QName, element: &BytesStart, to: &mut T, reader: &mut XmlReader) {
+    if *current == element.name() {
+        if let Some(node) = read_node(reader) {
+            *to = node
         }
     }
 }
 
-/// Used for parsing nodes denoted by `element` and setting to an external variable, `to`
-pub fn try_node_to<T: XMLElement>(current: &QName, element: &BytesStart, to: &mut T, reader: &mut XmlReader) {
-    if *current == element.name() {
-        *to = T::from_reader(reader).unwrap()
-    }
-}
-
 /// Used for parsing vec nodes denoted by `element` and setting to an external variable, `to`
-pub fn try_node_to_vec<T: XMLElementVec>(current: &QName, element: &BytesStart, to: &mut Vec<T>, reader: &mut XmlReader) {
+pub fn parse_vec_node_to<T: XMLElementVec>(current: &QName, element: &BytesStart, to: &mut Vec<T>, reader: &mut XmlReader) {
     if *current == element.name() {
-        *to = T::vec_from_reader(reader, element.to_end())
+        *to = parse_vec_node(reader, element.to_end())
     }
 }
 
 /// Used for parsing nodes denoted by `element` and setting to an external option, `to`
-pub fn try_node_to_option<T: XMLElement>(current: &QName, element: &BytesStart, to: &mut Option<T>, reader: &mut XmlReader) {
+pub fn parse_node_to_option<T: XMLElement>(current: &QName, element: &BytesStart, to: &mut Option<T>, reader: &mut XmlReader) {
     if *current == element.name() {
         *to = T::from_reader(reader)
     }

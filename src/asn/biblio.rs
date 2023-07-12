@@ -6,7 +6,7 @@ use quick_xml::Reader;
 use crate::general::{Date, DbTag, PersonId};
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use crate::parsing_utils::{next_string, parse_next_string_to, try_node_to, try_node_to_option};
+use crate::parsing_utils::{read_string, parse_next_string_to, parse_node_to, parse_node_to_option};
 use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -338,8 +338,8 @@ impl XMLElement for CitSub {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    try_node_to(&name, &authors_element, &mut cit.authors, reader);
-                    try_node_to_option(&name, &authors_element, &mut cit.date, reader);
+                    parse_node_to(&name, &authors_element, &mut cit.authors, reader);
+                    parse_node_to_option(&name, &authors_element, &mut cit.date, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -402,7 +402,7 @@ impl XMLElement for CitGen {
 
                     parse_next_string_to(&name, &cit_element, &mut gen.cit, reader);
                     parse_next_string_to(&name, &title_element, &mut gen.title, reader);
-                    try_node_to_option(&name, &authors_element, &mut gen.authors, reader);
+                    parse_node_to_option(&name, &authors_element, &mut gen.authors, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -492,8 +492,8 @@ impl XMLElement for AuthList {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    try_node_to(&name, &names_element, &mut list.names, reader);
-                    try_node_to_option(&name, &affil_element, &mut list.affil, reader);
+                    parse_node_to(&name, &names_element, &mut list.names, reader);
+                    parse_node_to_option(&name, &affil_element, &mut list.affil, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -573,7 +573,7 @@ impl XMLElement for Author {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    try_node_to(&name, &name_element, &mut author.name, reader);
+                    parse_node_to(&name, &name_element, &mut author.name, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {

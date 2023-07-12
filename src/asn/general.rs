@@ -7,7 +7,7 @@ use atoi::atoi;
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Serialize, Deserialize};
-use crate::parsing_utils::{next_int, next_string, get_vec_node, parse_vec_int_unchecked, parse_vec_str_unchecked, parse_next_string_to, parse_next_int_to, parse_next_int_to_option, try_node_to, to_int, to_string, try_node_to_vec};
+use crate::parsing_utils::{read_int, read_string, parse_vec_node, read_vec_int_unchecked, read_vec_str_unchecked, parse_next_string_to, parse_next_int_to, parse_next_int_to_option, parse_node_to, bytes_to_int, bytes_to_string, parse_vec_node_to};
 use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -143,13 +143,13 @@ impl XMLElement for ObjectId {
                 if e.name() == id_element.name() {
                     if let Event::Text(text) = reader.read_event().unwrap() {
                         return ObjectId::Id(
-                            to_int(text.deref())
+                            bytes_to_int(text.deref())
                         ).into();
                     }
                 }
                 else if e.name() == str_element.name() {
                     if let Event::Text(text) = reader.read_event().unwrap() {
-                        return ObjectId::Str(to_string(text.deref())).into()
+                        return ObjectId::Str(bytes_to_string(text.deref())).into()
                     }
                 }
             }
@@ -391,8 +391,8 @@ impl XMLElement for UserObject {
                     let name = e.name();
 
                     parse_next_string_to(&name, &class_element, &mut object.class, reader);
-                    try_node_to(&name, &type_element, &mut object.r#type, reader);
-                    try_node_to_vec(&name, &data_element, &mut object.data, reader);
+                    parse_node_to(&name, &type_element, &mut object.r#type, reader);
+                    parse_vec_node_to(&name, &data_element, &mut object.data, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -404,6 +404,7 @@ impl XMLElement for UserObject {
         }
     }
 }
+impl XMLElementVec for UserObject {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
@@ -427,7 +428,7 @@ impl UserData {
 
         let end = BytesEnd::new("User-field_data_strs");
 
-        let items = parse_vec_str_unchecked(reader, &end);
+        let items = read_vec_str_unchecked(reader, &end);
 
         return Self::Strs(items).into()
     }
@@ -435,7 +436,7 @@ impl UserData {
     fn parse_ints(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
         let end = BytesEnd::new("User-field_data_ints");
 
-        let items = parse_vec_int_unchecked(reader, &end);
+        let items = read_vec_int_unchecked(reader, &end);
 
         return Self::Ints(items).into()
     }
@@ -448,11 +449,7 @@ impl UserData {
         let end = BytesEnd::new("User-field_data_fields");
 
         return Self::Fields(
-            get_vec_node(
-                reader,
-                &UserField::start_bytes(),
-                &UserField::from_reader, &end
-            )
+            parse_vec_node(reader, end)
         ).into()
     }
 
@@ -460,11 +457,7 @@ impl UserData {
         let end = BytesEnd::new("User-field_data_fields");
 
         return Self::Objects(
-            get_vec_node(
-                reader,
-                &UserObject::start_bytes(),
-                &UserObject::from_reader, &end
-            )
+            parse_vec_node(reader, end)
         ).into()
     }
 }
@@ -501,10 +494,10 @@ impl XMLElement for UserData {
                     let name = e.name();
 
                     if name == str_element.name() {
-                        return Self::Str(next_string(reader).unwrap()).into();
+                        return Self::Str(read_string(reader).unwrap()).into();
                     }
                     if name == int_element.name() {
-                        return Self::Int(next_int::<i64>(reader).unwrap()).into();
+                        return Self::Int(read_int::<i64>(reader).unwrap()).into();
                     }
                     if name == real_element.name() {
                         unimplemented!()
@@ -565,8 +558,8 @@ impl XMLElement for UserField {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    try_node_to(&name, &label_element, &mut field.label, reader);
-                    try_node_to(&name, &data_element, &mut field.data, reader);
+                    parse_node_to(&name, &label_element, &mut field.label, reader);
+                    parse_node_to(&name, &data_element, &mut field.data, reader);
                     parse_next_int_to_option(&name, &num_element, &mut field.num, reader)
                 }
                 Event::End(e) => {
