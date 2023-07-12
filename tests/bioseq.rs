@@ -545,6 +545,27 @@ fn parse_bioseq_desc_user() {
 }
 
 #[test]
+fn parse_bioseq_desc_create_date() {
+    let bioseq = get_bioseq(DATA1);
+
+    let date = Date::Date(DateStd {
+        year: 2023,
+        month: 6.into(),
+        day: 14.into(),
+        ..DateStd::default()
+    });
+
+    let mut has_create_date = false;
+    for entry in bioseq.descr.unwrap().iter() {
+        if let SeqDesc::CreateDate(inner) = entry {
+            assert_eq!(*inner, date);
+            has_create_date = true;
+        }
+    }
+    assert!(has_create_date);
+}
+
+#[test]
 #[ignore]
 fn parse_bioseq_inst() {
     let bioseq = get_bioseq(DATA1);
