@@ -13,6 +13,7 @@ use crate::biblio::{
 use crate::medline::MedlineEntry;
 use serde::{Serialize, Deserialize};
 use crate::{XMLElement, XMLElementVec};
+use crate::parsing_utils::read_node;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
@@ -66,15 +67,15 @@ impl XMLElement for Pub {
 
                     if name == sub_element.name() {
                         return Pub::Sub(
-                            CitSub::from_reader(reader)
-                                .unwrap()
-                        ).into()
+                            read_node(reader)
+                                .unwrap())
+                            .into()
                     }
                     else if name == gen_element.name() {
                         return Pub::Gen(
-                            CitGen::from_reader(reader)
-                                .unwrap()
-                        ).into()
+                            read_node(reader)
+                                .unwrap())
+                            .into()
                     }
                 }
                 Event::End(e) => {

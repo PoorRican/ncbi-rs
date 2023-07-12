@@ -1,7 +1,6 @@
 use std::fs;
 use quick_xml::events::Event;
 use quick_xml::Reader;
-use crate::seq::BioSeq;
 use crate::seqset::BioSeqSet;
 use crate::XMLElement;
 
@@ -114,10 +113,6 @@ pub fn parse_xml(response: &str) -> Result<DataType, ()> {
                     return Ok(DataType::BioSeqSet(set));
                 }
             }
-            Event::End(e) => {
-            }
-            Event::Empty(e) => {}
-            Event::Text(e) => {}
             Event::Eof => break,
             _ => ()
         }

@@ -2,12 +2,10 @@
 //!
 //! As per [general.asn](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/asn_spec/general.asn.html)
 
-use std::ops::Deref;
-use atoi::atoi;
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Serialize, Deserialize};
-use crate::parsing_utils::{read_int, read_string, parse_vec_node, read_vec_int_unchecked, read_vec_str_unchecked, parse_next_string_to, parse_next_int_to, parse_next_int_to_option, parse_node_to, bytes_to_int, bytes_to_string, parse_vec_node_to};
+use crate::parsing_utils::{read_int, read_string, parse_vec_node, read_vec_int_unchecked, read_vec_str_unchecked, parse_string_to, parse_int_to, parse_int_to_option, parse_node_to, parse_vec_node_to, read_node};
 use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -48,7 +46,7 @@ impl XMLElement for Date {
                     let name = e.name();
 
                     if name == std_element.name() {
-                        return Date::Date(DateStd::from_reader(reader).unwrap()).into();
+                        return Date::Date(read_node(reader).unwrap()).into();
                     }
                 }
                 Event::End(e) => {
@@ -99,9 +97,9 @@ impl XMLElement for DateStd {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_next_int_to(&name, &year_element, &mut date.year, reader);
-                    parse_next_int_to_option(&name, &month_element, &mut date.month, reader);
-                    parse_next_int_to_option(&name, &day_element, &mut date.day, reader);
+                    parse_int_to(&name, &year_element, &mut date.year, reader);
+                    parse_int_to_option(&name, &month_element, &mut date.month, reader);
+                    parse_int_to_option(&name, &day_element, &mut date.day, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -141,23 +139,17 @@ impl XMLElement for ObjectId {
         loop {
             if let Event::Start(e) = reader.read_event().unwrap() {
                 if e.name() == id_element.name() {
-                    if let Event::Text(text) = reader.read_event().unwrap() {
-                        return ObjectId::Id(
-                            bytes_to_int(text.deref())
-                        ).into();
-                    }
+                    return ObjectId::Id(read_int(reader).unwrap()).into()
                 }
-                else if e.name() == str_element.name() {
-                    if let Event::Text(text) = reader.read_event().unwrap() {
-                        return ObjectId::Str(bytes_to_string(text.deref())).into()
-                    }
+                if e.name() == str_element.name() {
+                    return ObjectId::Str(read_string(reader).unwrap()).into()
                 }
             }
         }
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// Generalized for tagging
 pub struct DbTag {
     /// name of database or system
@@ -171,8 +163,7 @@ impl XMLElement for DbTag {
         BytesStart::new("Dbtag")
     }
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
-        let mut db = None;
-        let mut tag = None;
+        let mut tag = DbTag::default();
 
         let db_element = BytesStart::new("Dbtag_db");
         let tag_element = BytesStart::new("Dbtag_tag");
@@ -180,28 +171,19 @@ impl XMLElement for DbTag {
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
-                    if e.name() == db_element.name() {
-                        if let Event::Text(text) = reader.read_event().unwrap() {
-                            db = text.escape_ascii().to_string().into();
-                        }
-                    }
-                    else if e.name() == tag_element.name() {
-                        tag = ObjectId::from_reader(reader);
-                    }
+                    let name = e.name();
+
+                    parse_string_to(&name, &db_element, &mut tag.db, reader);
+                    parse_node_to(&name, &tag_element, &mut tag.tag, reader);
                 }
                 Event::End(e) => {
-                    if e.name() == Self::start_bytes().to_end().name() {
-                        break;
+                    if Self::is_end(&e) {
+                        return tag.into()
                     }
                 }
                 _ => ()
             }
         }
-
-        Self {
-            db: db.unwrap(),
-            tag: tag.unwrap(),
-        }.into()
     }
 }
 impl XMLElementVec for DbTag {}
@@ -243,7 +225,7 @@ impl XMLElement for PersonId {
                     let name = e.name();
 
                     if name == name_element.name() {
-                        return PersonId::Name(NameStd::from_reader(reader).unwrap()).into()
+                        return PersonId::Name(read_node(reader).unwrap()).into()
                     }
                 }
                 Event::End(e) => {
@@ -295,9 +277,9 @@ impl XMLElement for NameStd {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_next_string_to(&name, &last_element, &mut name_std.last, reader);
-                    parse_next_string_to(&name, &first_element, &mut name_std.first, reader);
-                    parse_next_string_to(&name, &initials_element, &mut name_std.initials, reader);
+                    parse_string_to(&name, &last_element, &mut name_std.last, reader);
+                    parse_string_to(&name, &first_element, &mut name_std.first, reader);
+                    parse_string_to(&name, &initials_element, &mut name_std.initials, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -390,7 +372,7 @@ impl XMLElement for UserObject {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_next_string_to(&name, &class_element, &mut object.class, reader);
+                    parse_string_to(&name, &class_element, &mut object.class, reader);
                     parse_node_to(&name, &type_element, &mut object.r#type, reader);
                     parse_vec_node_to(&name, &data_element, &mut object.data, reader);
                 }
@@ -441,7 +423,7 @@ impl UserData {
         return Self::Ints(items).into()
     }
 
-    fn parse_reals(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+    fn parse_reals(_reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
         unimplemented!()
     }
 
@@ -506,7 +488,7 @@ impl XMLElement for UserData {
                         unimplemented!()
                     }
                     if name == object_element.name() {
-                        return Self::Object(UserObject::from_reader(reader).unwrap()).into();
+                        return Self::Object(read_node(reader).unwrap()).into();
                     }
                     if name == strs_element.name() {
                         return Self::parse_strs(reader)
@@ -560,7 +542,7 @@ impl XMLElement for UserField {
 
                     parse_node_to(&name, &label_element, &mut field.label, reader);
                     parse_node_to(&name, &data_element, &mut field.data, reader);
-                    parse_next_int_to_option(&name, &num_element, &mut field.num, reader)
+                    parse_int_to_option(&name, &num_element, &mut field.num, reader)
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {

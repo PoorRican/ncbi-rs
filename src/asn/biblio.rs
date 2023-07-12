@@ -6,7 +6,7 @@ use quick_xml::Reader;
 use crate::general::{Date, DbTag, PersonId};
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use crate::parsing_utils::{read_string, parse_next_string_to, parse_node_to, parse_node_to_option};
+use crate::parsing_utils::{parse_string_to, parse_node_to, parse_node_to_option, read_node, parse_vec_node, read_string};
 use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -339,7 +339,7 @@ impl XMLElement for CitSub {
                     let name = e.name();
 
                     parse_node_to(&name, &authors_element, &mut cit.authors, reader);
-                    parse_node_to_option(&name, &authors_element, &mut cit.date, reader);
+                    parse_node_to_option(&name, &date_element, &mut cit.date, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -400,8 +400,8 @@ impl XMLElement for CitGen {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_next_string_to(&name, &cit_element, &mut gen.cit, reader);
-                    parse_next_string_to(&name, &title_element, &mut gen.title, reader);
+                    parse_string_to(&name, &cit_element, &mut gen.cit, reader);
+                    parse_string_to(&name, &title_element, &mut gen.title, reader);
                     parse_node_to_option(&name, &authors_element, &mut gen.authors, reader);
                 }
                 Event::End(e) => {
@@ -453,7 +453,7 @@ impl XMLElement for AuthListNames {
                     let name = e.name();
 
                     if name == std_element.name() {
-                        return Self::Std(Author::vec_from_reader(reader, Self::start_bytes().to_end())).into()
+                        return Self::Std(parse_vec_node(reader, std_element.to_end())).into()
                     }
                 }
                 Event::End(e) => {
@@ -637,13 +637,13 @@ impl XMLElement for AffilStd {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_next_string_to(&name, &affil_element, &mut affil.affil, reader);
-                    parse_next_string_to(&name, &div_element, &mut affil.div, reader);
-                    parse_next_string_to(&name, &city_element, &mut affil.city, reader);
-                    parse_next_string_to(&name, &sub_element, &mut affil.sub, reader);
-                    parse_next_string_to(&name, &country_element, &mut affil.country, reader);
-                    parse_next_string_to(&name, &street_element, &mut affil.street, reader);
-                    parse_next_string_to(&name, &postal_code_element, &mut affil.postal_code, reader);
+                    parse_string_to(&name, &affil_element, &mut affil.affil, reader);
+                    parse_string_to(&name, &div_element, &mut affil.div, reader);
+                    parse_string_to(&name, &city_element, &mut affil.city, reader);
+                    parse_string_to(&name, &sub_element, &mut affil.sub, reader);
+                    parse_string_to(&name, &country_element, &mut affil.country, reader);
+                    parse_string_to(&name, &street_element, &mut affil.street, reader);
+                    parse_string_to(&name, &postal_code_element, &mut affil.postal_code, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -682,7 +682,10 @@ impl XMLElement for Affil {
                     let name = e.name();
 
                     if name == std_element.name() {
-                        return Self::Std(AffilStd::from_reader(reader).unwrap()).into()
+                        return Self::Std(read_node(reader).unwrap()).into()
+                    }
+                    if name == str_element.name() {
+                        return Self::Str(read_string(reader).unwrap()).into()
                     }
                 }
                 Event::End(e) => {

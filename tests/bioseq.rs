@@ -1,11 +1,10 @@
 use std::ops::Not;
-use quick_xml::se::to_string;
 use ncbi::{DataType, get_local_xml, parse_xml};
 use ncbi::biblio::{Affil, AffilStd, AuthList, AuthListNames, Author, CitGen, CitSub, CitSubMedium};
 use ncbi::general::{Date, DateStd, DbTag, NameStd, ObjectId, PersonId, UserData, UserField, UserObject};
-use ncbi::r#pub::{Pub, PubEquiv};
-use ncbi::seq::{BioMol, BioSeq, Mol, MolInfo, MolTech, PubDesc, SeqDesc};
-use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, BioSourceOrigin, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SubSource, SubSourceSubType};
+use ncbi::r#pub::Pub;
+use ncbi::seq::{BioMol, BioSeq, MolInfo, MolTech, PubDesc, SeqDesc};
+use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SubSource, SubSourceSubType};
 use ncbi::seqloc::SeqId;
 use ncbi::seqset::{BioSeqSet, SeqEntry};
 

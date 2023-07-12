@@ -6,15 +6,15 @@
 //! See [book](https://ncbi.github.io/cxx-toolkit/pages/ch_datamod#ch_datamod._ASN1_Specification_s_8)
 //! for more information on.
 
-use atoi::atoi;
 use crate::biblio::IdPat;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId};
 use crate::seqfeat::FeatId;
 use serde::{Serialize, Deserialize};
 use serde_repr::{Serialize_repr, Deserialize_repr};
-use quick_xml::events::{BytesEnd, BytesStart, Event};
+use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use crate::{XMLElement, XMLElementVec};
+use crate::parsing_utils::{parse_int_to_option, parse_string_to, read_int, read_node};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
@@ -76,24 +76,20 @@ impl XMLElement for SeqId {
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
         // variants
-        let other = BytesStart::new("Seq-id_other");
-        let general = BytesStart::new("Seq-id_general");
-        let gi = BytesStart::new("Seq-id_gi");
+        let other_element = BytesStart::new("Seq-id_other");
+        let general_element = BytesStart::new("Seq-id_general");
+        let gi_element = BytesStart::new("Seq-id_gi");
 
         loop {
             if let Event::Start(e) = reader.read_event().unwrap() {
-                if e.name() == other.name() {
-                    return SeqId::Other(TextseqId::from_reader(reader).unwrap()).into();
+                if e.name() == other_element.name() {
+                    return SeqId::Other(read_node(reader).unwrap()).into();
                 }
-                else if e.name() == general.name() {
-                    return SeqId::General(DbTag::from_reader(reader).unwrap()).into();
+                if e.name() == general_element.name() {
+                    return SeqId::General(read_node(reader).unwrap()).into();
                 }
-                else if e.name() == gi.name() {
-                    if let Event::Text(text) = reader.read_event().unwrap() {
-                        return SeqId::Gi(
-                            atoi(text.as_ref()).expect("Can't parse &[u8] into int")
-                        ).into();
-                    }
+                else if e.name() == gi_element.name() {
+                    return SeqId::Gi(read_int(reader).unwrap()).into()
                 }
             }
         }
@@ -112,7 +108,7 @@ pub struct PatentSeqId {
     pub cit: IdPat,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct TextseqId {
     pub name: Option<String>,
     pub accession: Option<String>,
@@ -126,10 +122,7 @@ impl XMLElement for TextseqId {
     }
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
-        let mut name = None;
-        let mut accession = None;
-        let mut release = None;
-        let mut version = None;
+        let mut id = Self::default();
 
         let name_element = BytesStart::new("Textseq-id_name");
         let accession_element = BytesStart::new("Textseq-id_accession");
@@ -139,42 +132,21 @@ impl XMLElement for TextseqId {
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
-                    if e.name() == name_element.name() {
-                        if let Event::Text(text) = reader.read_event().unwrap() {
-                            name = text.escape_ascii().to_string().into();
-                        }
-                    }
-                    else if e.name() == accession_element.name() {
-                        if let Event::Text(text) = reader.read_event().unwrap() {
-                            accession = text.escape_ascii().to_string().into();
-                        }
-                    }
-                    else if e.name() == release_element.name() {
-                        if let Event::Text(text) = reader.read_event().unwrap() {
-                            release = text.escape_ascii().to_string().into();
-                        }
-                    }
-                    else if e.name() == version_element.name() {
-                        if let Event::Text(text) = reader.read_event().unwrap() {
-                            version = atoi(text.as_ref());
-                        }
-                    }
+                    let name = e.name();
+
+                    parse_string_to(&name, &name_element, &mut id.name, reader);
+                    parse_string_to(&name, &accession_element, &mut id.accession, reader);
+                    parse_string_to(&name, &release_element, &mut id.release, reader);
+                    parse_int_to_option(&name, &version_element, &mut id.version, reader);
                 }
                 Event::End(e) => {
                     if e.name() == Self::start_bytes().to_end().name() {
-                        break;
+                        return id.into()
                     }
                 }
                 _ => ()
             }
         }
-
-        Self {
-            name,
-            accession,
-            release,
-            version
-        }.into()
     }
 }
 

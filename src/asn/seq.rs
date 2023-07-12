@@ -8,7 +8,7 @@ use enum_primitive::FromPrimitive;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
-use crate::r#pub::{Pub, PubEquiv};
+use crate::r#pub::PubEquiv;
 use crate::seqalign::SeqAlign;
 use crate::seqblock::{EMBLBlock, GBBlock, PDBBlock, PIRBlock, PRFBlock, SPBlock};
 use crate::seqfeat::{
@@ -20,10 +20,10 @@ use crate::seqres::SeqGraph;
 use crate::seqtable::SeqTable;
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use crate::parsing_utils::{read_int, read_string};
+use crate::parsing_utils::{parse_node_to, parse_node_to_option, parse_vec_node_to, read_int, read_node, read_string};
 use crate::{XMLElement, XMLElementVec};
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all="kebab-case")]
 /// Single continuous biological sequence.
 ///
@@ -61,10 +61,7 @@ impl XMLElement for BioSeq {
     }
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
-        let mut id = Vec::new();
-        let mut descr = None;
-        let mut inst = None;
-        let mut annot = None;
+        let mut bioseq = Self::default();
 
         let id_elem = BytesStart::new("Bioseq_id");
         let descr_elem = BytesStart::new("Bioseq_descr");
@@ -74,31 +71,19 @@ impl XMLElement for BioSeq {
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
-                    if e.name() == id_elem.name() {
-                        id = SeqId::vec_from_reader(reader, id_elem.to_end());
-                    }
-                    else if e.name() == descr_elem.name() {
-                        descr = SeqDescr::from_reader(reader);
-                    }
+                    let name = e.name();
+
+                    parse_vec_node_to(&name, &id_elem, &mut bioseq.id, reader);
+                    parse_node_to_option(&name, &descr_elem, &mut bioseq.descr, reader);
                 }
                 Event::End(e) => {
-                    if e.name() == Self::start_bytes().to_end().name() {
-                        break;
+                    if Self::is_end(&e) {
+                        return bioseq.into()
                     }
-                }
-                Event::Eof => {
-                    break;
                 }
                 _ => ()
             }
         }
-
-        Self {
-            id,
-            descr,
-            inst,
-            annot
-        }.into()
     }
 }
 
@@ -200,19 +185,19 @@ impl XMLElement for SeqDesc {
                 Event::Start(e) => {
                     let name = e.name();
                     if name == source_element.name() {
-                        return Self::Source(BioSource::from_reader(reader).unwrap()).into()
+                        return Self::Source(read_node(reader).unwrap()).into()
                     }
                     else if name == molinfo_element.name() {
-                        return Self::MolInfo(MolInfo::from_reader(reader).unwrap()).into()
+                        return Self::MolInfo(read_node(reader).unwrap()).into()
                     }
                     else if name == pub_element.name() {
-                        return Self::Pub(PubDesc::from_reader(reader).unwrap()).into()
+                        return Self::Pub(read_node(reader).unwrap()).into()
                     }
                     else if name == comment_element.name() {
                         return Self::Comment(read_string(reader).unwrap()).into()
                     }
                     else if name == user_element.name() {
-                        return Self::User(UserObject::from_reader(reader).unwrap()).into()
+                        return Self::User(read_node(reader).unwrap()).into()
                     }
                 }
                 Event::End(e) => {
@@ -409,23 +394,17 @@ impl XMLElement for MolInfo {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    if name == bio_mol_element.name() {
-                        mol_info.bio_mol = BioMol::from_reader(reader).unwrap();
-                    }
-                    if name == tech_element.name() {
-                        mol_info.tech = MolTech::from_reader(reader).unwrap();
-                    }
+                    parse_node_to(&name, &bio_mol_element, &mut mol_info.bio_mol, reader);
+                    parse_node_to(&name, &tech_element, &mut mol_info.tech, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        break;
+                        return mol_info.into()
                     }
                 }
                 _ => ()
             }
         }
-
-        mol_info.into()
     }
 }
 
@@ -664,9 +643,7 @@ impl XMLElement for PubDesc {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    if name == pub_element.name() {
-                        desc.r#pub = PubEquiv::from_reader(reader).unwrap();
-                    }
+                    parse_node_to(&name, &pub_element, &mut desc.r#pub, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {

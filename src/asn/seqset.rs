@@ -3,13 +3,14 @@
 //! Adapted from ["seqset.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seqset/seqset.asn)
 //! from the NCBI C++ Toolkit
 
-use quick_xml::events::{BytesEnd, BytesStart, Event};
+use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use crate::general::{Date, DbTag, ObjectId};
 use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
 use serde::{Serialize, Deserialize};
 use serde_repr::{Serialize_repr, Deserialize_repr};
 use crate::{XMLElement, XMLElementVec};
+use crate::parsing_utils::{parse_vec_node_to, read_node};
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
 #[repr(u8)]
@@ -90,7 +91,7 @@ pub enum BioSeqSetClass {
     Other = 255,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// just a collection
 pub struct BioSeqSet {
     pub id: Option<ObjectId>,
@@ -117,45 +118,24 @@ impl XMLElement for BioSeqSet {
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
         let seq_set_element = BytesStart::new("Bioseq-set_seq-set");
 
-        let mut id = None;
-        let mut coll = None;
-        let mut level = None;
-        let mut class = BioSeqSetClass::default();
-        let mut release = None;
-        let mut date = None;
-        let mut descr = None;
-        let mut annot = None;
-        let mut seq_set= Vec::new();
+        let mut set = Self::default();
 
         println!("Starting to parse BioSeqSet");
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
-                    if e.name() == seq_set_element.name() {
-                        seq_set = SeqEntry::vec_from_reader(reader, seq_set_element.to_end());
-                    }
+                    let name = e.name();
+
+                    parse_vec_node_to(&name, &seq_set_element, &mut set.seq_set, reader);
                 }
                 Event::End(e) => {
                     if e.name() == Self::start_bytes().to_end().name() {
-                        break;
+                        return set.into()
                     }
                 }
-                Event::Eof => break,
                 _ => ()
             }
         }
-
-        Self {
-            id,
-            coll,
-            level,
-            class,
-            release,
-            date,
-            descr,
-            seq_set,
-            annot,
-        }.into()
     }
 }
 
@@ -173,32 +153,34 @@ impl XMLElement for SeqEntry {
         let seq = BytesStart::new("Seq-entry_seq");
         let set = BytesStart::new("Seq-entry_set");
 
-        let mut entry = None;
-
         println!("Beginning to parse Seq-entry");
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
-                    println!("Got here");
-                    if e.name() == seq.name() {
-                        entry = Self::Seq(BioSeq::from_reader(reader).unwrap()).into();
+                    let name = e.name();
+
+                    if name == seq.name() {
+                        return Self::Seq(
+                            read_node(reader)
+                                .unwrap())
+                            .into();
                     }
-                    else if e.name() == set.name() {
-                        entry = Self::Set(BioSeqSet::from_reader(reader).unwrap()).into();
+                    if name == set.name() {
+                        return Self::Set(
+                            read_node(reader)
+                                .unwrap())
+                            .into();
                     }
                 }
                 Event::End(e) => {
                     // correctly escape "Seq-entry"
-                    if Self::start_bytes().to_end().name() == e.name() {
-                        break;
+                    if Self::is_end(&e) {
+                        return None
                     }
                 }
                 _ => (),
             }
         }
-        println!("Finished parsing Seq-entry");
-
-        entry
     }
 }
 impl XMLElementVec for SeqEntry {}

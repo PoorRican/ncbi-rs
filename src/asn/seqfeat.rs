@@ -52,7 +52,6 @@
 //! cases, the [`SeqFeat`] can be marked with an "exception" flag to indicate
 //! that the data is correct but may not behave as expected.
 
-use atoi::atoi;
 use bitflags::bitflags;
 use enum_primitive::FromPrimitive;
 use quick_xml::events::{BytesStart, Event};
@@ -64,7 +63,7 @@ use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use crate::parsing_utils::{read_int, parse_next_string_to};
+use crate::parsing_utils::{read_int, parse_string_to, parse_node_to, parse_node_to_option, parse_vec_node_to_option, parse_int_to_option, read_node};
 use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -1565,25 +1564,18 @@ impl XMLElement for OrgRef {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_next_string_to(&name, &taxname_element, &mut org_ref.taxname, reader);
-
-                    if name == db_element.name() {
-                        org_ref.db = DbTag::vec_from_reader(reader, db_element.to_end()).into();
-                    }
-                    if name == orgname_element.name() {
-                        org_ref.orgname = OrgName::from_reader(reader).into();
-                    }
+                    parse_string_to(&name, &taxname_element, &mut org_ref.taxname, reader);
+                    parse_node_to_option(&name, &orgname_element, &mut org_ref.orgname, reader);
+                    parse_vec_node_to_option(&name, &db_element, &mut org_ref.db, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        break;
+                        return org_ref.into()
                     }
                 }
                 _ => ()
             }
         }
-
-        org_ref.into()
     }
 }
 
@@ -1621,7 +1613,7 @@ impl XMLElement for OrgNameChoice {
                     let name = e.name();
 
                     if name == binomial_element.name() {
-                        return Self::Binomial(BinomialOrgName::from_reader(reader).unwrap()).into()
+                        return Self::Binomial(read_node(reader).unwrap()).into()
                     }
                 }
                 Event::End(e) => {
@@ -1684,34 +1676,21 @@ impl XMLElement for OrgName {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    if name == name_element.name() {
-                        org_name.name = OrgNameChoice::from_reader(reader);
-                    }
-
-                    parse_next_string_to(&name, &attrib_element, &mut org_name.attrib, reader);
-
-                    if name == mod_element.name() {
-                        org_name.r#mod = OrgMod::vec_from_reader(reader, mod_element.to_end()).into();
-                    }
-
-                    parse_next_string_to(&name, &lineage_element, &mut org_name.lineage, reader);
-
-                    if name == gcode_element.name() {
-                        org_name.gcode = read_int::<u64>(reader);
-                    }
-
-                    parse_next_string_to(&name, &div_element, &mut org_name.div, reader)
+                    parse_string_to(&name, &div_element, &mut org_name.div, reader);
+                    parse_string_to(&name, &attrib_element, &mut org_name.attrib, reader);
+                    parse_string_to(&name, &lineage_element, &mut org_name.lineage, reader);
+                    parse_int_to_option(&name, &gcode_element, &mut org_name.gcode, reader);
+                    parse_node_to_option(&name, &name_element, &mut org_name.name, reader);
+                    parse_vec_node_to_option(&name, &mod_element, &mut org_name.r#mod, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        break;
+                        return org_name.into()
                     }
                 }
                 _ => ()
             }
         }
-
-        return org_name.into()
     }
 }
 
@@ -1782,25 +1761,24 @@ enum_from_primitive! {
     }
 }
 
+/// default not defined in original spec
+impl Default for OrgModSubType {
+    fn default() -> Self {
+        Self::Other
+    }
+}
+
 impl XMLElement for OrgModSubType {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("OrgMod_subtype")
     }
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
-        loop {
-            match reader.read_event().unwrap() {
-                Event::Text(text) => {
-                    return Self::from_u8(atoi::<u8>(text.as_ref()).unwrap())
-                }
-                _ => ()
-            }
-        }
-
+        Self::from_u8(read_int(reader).unwrap())
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct OrgMod {
     pub subtype: OrgModSubType,
     pub subname: String,
@@ -1815,9 +1793,7 @@ impl XMLElement for OrgMod {
     }
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
-        let mut subtype = None;
-        let mut subname = None;
-        let mut attrib = None;
+        let mut r#mod = Self::default();
 
         let subtype_element = BytesStart::new("OrgMod_subtype");
         let subname_element = BytesStart::new("OrgMod_subname");
@@ -1828,26 +1804,18 @@ impl XMLElement for OrgMod {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    if name == subtype_element.name() {
-                        subtype = OrgModSubType::from_reader(reader);
-                    }
-
-                    parse_next_string_to(&name, &subname_element, &mut subname, reader);
+                    parse_node_to(&name, &subtype_element, &mut r#mod.subtype, reader);
+                    parse_string_to(&name, &subname_element, &mut r#mod.subname, reader);
+                    parse_string_to(&name, &attrib_element, &mut r#mod.attrib, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        break;
+                        return r#mod.into()
                     }
                 }
                 _ => ()
             }
         }
-
-        Self {
-            subtype: subtype.unwrap(),
-            subname: subname.unwrap(),
-            attrib
-        }.into()
     }
 }
 impl XMLElementVec for OrgMod {}
@@ -1879,20 +1847,18 @@ impl XMLElement for BinomialOrgName {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_next_string_to(&name, &genus_element, &mut binomial.genus, reader);
-                    parse_next_string_to(&name, &species_element, &mut binomial.species, reader);
-                    parse_next_string_to(&name, &subspecies_element, &mut binomial.subspecies, reader);
+                    parse_string_to(&name, &genus_element, &mut binomial.genus, reader);
+                    parse_string_to(&name, &species_element, &mut binomial.species, reader);
+                    parse_string_to(&name, &subspecies_element, &mut binomial.subspecies, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
-                        break;
+                        return binomial.into()
                     }
                 }
                 _ => ()
             }
         }
-
-        binomial.into()
     }
 }
 
@@ -1961,14 +1927,7 @@ impl XMLElement for BioSourceGenome {
     }
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
-        loop {
-            match reader.read_event().unwrap() {
-                Event::Text(text) => {
-                    return BioSourceGenome::from_u8(atoi::<u8>(text.as_ref()).unwrap())
-                }
-                _ => ()
-            }
-        }
+        Self::from_u8(read_int(reader).unwrap())
     }
 }
 
@@ -2021,12 +1980,7 @@ impl XMLElement for BioSource {
     }
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
-        let mut genome = BioSourceGenome::default();
-        let mut origin = BioSourceOrigin::default();
-        let mut org = OrgRef::default();
-        let mut subtype = None;
-        let mut is_focus = None;
-        let mut pcr_primers = None;
+        let mut source = Self::default();
 
         let genome_element = BytesStart::new("BioSource_genome");
         let origin_element = BytesStart::new("BioSource_origin");
@@ -2038,33 +1992,18 @@ impl XMLElement for BioSource {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    if name == genome_element.name() {
-                        genome = BioSourceGenome::from_reader(reader).unwrap();
-                    }
-                    else if name == org_element.name() {
-                        org = OrgRef::from_reader(reader).unwrap();
-                    }
-                    else if name == subtype_element.name() {
-                        subtype = SubSource::vec_from_reader(reader, subtype_element.to_end()).into();
-                   }
+                    parse_node_to(&name, &genome_element, &mut source.genome, reader);
+                    parse_node_to(&name, &org_element, &mut source.org, reader);
+                    parse_vec_node_to_option(&name, &subtype_element, &mut source.subtype, reader);
                 }
                 Event::End(e) => {
                     if e.name() == Self::start_bytes().to_end().name() {
-                        break;
+                        return source.into()
                     }
                 }
                 _ => ()
             }
         }
-
-        Self {
-            genome,
-            origin,
-            org,
-            subtype,
-            is_focus,
-            pcr_primers
-        }.into()
     }
 }
 
@@ -2148,24 +2087,24 @@ enum_from_primitive! {
     }
 }
 
+/// default not in original spec
+impl Default for SubSourceSubType {
+    fn default() -> Self {
+        Self::Other
+    }
+}
+
 impl XMLElement for SubSourceSubType {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("SubSource_subtype")
     }
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
-        loop {
-            match reader.read_event().unwrap() {
-                Event::Text(text) => {
-                    return SubSourceSubType::from_u8(atoi::<u8>(text.as_ref()).unwrap())
-                }
-                _ => ()
-            }
-        }
+        Self::from_u8(read_int(reader).unwrap())
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct SubSource {
     pub subtype: SubSourceSubType,
     pub name: String,
@@ -2180,9 +2119,7 @@ impl XMLElement for SubSource {
     }
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
-        let mut subtype = None;
-        let mut name = String::new();
-        let mut attrib = None;
+        let mut source = Self::default();
 
         let subtype_element = BytesStart::new("SubSource_subtype");
         let name_element = BytesStart::new("SubSource_name");
@@ -2193,26 +2130,18 @@ impl XMLElement for SubSource {
                 Event::Start(e) => {
                     let qname = e.name();
 
-                    if qname == subtype_element.name() {
-                        subtype = SubSourceSubType::from_reader(reader);
-                    }
-
-                    parse_next_string_to(&qname, &name_element, &mut name, reader);
+                    parse_node_to(&qname, &subtype_element, &mut source.subtype, reader);
+                    parse_string_to(&qname, &name_element, &mut source.name, reader);
+                    parse_string_to(&qname, &attrib_element, &mut source.attrib, reader);
                 }
                 Event::End(e) => {
                     if e.name() == Self::start_bytes().to_end().name() {
-                        break;
+                        return source.into()
                     }
                 }
                 _ => ()
             }
         }
-
-        Self {
-            subtype: subtype.unwrap(),
-            name,
-            attrib
-        }.into()
     }
 }
 impl XMLElementVec for SubSource {}
