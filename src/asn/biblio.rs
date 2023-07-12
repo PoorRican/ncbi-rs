@@ -7,7 +7,7 @@ use crate::general::{Date, DbTag, PersonId};
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use crate::parsing_utils::{try_next_string, parse_next_string_into};
-use crate::XMLElement;
+use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
@@ -601,6 +601,7 @@ impl XMLElement for Author {
         }
     }
 }
+impl XMLElementVec for Author {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all="kebab-case")]

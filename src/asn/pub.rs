@@ -12,7 +12,7 @@ use crate::biblio::{
 };
 use crate::medline::MedlineEntry;
 use serde::{Serialize, Deserialize};
-use crate::XMLElement;
+use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
@@ -87,6 +87,7 @@ impl XMLElement for Pub {
         }
     }
 }
+impl XMLElementVec for Pub {}
 
 pub type PubEquiv = Vec<Pub>;
 

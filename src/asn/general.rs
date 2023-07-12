@@ -7,7 +7,7 @@ use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Serialize, Deserialize};
 use crate::parsing_utils::{try_next_int, try_next_string, get_vec_node, parse_vec_int_unchecked, parse_vec_str_unchecked, parse_next_string_into};
-use crate::XMLElement;
+use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
@@ -209,6 +209,7 @@ impl XMLElement for DbTag {
         }.into()
     }
 }
+impl XMLElementVec for DbTag {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
@@ -595,3 +596,4 @@ impl XMLElement for UserField {
         }
     }
 }
+impl XMLElementVec for UserField {}

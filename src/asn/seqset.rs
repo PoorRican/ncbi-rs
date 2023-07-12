@@ -9,7 +9,7 @@ use crate::general::{Date, DbTag, ObjectId};
 use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
 use serde::{Serialize, Deserialize};
 use serde_repr::{Serialize_repr, Deserialize_repr};
-use crate::XMLElement;
+use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
 #[repr(u8)]
@@ -201,3 +201,4 @@ impl XMLElement for SeqEntry {
         entry
     }
 }
+impl XMLElementVec for SeqEntry {}

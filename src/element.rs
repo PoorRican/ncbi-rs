@@ -8,7 +8,9 @@ pub trait XMLElement {
     fn is_end(element: &BytesEnd) -> bool {
         element.name() == Self::start_bytes().name()
     }
+}
 
+pub trait XMLElementVec: XMLElement {
     fn vec_from_reader<'a, E>(reader: &mut Reader<&[u8]>, end: E) -> Vec<Self>
     where
         E: Into<Option<BytesEnd<'a>>>,

@@ -65,7 +65,7 @@ use crate::seqloc::{GiimportId, SeqId, SeqLoc};
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use crate::parsing_utils::{try_next_int, parse_next_string_into};
-use crate::XMLElement;
+use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
@@ -1850,6 +1850,7 @@ impl XMLElement for OrgMod {
         }.into()
     }
 }
+impl XMLElementVec for OrgMod {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct BinomialOrgName {
@@ -2214,6 +2215,7 @@ impl XMLElement for SubSource {
         }.into()
     }
 }
+impl XMLElementVec for SubSource {}
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
 #[repr(u8)]

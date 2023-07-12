@@ -21,7 +21,7 @@ use crate::seqtable::SeqTable;
 use serde::{Serialize, Deserialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use crate::parsing_utils::{try_next_int, try_next_string};
-use crate::XMLElement;
+use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="kebab-case")]
@@ -226,6 +226,7 @@ impl XMLElement for SeqDesc {
         }
     }
 }
+impl XMLElementVec for SeqDesc {}
 
 enum_from_primitive! {
     #[allow(non_camel_case_types)]

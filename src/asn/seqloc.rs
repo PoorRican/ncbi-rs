@@ -14,7 +14,7 @@ use serde::{Serialize, Deserialize};
 use serde_repr::{Serialize_repr, Deserialize_repr};
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::Reader;
-use crate::XMLElement;
+use crate::{XMLElement, XMLElementVec};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all="lowercase")]
@@ -99,6 +99,7 @@ impl XMLElement for SeqId {
         }
     }
 }
+impl XMLElementVec for SeqId {}
 
 pub type SeqIdSet = Vec<SeqId>;
 
