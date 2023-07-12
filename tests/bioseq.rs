@@ -90,7 +90,7 @@ fn parse_bioseq_descr() {
     let bioseq = get_bioseq(DATA1);
 
     assert!(bioseq.descr.is_some());
-    assert_eq!(bioseq.descr.unwrap().len(), 11);
+    assert_eq!(bioseq.descr.unwrap().len(), 12);
 }
 
 #[test]
@@ -563,6 +563,27 @@ fn parse_bioseq_desc_create_date() {
         }
     }
     assert!(has_create_date);
+}
+
+#[test]
+fn parse_bioseq_desc_update_date() {
+    let bioseq = get_bioseq(DATA1);
+
+    let date = Date::Date(DateStd {
+        year: 2023,
+        month: 6.into(),
+        day: 14.into(),
+        ..DateStd::default()
+    });
+
+    let mut has_update_date = false;
+    for entry in bioseq.descr.unwrap().iter() {
+        if let SeqDesc::UpdateDate(inner) = entry {
+            assert_eq!(*inner, date);
+            has_update_date = true;
+        }
+    }
+    assert!(has_update_date);
 }
 
 #[test]
