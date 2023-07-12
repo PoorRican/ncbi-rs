@@ -826,6 +826,24 @@ pub struct SeqInst {
     pub hist: Option<SeqHist>,
 }
 
+impl Default for SeqInst {
+    fn default() -> Self {
+        let repr = Repr::Other;
+        let mol = Mol::Other;
+        let strand = Strand::Other;
+        Self {
+            repr, mol,
+            length: None,
+            fuzz: None,
+            topology: Default::default(),
+            strand,
+            seq_data: None,
+            ext: None,
+            hist: None,
+        }
+    }
+}
+
 // Sequence extensions for representing more complex types
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]

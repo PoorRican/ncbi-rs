@@ -215,6 +215,19 @@ pub struct SeqInterval {
     pub fuzz_to: Option<IntFuzz>,
 }
 
+impl Default for SeqInterval {
+    fn default() -> Self {
+        Self {
+            from: 0,
+            to: 0,
+            strand: None,
+            id: SeqId::Other(TextseqId::default()),
+            fuzz_from: None,
+            fuzz_to: None
+        }
+    }
+}
+
 pub type PackedSeqInt = Vec<SeqInterval>;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]

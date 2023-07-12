@@ -5,12 +5,9 @@ use ncbi::general::{
     Date, DateStd, DbTag, NameStd, ObjectId, PersonId, UserData, UserField, UserObject,
 };
 use ncbi::r#pub::Pub;
-use ncbi::seq::{BioMol, BioSeq, MolInfo, MolTech, PubDesc, SeqDesc};
-use ncbi::seqfeat::{
-    BinomialOrgName, BioSource, BioSourceGenome, OrgMod, OrgModSubType, OrgName, OrgNameChoice,
-    OrgRef, SubSource, SubSourceSubType,
-};
-use ncbi::seqloc::SeqId;
+use ncbi::seq::{BioMol, BioSeq, DeltaSeq, Mol, MolInfo, MolTech, PubDesc, Repr, SeqDesc, SeqExt, SeqInst, Strand};
+use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SubSource, SubSourceSubType};
+use ncbi::seqloc::{NaStrand, SeqId, SeqInterval, SeqLoc, TextseqId};
 use ncbi::seqset::{BioSeqSet, SeqEntry};
 use ncbi::{get_local_xml, parse_xml, DataType};
 use std::ops::Not;
@@ -587,10 +584,32 @@ fn parse_bioseq_desc_update_date() {
 }
 
 #[test]
-#[ignore]
 fn parse_bioseq_inst() {
     let bioseq = get_bioseq(DATA1);
     assert!(bioseq.inst.is_some());
+
+    let expected = SeqInst {
+        repr: Repr::Delta,
+        mol: Mol::DNA,
+        length: 86489.into(),
+        fuzz: None,
+        topology: Default::default(),
+        strand: Strand::NotSet,
+        seq_data: None,
+        ext: SeqExt::Delta(vec![DeltaSeq::Loc(SeqLoc::Int(SeqInterval {
+            from: 0,
+            to: 86488,
+            strand: NaStrand::Plus.into(),
+            id: SeqId::Genbank(TextseqId {
+                accession: "JARQWN010000024".to_string().into(),
+                version: 1.into(),
+                ..TextseqId::default()
+            }),
+            ..SeqInterval::default()
+        }))]).into(),
+        hist: None,
+    };
+    assert_eq!(bioseq.inst.unwrap(), expected);
 }
 
 #[test]
