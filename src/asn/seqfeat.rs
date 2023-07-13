@@ -54,10 +54,7 @@
 
 use crate::biblio::{PubMedId, DOI};
 use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing_utils::{
-    parse_int_to_option, parse_node_to, parse_node_to_option, parse_string_to,
-    parse_vec_node_to_option, read_int, read_node,
-};
+use crate::parsing_utils::{parse_int_to_option, parse_node_to, parse_node_to_option, parse_string_to, parse_vec_node_to_option, read_int, read_node, read_vec_str_unchecked};
 use crate::r#pub::PubSet;
 use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
@@ -196,7 +193,7 @@ pub struct SeqFeat {
 impl SeqFeat {
     /// not originally in spec
     pub fn default() -> Self {
-        Self::new(SeqFeatData::Gene(GeneRef::default()))
+        Self::new(SeqFeatData::User(UserObject::default()))
     }
 
     pub fn new(data: SeqFeatData) -> Self {
@@ -258,6 +255,7 @@ impl XmlNode for SeqFeat {
                 Event::Start(e) => {
                     let name = e.name();
                     parse_node_to_option(&name, &id_tag, &mut feat.id, reader);
+                    parse_node_to(&name, &data_tag, &mut feat.data, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -393,6 +391,55 @@ pub enum SeqFeatData {
     BioSrc(BioSource),
     Clone(CloneRef),
     Variation(VariationRef),
+}
+
+impl XmlNode for SeqFeatData {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("SeqFeatData")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variant tags
+        let gene_tag = BytesStart::new("SeqFeatData_gene");
+        let org_tag = BytesStart::new("SeqFeatData_org");
+        let cdregion_tag = BytesStart::new("SeqFeatData_cdregion");
+        let prot_tag = BytesStart::new("SeqFeatData_prot");
+        let rna_tag = BytesStart::new("SeqFeatData_rna");
+        let pub_tag = BytesStart::new("SeqFeatData_pub");
+        let seq_tag = BytesStart::new("SeqFeatData_seq");
+        let imp_tag = BytesStart::new("SeqFeatData_imp");
+        let region_tag = BytesStart::new("SeqFeatData_region");
+        let bond_tag = BytesStart::new("SeqFeatData_bond");
+        let site_tag = BytesStart::new("SeqFeatData_site");
+        let rsite_tag = BytesStart::new("SeqFeatData_rsite");
+        let user_tag = BytesStart::new("SeqFeatData_user");
+        let txinit_tag = BytesStart::new("SeqFeatData_txinit");
+        let num_tag = BytesStart::new("SeqFeatData_num");
+        let psec_str_tag = BytesStart::new("SeqFeatData_psec-str");
+        let non_std_residue__tag = BytesStart::new("SeqFeatData_non-std-residue");
+        let het_tag = BytesStart::new("SeqFeatData_het");
+        let biosrc_tag = BytesStart::new("SeqFeatData_biosrc");
+        let clone_tag = BytesStart::new("SeqFeatData_clone");
+        let variation_tag = BytesStart::new("SeqFeatData_variation");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == gene_tag.name() {
+                        return Self::Gene(read_node(reader).unwrap()).into()
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -1616,6 +1663,48 @@ pub struct GeneRef {
     pub locus_tag: Option<String>,
 
     pub formal_name: Option<GeneNomenclature>,
+}
+
+impl XmlNode for GeneRef {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Gene-ref")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut gene = Self::default();
+
+        // field tags
+        let locus_tag = BytesStart::new("Gene-ref_locus");
+        let allele_tag = BytesStart::new("Gene-ref_allele");
+        let desc_tag = BytesStart::new("Gene-ref_desc");
+        let maploc_tag = BytesStart::new("Gene-ref_maploc");
+        let pseudo_tag = BytesStart::new("Gene-ref_pseudo");
+        let db_tag = BytesStart::new("Gene-ref_db");
+        let syn_tag = BytesStart::new("Gene-ref_syn");
+        let locus_tag_tag = BytesStart::new("Gene-ref_locus-tag");
+        let form_name_tag = BytesStart::new("Gene-ref_formal-name");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    parse_string_to(&name, &locus_tag, &mut gene.locus, reader);
+                    parse_string_to(&name, &allele_tag, &mut gene.allele, reader);
+                    parse_string_to(&name, &desc_tag, &mut gene.desc, reader);
+                    parse_string_to(&name, &maploc_tag, &mut gene.maploc, reader);
+                    parse_vec_node_to_option(&name, &db_tag, &mut gene.db, reader);
+                    parse_string_to(&name, &locus_tag_tag, &mut gene.locus_tag, reader);
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return gene.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
 }
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]

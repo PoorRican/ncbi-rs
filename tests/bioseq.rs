@@ -6,7 +6,7 @@ use ncbi::general::{
 };
 use ncbi::r#pub::Pub;
 use ncbi::seq::{BioMol, BioSeq, DeltaSeq, Mol, MolInfo, MolTech, PubDesc, Repr, SeqAnnotData, SeqDesc, SeqExt, SeqInst, Strand};
-use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SubSource, SubSourceSubType};
+use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SeqFeatData, SubSource, SubSourceSubType};
 use ncbi::seqloc::{NaStrand, SeqId, SeqInterval, SeqLoc, TextseqId};
 use ncbi::seqset::{BioSeqSet, SeqEntry};
 use ncbi::{get_local_xml, parse_xml, DataType};
@@ -616,18 +616,32 @@ fn parse_bioseq_inst() {
 fn parse_bioseq_annot() {
     let bioseq = get_bioseq(DATA1);
 
+    // total number of feat id's
+    let feats: usize = 176;
+
+    // total number of occurrences of `SeqFeatData::Gene`
+    let expected_genes: usize = 88;
+
     assert!(bioseq.annot.is_some());
-    let feats = 176 as usize;
 
     if let Some(annot) = bioseq.annot {
         let annot = annot.get(0).unwrap();
         if let SeqAnnotData::FTable(ftable) = &annot.data {
             assert_eq!(ftable.len(), feats);
+
+            // counter for gene features
+            let mut genes: usize = 0;
+
+            // inspect parsed features
+            for feat in ftable.iter() {
+                if let SeqFeatData::Gene(_) = feat.data {
+                    genes += 1;
+                }
+            }
+            assert_eq!(expected_genes, genes)
         } else {
             assert!(false);
         }
 
-    } else {
-        assert!(false)
     }
 }
