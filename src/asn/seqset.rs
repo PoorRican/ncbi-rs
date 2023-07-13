@@ -6,7 +6,7 @@
 use crate::general::{Date, DbTag, ObjectId};
 use crate::parsing_utils::{parse_vec_node_to, read_node};
 use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
-use crate::{XMLElement, XMLElementVec};
+use crate::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Deserialize, Serialize};
@@ -110,7 +110,7 @@ pub struct BioSeqSet {
     pub annot: Option<Vec<SeqAnnot>>,
 }
 
-impl XMLElement for BioSeqSet {
+impl XmlNode for BioSeqSet {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Bioseq-set")
     }
@@ -145,7 +145,7 @@ pub enum SeqEntry {
     Set(BioSeqSet),
 }
 
-impl XMLElement for SeqEntry {
+impl XmlNode for SeqEntry {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Seq-entry")
     }
@@ -177,4 +177,4 @@ impl XMLElement for SeqEntry {
         }
     }
 }
-impl XMLElementVec for SeqEntry {}
+impl XmlVecNode for SeqEntry {}

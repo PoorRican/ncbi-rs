@@ -4,15 +4,15 @@ use quick_xml::Reader;
 
 /// Parses [`Event::Empty`] values
 ///
-/// Differs from [`XMLElement`] in that
+/// Differs from [`XmlNode`] in that
 /// [`Self::from_attributes`] accepts [`Attributes`],
-/// whereas [`XMLElement::from_reader()`] accepts an [`XMLReader`]
+/// whereas [`XmlNode::from_reader()`] accepts an [`XMLReader`]
 pub trait XmlValue {
     fn start_bytes() -> BytesStart<'static>;
     fn from_attributes(bytes: Attributes) -> Option<Self> where Self: Sized;
 }
 
-pub trait XMLElement {
+pub trait XmlNode {
     fn start_bytes() -> BytesStart<'static>;
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
     where
@@ -23,7 +23,7 @@ pub trait XMLElement {
     }
 }
 
-pub trait XMLElementVec: XMLElement {
+pub trait XmlVecNode: XmlNode {
     fn vec_from_reader<'a, E>(reader: &mut Reader<&[u8]>, end: E) -> Vec<Self>
     where
         E: Into<Option<BytesEnd<'a>>>,

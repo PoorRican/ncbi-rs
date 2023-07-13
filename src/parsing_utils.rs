@@ -1,4 +1,4 @@
-use crate::{XMLElement, XMLElementVec, XmlValue};
+use crate::{XmlNode, XmlVecNode, XmlValue};
 use atoi::{atoi, FromRadix10SignedChecked};
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::name::QName;
@@ -139,7 +139,7 @@ pub fn read_string(reader: &mut XmlReader) -> Option<String> {
     }
 }
 
-pub fn read_node<T: XMLElement>(reader: &mut XmlReader) -> Option<T> {
+pub fn read_node<T: XmlNode>(reader: &mut XmlReader) -> Option<T> {
     T::from_reader(reader)
 }
 
@@ -207,7 +207,7 @@ where
 ///
 /// # Returns
 /// Parsed object contained by `end`
-pub fn parse_vec_node<'a, T: XMLElementVec, E>(reader: &mut Reader<&[u8]>, end: E) -> Vec<T>
+pub fn parse_vec_node<'a, T: XmlVecNode, E>(reader: &mut Reader<&[u8]>, end: E) -> Vec<T>
 where
     E: Into<Option<BytesEnd<'a>>>,
 {
@@ -215,7 +215,7 @@ where
 }
 
 /// Used for parsing nodes denoted by `element` and setting to an external variable, `to`
-pub fn parse_node_to<T: XMLElement>(
+pub fn parse_node_to<T: XmlNode>(
     current: &QName,
     element: &BytesStart,
     to: &mut T,
@@ -229,7 +229,7 @@ pub fn parse_node_to<T: XMLElement>(
 }
 
 /// Used for parsing vec nodes denoted by `element` and setting to an external variable, `to`
-pub fn parse_vec_node_to<T: XMLElementVec>(
+pub fn parse_vec_node_to<T: XmlVecNode>(
     current: &QName,
     element: &BytesStart,
     to: &mut Vec<T>,
@@ -241,7 +241,7 @@ pub fn parse_vec_node_to<T: XMLElementVec>(
 }
 
 /// Used for parsing nodes denoted by `element` and setting to an external option, `to`
-pub fn parse_node_to_option<T: XMLElement>(
+pub fn parse_node_to_option<T: XmlNode>(
     current: &QName,
     element: &BytesStart,
     to: &mut Option<T>,
@@ -255,7 +255,7 @@ pub fn parse_node_to_option<T: XMLElement>(
     }
 }
 
-pub fn parse_vec_node_to_option<T: XMLElementVec>(
+pub fn parse_vec_node_to_option<T: XmlVecNode>(
     current: &QName,
     element: &BytesStart,
     to: &mut Option<Vec<T>>,

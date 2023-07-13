@@ -1,5 +1,5 @@
 use crate::seqset::BioSeqSet;
-use crate::XMLElement;
+use crate::XmlNode;
 use quick_xml::events::Event;
 use quick_xml::Reader;
 use std::fs;

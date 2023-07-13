@@ -15,7 +15,7 @@ use crate::seqfeat::{BioSource, ModelEvidenceSupport, OrgRef, SeqFeat};
 use crate::seqloc::{SeqId, SeqLoc};
 use crate::seqres::SeqGraph;
 use crate::seqtable::SeqTable;
-use crate::{XMLElement, XMLElementVec};
+use crate::{XmlNode, XmlVecNode};
 use enum_primitive::FromPrimitive;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
@@ -54,7 +54,7 @@ pub struct BioSeq {
     pub annot: Option<Vec<SeqAnnot>>,
 }
 
-impl XMLElement for BioSeq {
+impl XmlNode for BioSeq {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Bioseq")
     }
@@ -88,7 +88,7 @@ impl XMLElement for BioSeq {
 
 pub type SeqDescr = Vec<SeqDesc>;
 
-impl XMLElement for SeqDescr {
+impl XmlNode for SeqDescr {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Seq-descr")
     }
@@ -166,7 +166,7 @@ pub enum SeqDesc {
     ModelEv(ModelEvidenceSupport),
 }
 
-impl XMLElement for SeqDesc {
+impl XmlNode for SeqDesc {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Seqdesc")
     }
@@ -212,7 +212,7 @@ impl XMLElement for SeqDesc {
         }
     }
 }
-impl XMLElementVec for SeqDesc {}
+impl XmlVecNode for SeqDesc {}
 
 enum_from_primitive! {
     #[allow(non_camel_case_types)]
@@ -255,7 +255,7 @@ enum_from_primitive! {
     }
 }
 
-impl XMLElement for BioMol {
+impl XmlNode for BioMol {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("MolInfo_biomol")
     }
@@ -334,7 +334,7 @@ enum_from_primitive! {
     }
 }
 
-impl XMLElement for MolTech {
+impl XmlNode for MolTech {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("MolInfo_tech")
     }
@@ -384,7 +384,7 @@ pub struct MolInfo {
     pub gb_mol_type: Option<String>,
 }
 
-impl XMLElement for MolInfo {
+impl XmlNode for MolInfo {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("MolInfo")
     }
@@ -636,7 +636,7 @@ pub struct PubDesc {
     pub ref_type: PubDescRefType,
 }
 
-impl XMLElement for PubDesc {
+impl XmlNode for PubDesc {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Pubdesc")
     }

@@ -5,7 +5,7 @@ use crate::general::{Date, DbTag, PersonId};
 use crate::parsing_utils::{
     parse_node_to, parse_node_to_option, parse_string_to, parse_vec_node, read_node, read_string,
 };
-use crate::{XMLElement, XMLElementVec};
+use crate::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Deserialize, Serialize};
@@ -320,7 +320,7 @@ impl CitSub {
     }
 }
 
-impl XMLElement for CitSub {
+impl XmlNode for CitSub {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Cit-sub")
     }
@@ -386,7 +386,7 @@ pub struct CitGen {
     pub pmid: Option<PubMedId>,
 }
 
-impl XMLElement for CitGen {
+impl XmlNode for CitGen {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Cit-gen")
     }
@@ -445,7 +445,7 @@ impl Default for AuthListNames {
     }
 }
 
-impl XMLElement for AuthListNames {
+impl XmlNode for AuthListNames {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Auth-list_names")
     }
@@ -486,7 +486,7 @@ pub struct AuthList {
     pub affil: Option<Affil>,
 }
 
-impl XMLElement for AuthList {
+impl XmlNode for AuthList {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Auth-list")
     }
@@ -571,7 +571,7 @@ impl Author {
     }
 }
 
-impl XMLElement for Author {
+impl XmlNode for Author {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Author")
     }
@@ -601,7 +601,7 @@ impl XMLElement for Author {
         }
     }
 }
-impl XMLElementVec for Author {}
+impl XmlVecNode for Author {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
@@ -631,7 +631,7 @@ pub struct AffilStd {
     pub postal_code: Option<String>,
 }
 
-impl XMLElement for AffilStd {
+impl XmlNode for AffilStd {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Affil_std")
     }
@@ -685,7 +685,7 @@ pub enum Affil {
     Std(AffilStd),
 }
 
-impl XMLElement for Affil {
+impl XmlNode for Affil {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Affil")
     }

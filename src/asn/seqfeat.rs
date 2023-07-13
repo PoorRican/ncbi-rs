@@ -61,7 +61,7 @@ use crate::parsing_utils::{
 use crate::r#pub::PubSet;
 use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
-use crate::{XMLElement, XMLElementVec};
+use crate::{XmlNode, XmlVecNode};
 use bitflags::bitflags;
 use enum_primitive::FromPrimitive;
 use quick_xml::events::{BytesStart, Event};
@@ -1548,7 +1548,7 @@ pub struct OrgRef {
     pub orgname: Option<OrgName>,
 }
 
-impl XMLElement for OrgRef {
+impl XmlNode for OrgRef {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Org-ref")
     }
@@ -1599,7 +1599,7 @@ pub enum OrgNameChoice {
     Partial(PartialOrgName),
 }
 
-impl XMLElement for OrgNameChoice {
+impl XmlNode for OrgNameChoice {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("OrgName_name")
     }
@@ -1660,7 +1660,7 @@ pub struct OrgName {
     pub pgcode: Option<u64>,
 }
 
-impl XMLElement for OrgName {
+impl XmlNode for OrgName {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("OrgName")
     }
@@ -1774,7 +1774,7 @@ impl Default for OrgModSubType {
     }
 }
 
-impl XMLElement for OrgModSubType {
+impl XmlNode for OrgModSubType {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("OrgMod_subtype")
     }
@@ -1796,7 +1796,7 @@ pub struct OrgMod {
     pub attrib: Option<String>,
 }
 
-impl XMLElement for OrgMod {
+impl XmlNode for OrgMod {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("OrgMod")
     }
@@ -1830,7 +1830,7 @@ impl XMLElement for OrgMod {
         }
     }
 }
-impl XMLElementVec for OrgMod {}
+impl XmlVecNode for OrgMod {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct BinomialOrgName {
@@ -1842,7 +1842,7 @@ pub struct BinomialOrgName {
     pub subspecies: Option<String>,
 }
 
-impl XMLElement for BinomialOrgName {
+impl XmlNode for BinomialOrgName {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("BinomialOrgName")
     }
@@ -1935,7 +1935,7 @@ enum_from_primitive! {
     }
 }
 
-impl XMLElement for BioSourceGenome {
+impl XmlNode for BioSourceGenome {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("BioSource_genome")
     }
@@ -1988,7 +1988,7 @@ pub struct BioSource {
     pub pcr_primers: Option<PCRReationSet>,
 }
 
-impl XMLElement for BioSource {
+impl XmlNode for BioSource {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("BioSource")
     }
@@ -2108,7 +2108,7 @@ impl Default for SubSourceSubType {
     }
 }
 
-impl XMLElement for SubSourceSubType {
+impl XmlNode for SubSourceSubType {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("SubSource_subtype")
     }
@@ -2127,7 +2127,7 @@ pub struct SubSource {
     pub attrib: Option<String>,
 }
 
-impl XMLElement for SubSource {
+impl XmlNode for SubSource {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("SubSource")
     }
@@ -2158,7 +2158,7 @@ impl XMLElement for SubSource {
         }
     }
 }
-impl XMLElementVec for SubSource {}
+impl XmlVecNode for SubSource {}
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
 #[repr(u8)]

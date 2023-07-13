@@ -7,7 +7,7 @@ use crate::parsing_utils::{
     parse_vec_node_to, read_int, read_node, read_string, read_vec_int_unchecked,
     read_vec_str_unchecked,
 };
-use crate::{XMLElement, XMLElementVec};
+use crate::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Deserialize, Serialize};
@@ -33,7 +33,7 @@ impl Default for Date {
     }
 }
 
-impl XMLElement for Date {
+impl XmlNode for Date {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Date")
     }
@@ -84,7 +84,7 @@ pub struct DateStd {
     pub second: Option<u8>,
 }
 
-impl XMLElement for DateStd {
+impl XmlNode for DateStd {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Date-std")
     }
@@ -134,7 +134,7 @@ impl Default for ObjectId {
     }
 }
 
-impl XMLElement for ObjectId {
+impl XmlNode for ObjectId {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Object-id")
     }
@@ -166,7 +166,7 @@ pub struct DbTag {
     pub tag: ObjectId,
 }
 
-impl XMLElement for DbTag {
+impl XmlNode for DbTag {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Dbtag")
     }
@@ -194,7 +194,7 @@ impl XMLElement for DbTag {
         }
     }
 }
-impl XMLElementVec for DbTag {}
+impl XmlVecNode for DbTag {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "lowercase")]
@@ -218,7 +218,7 @@ impl Default for PersonId {
     }
 }
 
-impl XMLElement for PersonId {
+impl XmlNode for PersonId {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Person-id")
     }
@@ -270,7 +270,7 @@ pub struct NameStd {
     pub title: Option<String>,
 }
 
-impl XMLElement for NameStd {
+impl XmlNode for NameStd {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Name-std")
     }
@@ -367,7 +367,7 @@ pub struct UserObject {
     pub data: Vec<UserField>,
 }
 
-impl XMLElement for UserObject {
+impl XmlNode for UserObject {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("User-object")
     }
@@ -402,7 +402,7 @@ impl XMLElement for UserObject {
         }
     }
 }
-impl XMLElementVec for UserObject {}
+impl XmlVecNode for UserObject {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "lowercase")]
@@ -477,7 +477,7 @@ impl Default for UserData {
     }
 }
 
-impl XMLElement for UserData {
+impl XmlNode for UserData {
     /// This enumerated value is not enclosed by a tag
     fn start_bytes() -> BytesStart<'static> {
         unimplemented!()
@@ -551,7 +551,7 @@ pub struct UserField {
     pub data: UserData,
 }
 
-impl XMLElement for UserField {
+impl XmlNode for UserField {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("User-field")
     }
@@ -586,4 +586,4 @@ impl XMLElement for UserField {
         }
     }
 }
-impl XMLElementVec for UserField {}
+impl XmlVecNode for UserField {}

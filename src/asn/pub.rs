@@ -9,7 +9,7 @@ use crate::biblio::{
 };
 use crate::medline::MedlineEntry;
 use crate::parsing_utils::read_node;
-use crate::{XMLElement, XMLElementVec};
+use crate::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Deserialize, Serialize};
@@ -49,7 +49,7 @@ pub enum Pub {
     PmId(PubMedId),
 }
 
-impl XMLElement for Pub {
+impl XmlNode for Pub {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Pub")
     }
@@ -83,11 +83,11 @@ impl XMLElement for Pub {
         }
     }
 }
-impl XMLElementVec for Pub {}
+impl XmlVecNode for Pub {}
 
 pub type PubEquiv = Vec<Pub>;
 
-impl XMLElement for PubEquiv {
+impl XmlNode for PubEquiv {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Pub-equiv")
     }

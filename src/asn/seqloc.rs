@@ -10,7 +10,7 @@ use crate::biblio::IdPat;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId};
 use crate::parsing_utils::{parse_int_to_option, parse_string_to, read_int, read_node};
 use crate::seqfeat::FeatId;
-use crate::{XMLElement, XMLElementVec};
+use crate::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Deserialize, Serialize};
@@ -69,7 +69,7 @@ pub enum SeqId {
     NamedAnnotTrack(TextseqId),
 }
 
-impl XMLElement for SeqId {
+impl XmlNode for SeqId {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Seq-id")
     }
@@ -94,7 +94,7 @@ impl XMLElement for SeqId {
         }
     }
 }
-impl XMLElementVec for SeqId {}
+impl XmlVecNode for SeqId {}
 
 pub type SeqIdSet = Vec<SeqId>;
 
@@ -115,7 +115,7 @@ pub struct TextseqId {
     pub version: Option<u64>,
 }
 
-impl XMLElement for TextseqId {
+impl XmlNode for TextseqId {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Textseq-id")
     }
