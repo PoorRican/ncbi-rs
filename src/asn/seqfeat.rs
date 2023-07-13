@@ -54,7 +54,7 @@
 
 use crate::biblio::{PubMedId, DOI};
 use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing_utils::{parse_int_to_option, parse_node_to, parse_node_to_option, parse_string_to, parse_vec_node_to_option, read_int, read_node};
+use crate::parsing_utils::{check_unimplemented, parse_int_to_option, parse_node_to, parse_node_to_option, parse_string_to, parse_vec_node_to_option, read_int, read_node};
 use crate::r#pub::PubSet;
 use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
@@ -249,6 +249,26 @@ impl XmlNode for SeqFeat {
         let ids_tag = BytesStart::new("Seq-feat_ids");
         let exts_tag = BytesStart::new("Seq-feat_exts");
         let support_tag = BytesStart::new("Seq-feat_support");
+
+        // list of XML elements that have not been implemented yet
+        let forbidden = [
+            &partial_tag,
+            &except_tag,
+            &comment_tag,
+            &product_tag,
+            &qual_tag,
+            &title_tag,
+            &ext_tag,
+            &cit_tag,
+            &exp_ev_tag,
+            &xref_tag,
+            &dbxref_tag,
+            &pseudo_tag,
+            &except_text_tag,
+            &ids_tag,
+            &exts_tag,
+            &support_tag
+        ];
 
         loop {
             match reader.read_event().unwrap() {

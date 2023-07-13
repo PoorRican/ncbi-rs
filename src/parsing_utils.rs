@@ -263,3 +263,12 @@ pub fn parse_vec_node_to_option<T: XmlVecNode>(
         *to = parse_vec_node(reader, element.to_end()).into()
     }
 }
+
+pub fn check_unimplemented(current: &QName, forbidden: &[&BytesStart<'static>]) {
+    for tag in forbidden.iter() {
+        if *current == tag.name() {
+
+            eprintln!("Encountered XML tag {}, which has not been implemented yet...", tag.escape_ascii().to_string())
+        }
+    }
+}
