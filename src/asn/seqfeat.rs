@@ -54,7 +54,7 @@
 
 use crate::biblio::{PubMedId, DOI};
 use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing_utils::{parse_int_to_option, parse_node_to, parse_node_to_option, parse_string_to, parse_vec_node_to_option, read_int, read_node, read_vec_str_unchecked};
+use crate::parsing_utils::{parse_int_to_option, parse_node_to, parse_node_to_option, parse_string_to, parse_vec_node_to_option, read_int, read_node};
 use crate::r#pub::PubSet;
 use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
@@ -401,26 +401,26 @@ impl XmlNode for SeqFeatData {
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
         // variant tags
         let gene_tag = BytesStart::new("SeqFeatData_gene");
-        let org_tag = BytesStart::new("SeqFeatData_org");
+        let _org_tag = BytesStart::new("SeqFeatData_org");
         let cdregion_tag = BytesStart::new("SeqFeatData_cdregion");
-        let prot_tag = BytesStart::new("SeqFeatData_prot");
-        let rna_tag = BytesStart::new("SeqFeatData_rna");
-        let pub_tag = BytesStart::new("SeqFeatData_pub");
-        let seq_tag = BytesStart::new("SeqFeatData_seq");
-        let imp_tag = BytesStart::new("SeqFeatData_imp");
-        let region_tag = BytesStart::new("SeqFeatData_region");
-        let bond_tag = BytesStart::new("SeqFeatData_bond");
-        let site_tag = BytesStart::new("SeqFeatData_site");
-        let rsite_tag = BytesStart::new("SeqFeatData_rsite");
-        let user_tag = BytesStart::new("SeqFeatData_user");
-        let txinit_tag = BytesStart::new("SeqFeatData_txinit");
-        let num_tag = BytesStart::new("SeqFeatData_num");
-        let psec_str_tag = BytesStart::new("SeqFeatData_psec-str");
-        let non_std_residue__tag = BytesStart::new("SeqFeatData_non-std-residue");
-        let het_tag = BytesStart::new("SeqFeatData_het");
-        let biosrc_tag = BytesStart::new("SeqFeatData_biosrc");
-        let clone_tag = BytesStart::new("SeqFeatData_clone");
-        let variation_tag = BytesStart::new("SeqFeatData_variation");
+        let _prot_tag = BytesStart::new("SeqFeatData_prot");
+        let _rna_tag = BytesStart::new("SeqFeatData_rna");
+        let _pub_tag = BytesStart::new("SeqFeatData_pub");
+        let _seq_tag = BytesStart::new("SeqFeatData_seq");
+        let _imp_tag = BytesStart::new("SeqFeatData_imp");
+        let _region_tag = BytesStart::new("SeqFeatData_region");
+        let _bond_tag = BytesStart::new("SeqFeatData_bond");
+        let _site_tag = BytesStart::new("SeqFeatData_site");
+        let _rsite_tag = BytesStart::new("SeqFeatData_rsite");
+        let _user_tag = BytesStart::new("SeqFeatData_user");
+        let _txinit_tag = BytesStart::new("SeqFeatData_txinit");
+        let _num_tag = BytesStart::new("SeqFeatData_num");
+        let _psec_str_tag = BytesStart::new("SeqFeatData_psec-str");
+        let _non_std_residue_tag = BytesStart::new("SeqFeatData_non-std-residue");
+        let _het_tag = BytesStart::new("SeqFeatData_het");
+        let _biosrc_tag = BytesStart::new("SeqFeatData_biosrc");
+        let _clone_tag = BytesStart::new("SeqFeatData_clone");
+        let _variation_tag = BytesStart::new("SeqFeatData_variation");
 
         loop {
             match reader.read_event().unwrap() {
@@ -429,6 +429,9 @@ impl XmlNode for SeqFeatData {
 
                     if name == gene_tag.name() {
                         return Self::Gene(read_node(reader).unwrap()).into()
+                    }
+                    if name == cdregion_tag.name() {
+                        return Self::CdRegion(read_node(reader).unwrap()).into()
                     }
                 }
                 Event::End(e) => {
@@ -576,7 +579,7 @@ pub enum CdRegionFrame {
     Three,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 /// Instructions to translate from a nucleic acid to a peptide
 pub struct CdRegion {
@@ -615,6 +618,45 @@ pub struct CdRegion {
     pub stops: Option<u64>,
 }
 
+impl XmlNode for CdRegion {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Cdregion")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut cdregion = Self::default();
+
+        // field tags
+        let _orf_tag = BytesStart::new("Cdregion_orf");
+        let _frame_tag = BytesStart::new("Cdregion_frame");
+        let _conflict_tag = BytesStart::new("Cdregion_conflict");
+        let gaps_tag = BytesStart::new("Cdregion_gaps");
+        let mismatch_tag = BytesStart::new("Cdregion_mismatch");
+        let code_tag = BytesStart::new("Cdregion_code");
+        let _code_break_tag = BytesStart::new("Cdregion_code-break");
+        let stops_tag = BytesStart::new("Cdregion_stops");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    parse_vec_node_to_option(&name, &code_tag, &mut cdregion.code, reader);
+                    parse_int_to_option(&name, &gaps_tag, &mut cdregion.gaps, reader);
+                    parse_int_to_option(&name, &mismatch_tag, &mut cdregion.mismatch, reader);
+                    parse_int_to_option(&name, &stops_tag, &mut cdregion.stops, reader);
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return cdregion.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "lowercase")]
 /// Storage type for genetic code data
@@ -646,6 +688,43 @@ pub enum GeneticCodeOpt {
     /// start, indexed to [`crate::asn::NCBIStdAa`]
     SNcbiStdAa(Vec<u8>),
 }
+
+impl XmlNode for GeneticCodeOpt {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Genetic-code_E")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variant tags
+        let id_tag = BytesStart::new("Genetic-code_E_id");
+        let name_tag = BytesStart::new("Genetic-code_E_name");
+        let ncbieaa_tag = BytesStart::new("Genetic-code_E_ncbieaa");
+        let ncbi8aa_tag = BytesStart::new("Genetic-code_E_ncbi8aa");
+        let ncbistdaa_tag = BytesStart::new("Genetic-code_E_ncbistdaa");
+        let sncbieaa_tag = BytesStart::new("Genetic-code_E_sncbieaa");
+        let sncbi8aa_tag = BytesStart::new("Genetic-code_E_sncbi8aa");
+        let sncbistdaa_tag = BytesStart::new("Genetic-code_E_sncbistdaa");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == id_tag.name() {
+                        return Self::Id(read_int(reader).unwrap()).into()
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+impl XmlVecNode for GeneticCodeOpt {}
 
 pub type GeneticCode = Vec<GeneticCodeOpt>;
 

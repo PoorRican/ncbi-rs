@@ -6,7 +6,7 @@ use ncbi::general::{
 };
 use ncbi::r#pub::Pub;
 use ncbi::seq::{BioMol, BioSeq, DeltaSeq, Mol, MolInfo, MolTech, PubDesc, Repr, SeqAnnotData, SeqDesc, SeqExt, SeqInst, Strand};
-use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SeqFeatData, SubSource, SubSourceSubType};
+use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, GeneticCode, GeneticCodeOpt, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SeqFeat, SeqFeatData, SubSource, SubSourceSubType};
 use ncbi::seqloc::{NaStrand, SeqId, SeqInterval, SeqLoc, TextseqId};
 use ncbi::seqset::{BioSeqSet, SeqEntry};
 use ncbi::{get_local_xml, parse_xml, DataType};
@@ -621,9 +621,14 @@ fn parse_bioseq_annot() {
 
     // total number of occurrences of `SeqFeatData::Gene`
     let expected_genes: usize = 88;
+    let expected_cdregions: usize = 88;
+    let genetic_code = Some(vec![GeneticCodeOpt::Id(11)]);
 
     assert!(bioseq.annot.is_some());
 
+    // track occurrence of object types
+    let mut has_gene_data = false;
+    let mut has_cdregion_data = false;
     if let Some(annot) = bioseq.annot {
         let annot = annot.get(0).unwrap();
         if let SeqAnnotData::FTable(ftable) = &annot.data {
@@ -631,16 +636,29 @@ fn parse_bioseq_annot() {
 
             // counter for gene features
             let mut genes: usize = 0;
+            let mut cdregions: usize = 0;
 
             // inspect parsed features
             for feat in ftable.iter() {
-                if let SeqFeatData::Gene(_) = feat.data {
+                if let SeqFeatData::Gene(_) = &feat.data {
+                    has_gene_data = true;
                     genes += 1;
                 }
+                else if let SeqFeatData::CdRegion(cdregion) = &feat.data {
+                    has_cdregion_data = true;
+                    assert_eq!(cdregion.code, genetic_code);
+                    cdregions += 1;
+                }
             }
-            assert_eq!(expected_genes, genes)
+
+            // assert parsed features
+            assert!(has_gene_data);
+            assert_eq!(expected_genes, genes);
+
+            assert!(has_cdregion_data);
+            assert_eq!(expected_cdregions, cdregions);
         } else {
-            assert!(false);
+            assert!(false, "data value is not ftable");
         }
 
     }
