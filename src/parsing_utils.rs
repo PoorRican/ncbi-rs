@@ -1,4 +1,4 @@
-use crate::{XMLElement, XMLElementVec};
+use crate::{XMLElement, XMLElementVec, XmlValue};
 use atoi::{atoi, FromRadix10SignedChecked};
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::name::QName;
@@ -92,6 +92,30 @@ where
 /// Parse the given bytes into a [`String`]
 pub fn bytes_to_string(text: &[u8]) -> String {
     text.escape_ascii().to_string()
+}
+
+pub fn parse_attribute<T: XmlValue>(current: &BytesStart, element: &BytesStart, reader: &mut XmlReader) -> Option<T> {
+    let current_str = current.name().0.escape_ascii().to_string();
+    let element_str = element.name().0.escape_ascii().to_string();
+    if current.name() == element.name() {
+        T::from_attributes(current.html_attributes())
+    } else {
+        None
+    }
+}
+
+pub fn parse_attribute_to<T: XmlValue>(current: &BytesStart, element: &BytesStart, to: &mut T, reader: &mut XmlReader){
+    let value = parse_attribute(current, element, reader);
+    if value.is_some() {
+        *to = value.unwrap()
+    }
+}
+
+pub fn parse_attribute_to_option<T: XmlValue>(current: &BytesStart, element: &BytesStart, to: &mut Option<T>, reader: &mut XmlReader){
+    let value = parse_attribute(current, element, reader);
+    if value.is_some() {
+        *to = value
+    }
 }
 
 /// Parses the next [`Event::Text`] as an integer

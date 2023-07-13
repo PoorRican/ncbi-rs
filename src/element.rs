@@ -1,5 +1,16 @@
 use quick_xml::events::{BytesEnd, BytesStart, Event};
+use quick_xml::events::attributes::Attributes;
 use quick_xml::Reader;
+
+/// Parses [`Event::Empty`] values
+///
+/// Differs from [`XMLElement`] in that
+/// [`Self::from_attributes`] accepts [`Attributes`],
+/// whereas [`XMLElement::from_reader()`] accepts an [`XMLReader`]
+pub trait XmlValue {
+    fn start_bytes() -> BytesStart<'static>;
+    fn from_attributes(bytes: Attributes) -> Option<Self> where Self: Sized;
+}
 
 pub trait XMLElement {
     fn start_bytes() -> BytesStart<'static>;
