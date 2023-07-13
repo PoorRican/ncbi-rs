@@ -5,7 +5,7 @@ use ncbi::general::{
     Date, DateStd, DbTag, NameStd, ObjectId, PersonId, UserData, UserField, UserObject,
 };
 use ncbi::r#pub::Pub;
-use ncbi::seq::{BioMol, BioSeq, DeltaSeq, Mol, MolInfo, MolTech, PubDesc, Repr, SeqDesc, SeqExt, SeqInst, Strand};
+use ncbi::seq::{BioMol, BioSeq, DeltaSeq, Mol, MolInfo, MolTech, PubDesc, Repr, SeqAnnotData, SeqDesc, SeqExt, SeqInst, Strand};
 use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SubSource, SubSourceSubType};
 use ncbi::seqloc::{NaStrand, SeqId, SeqInterval, SeqLoc, TextseqId};
 use ncbi::seqset::{BioSeqSet, SeqEntry};
@@ -613,8 +613,21 @@ fn parse_bioseq_inst() {
 }
 
 #[test]
-#[ignore]
 fn parse_bioseq_annot() {
     let bioseq = get_bioseq(DATA1);
+
     assert!(bioseq.annot.is_some());
+    let feats = 176 as usize;
+
+    if let Some(annot) = bioseq.annot {
+        let annot = annot.get(0).unwrap();
+        if let SeqAnnotData::FTable(ftable) = &annot.data {
+            assert_eq!(ftable.len(), feats);
+        } else {
+            assert!(false);
+        }
+
+    } else {
+        assert!(false)
+    }
 }
