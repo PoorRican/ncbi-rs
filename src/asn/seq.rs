@@ -5,7 +5,7 @@
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing_utils::{parse_attribute_to, parse_int_to_option, parse_node_to, parse_node_to_option, parse_vec_node, parse_vec_node_to, read_int, read_node, read_string};
+use crate::parsing_utils::{parse_attribute_to, parse_int_to_option, parse_node_to, parse_node_to_option, parse_vec_node, parse_vec_node_to, parse_vec_node_to_option, read_int, read_node, read_string};
 use crate::r#pub::PubEquiv;
 use crate::seqalign::SeqAlign;
 use crate::seqblock::{EMBLBlock, GBBlock, PDBBlock, PIRBlock, PRFBlock, SPBlock};
@@ -64,7 +64,7 @@ impl XmlNode for BioSeq {
         let id_elem = BytesStart::new("Bioseq_id");
         let descr_elem = BytesStart::new("Bioseq_descr");
         let inst_elem = BytesStart::new("Bioseq_inst");
-        let _annot_elem = BytesStart::new("Bioseq_annot");
+        let annot_elem = BytesStart::new("Bioseq_annot");
 
         loop {
             match reader.read_event().unwrap() {
@@ -74,6 +74,7 @@ impl XmlNode for BioSeq {
                     parse_vec_node_to(&name, &id_elem, &mut bioseq.id, reader);
                     parse_node_to_option(&name, &descr_elem, &mut bioseq.descr, reader);
                     parse_node_to_option(&name, &inst_elem, &mut bioseq.inst, reader);
+                    parse_vec_node_to_option(&name, &annot_elem, &mut bioseq.annot, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -246,7 +247,7 @@ enum_from_primitive! {
         cRNA,
         /// viral RNA genome copy intermediate
         snoRNA,
-        /// small nucleolar RNA
+        /// small nucleolar RNAGG
         TranscribedRNA,
         /// transcribed RNA other than existing classes
         ncRNA,
@@ -1361,6 +1362,35 @@ pub enum SeqAnnotData {
     SeqTable(SeqTable),
 }
 
+impl XmlNode for SeqAnnotData {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-annot_data")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variant tags
+        let ftable_tag = BytesStart::new("Seq-annot_data_ftable");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == ftable_tag.name() {
+                        return Self::FTable(parse_vec_node(reader, ftable_tag.to_end())).into()
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct SeqAnnot {
@@ -1375,3 +1405,50 @@ pub struct SeqAnnot {
 
     pub data: SeqAnnotData,
 }
+
+impl SeqAnnot {
+    /// default not originally in spec
+    pub fn default() -> Self {
+        Self::new(SeqAnnotData::FTable(vec![]))
+    }
+
+    pub fn new(data: SeqAnnotData) -> Self {
+        Self {
+            id: None,
+            db: None,
+            name: None,
+            desc: None,
+            data,
+        }
+    }
+}
+
+impl XmlNode for SeqAnnot {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-annot")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut annot = SeqAnnot::default();
+
+        // attribute tags
+        let data_tag = BytesStart::new("Seq-annot_data");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    parse_node_to(&name, &data_tag, &mut annot.data, reader);
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return annot.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+impl XmlVecNode for SeqAnnot {}

@@ -207,6 +207,13 @@ pub enum SeqLoc {
     Feat(FeatId),
 }
 
+impl SeqLoc {
+    /// default not originally in spec
+    pub fn default() -> Self {
+        Self::Null
+    }
+}
+
 impl XmlNode for SeqLoc {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Seq-loc")

@@ -86,6 +86,38 @@ pub enum FeatId {
     General(DbTag),
 }
 
+impl XmlNode for FeatId {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Feat-id")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variant tags
+        let gibb_tag = BytesStart::new("Feat-id_gibb");
+        let giim_tag = BytesStart::new("Feat-id_giim");
+        let local_tag = BytesStart::new("Feat-id_local");
+        let general_tag = BytesStart::new("Feat-id_general");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == local_tag.name() {
+                        return Self::Local(read_node(reader).unwrap()).into();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
 #[repr(u8)]
 /// Experimental evidence for existence of feature
@@ -160,6 +192,84 @@ pub struct SeqFeat {
 
     pub support: Option<SeqFeatSupport>,
 }
+
+impl SeqFeat {
+    /// not originally in spec
+    pub fn default() -> Self {
+        Self::new(SeqFeatData::Gene(GeneRef::default()))
+    }
+
+    pub fn new(data: SeqFeatData) -> Self {
+        Self {
+            id: None,
+            data,
+            partial: None,
+            except: None,
+            comment: None,
+            product: None,
+            location: SeqLoc::default(),
+            qual: None,
+            title: None,
+            ext: None,
+            cit: None,
+            exp_ev: None,
+            xref: None,
+            dbxref: None,
+            pseudo: None,
+            except_text: None,
+            ids: None,
+            exts: None,
+            support: None,
+        }
+    }
+}
+
+impl XmlNode for SeqFeat {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-feat")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut feat = Self::default();
+
+        // attribute tags
+        let id_tag = BytesStart::new("Seq-feat_id");
+        let data_tag = BytesStart::new("Seq-feat_data");
+        let partial_tag = BytesStart::new("Seq-feat_partial");
+        let except_tag = BytesStart::new("Seq-feat_except");
+        let comment_tag = BytesStart::new("Seq-feat_comment");
+        let product_tag = BytesStart::new("Seq-feat_product");
+        let location_tag = BytesStart::new("Seq-feat_location");
+        let qual_tag = BytesStart::new("Seq-feat_qual");
+        let title_tag = BytesStart::new("Seq-feat_title");
+        let ext_tag = BytesStart::new("Seq-feat_ext");
+        let cit_tag = BytesStart::new("Seq-feat_cit");
+        let exp_ev_tag = BytesStart::new("Seq-feat_exp_ev");
+        let xref_tag = BytesStart::new("Seq-feat_xref");
+        let dbxref_tag = BytesStart::new("Seq-feat_db_xref");
+        let pseudo_tag = BytesStart::new("Seq-feat_pseudo");
+        let except_text_tag = BytesStart::new("Seq-feat_except_text");
+        let ids_tag = BytesStart::new("Seq-feat_ids");
+        let exts_tag = BytesStart::new("Seq-feat_exts");
+        let support_tag = BytesStart::new("Seq-feat_support");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+                    parse_node_to_option(&name, &id_tag, &mut feat.id, reader);
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return feat.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+impl XmlVecNode for SeqFeat {}
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
 #[repr(u8)]
@@ -1478,7 +1588,7 @@ pub struct RnaQual {
 
 pub type RnaQualSet = Vec<RnaQual>;
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 pub struct GeneRef {
     /// official gene symbol
@@ -1494,7 +1604,7 @@ pub struct GeneRef {
     pub maploc: Option<String>,
 
     /// pseudogene
-    pub pseudo: bool, // TODO: default false
+    pub pseudo: bool,
 
     /// ids in other dbases
     pub db: Option<Vec<DbTag>>,
