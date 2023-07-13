@@ -276,6 +276,9 @@ impl XmlNode for SeqFeat {
                     let name = e.name();
                     parse_node_to_option(&name, &id_tag, &mut feat.id, reader);
                     parse_node_to(&name, &data_tag, &mut feat.data, reader);
+                    parse_node_to(&name, &location_tag, &mut feat.location, reader);
+
+                    check_unimplemented(&name, &forbidden);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
