@@ -120,7 +120,6 @@ impl XmlNode for BioSeqSet {
 
         let mut set = Self::default();
 
-        println!("Starting to parse BioSeqSet");
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -153,7 +152,6 @@ impl XmlNode for SeqEntry {
         let seq = BytesStart::new("Seq-entry_seq");
         let set = BytesStart::new("Seq-entry_set");
 
-        println!("Beginning to parse Seq-entry");
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {

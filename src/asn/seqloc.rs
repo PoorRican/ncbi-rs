@@ -285,7 +285,7 @@ impl XmlNode for SeqInterval {
                     parse_node_to(&name, &id_element, &mut interval.id, reader);
                 }
                 Event::Empty(e) => {
-                    parse_attribute_to_option(&e, &NaStrand::start_bytes(), &mut interval.strand, reader);
+                    parse_attribute_to_option(&e, &NaStrand::start_bytes(), &mut interval.strand);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {

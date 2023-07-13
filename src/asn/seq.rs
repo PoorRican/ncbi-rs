@@ -4,9 +4,8 @@
 //!
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
-use std::ops::Deref;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing_utils::{parse_attribute_to, parse_attribute_to_option, parse_int_to, parse_int_to_option, parse_node_to, parse_node_to_option, parse_vec_node, parse_vec_node_to, read_int, read_node, read_string};
+use crate::parsing_utils::{parse_attribute_to, parse_int_to_option, parse_node_to, parse_node_to_option, parse_vec_node, parse_vec_node_to, read_int, read_node, read_string};
 use crate::r#pub::PubEquiv;
 use crate::seqalign::SeqAlign;
 use crate::seqblock::{EMBLBlock, GBBlock, PDBBlock, PIRBlock, PRFBlock, SPBlock};
@@ -65,7 +64,7 @@ impl XmlNode for BioSeq {
         let id_elem = BytesStart::new("Bioseq_id");
         let descr_elem = BytesStart::new("Bioseq_descr");
         let inst_elem = BytesStart::new("Bioseq_inst");
-        let annot_elem = BytesStart::new("Bioseq_annot");
+        let _annot_elem = BytesStart::new("Bioseq_annot");
 
         loop {
             match reader.read_event().unwrap() {
@@ -750,7 +749,6 @@ impl XmlValue for Repr {
                 if attr.key == value.name() {
                     let _inner = attr.unescape_value().unwrap().to_string();
                     let inner = _inner.get(2.._inner.len()-2).unwrap();
-                    println!("{}", inner);
                     if inner == "not-set" {
                         return Self::NotSet.into()
                     }
@@ -946,10 +944,8 @@ impl XmlNode for SeqInst {
                     parse_node_to_option(&name, &ext_element, &mut inst.ext, reader);
                 }
                 Event::Empty(e) => {
-                    let name = e.name();
-
-                    parse_attribute_to(&e, &repr_element, &mut inst.repr, reader);
-                    parse_attribute_to(&e, &mol_element, &mut inst.mol, reader);
+                    parse_attribute_to(&e, &repr_element, &mut inst.repr);
+                    parse_attribute_to(&e, &mol_element, &mut inst.mol);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {

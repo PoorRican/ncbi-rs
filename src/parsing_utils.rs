@@ -94,9 +94,7 @@ pub fn bytes_to_string(text: &[u8]) -> String {
     text.escape_ascii().to_string()
 }
 
-pub fn parse_attribute<T: XmlValue>(current: &BytesStart, element: &BytesStart, reader: &mut XmlReader) -> Option<T> {
-    let current_str = current.name().0.escape_ascii().to_string();
-    let element_str = element.name().0.escape_ascii().to_string();
+pub fn parse_attribute<T: XmlValue>(current: &BytesStart, element: &BytesStart) -> Option<T> {
     if current.name() == element.name() {
         T::from_attributes(current.html_attributes())
     } else {
@@ -104,15 +102,15 @@ pub fn parse_attribute<T: XmlValue>(current: &BytesStart, element: &BytesStart, 
     }
 }
 
-pub fn parse_attribute_to<T: XmlValue>(current: &BytesStart, element: &BytesStart, to: &mut T, reader: &mut XmlReader){
-    let value = parse_attribute(current, element, reader);
+pub fn parse_attribute_to<T: XmlValue>(current: &BytesStart, element: &BytesStart, to: &mut T){
+    let value = parse_attribute(current, element);
     if value.is_some() {
         *to = value.unwrap()
     }
 }
 
-pub fn parse_attribute_to_option<T: XmlValue>(current: &BytesStart, element: &BytesStart, to: &mut Option<T>, reader: &mut XmlReader){
-    let value = parse_attribute(current, element, reader);
+pub fn parse_attribute_to_option<T: XmlValue>(current: &BytesStart, element: &BytesStart, to: &mut Option<T>){
+    let value = parse_attribute(current, element);
     if value.is_some() {
         *to = value
     }

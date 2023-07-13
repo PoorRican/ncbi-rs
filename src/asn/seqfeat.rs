@@ -1997,7 +1997,7 @@ impl XmlNode for BioSource {
         let mut source = Self::default();
 
         let genome_element = BytesStart::new("BioSource_genome");
-        let origin_element = BytesStart::new("BioSource_origin");
+        let _origin_element = BytesStart::new("BioSource_origin");
         let org_element = BytesStart::new("BioSource_org");
         let subtype_element = BytesStart::new("BioSource_subtype");
 
