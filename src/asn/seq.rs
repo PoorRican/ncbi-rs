@@ -4,10 +4,9 @@
 //!
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
+use std::ops::Deref;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing_utils::{
-    parse_node_to, parse_node_to_option, parse_vec_node_to, read_int, read_node, read_string,
-};
+use crate::parsing_utils::{parse_attribute_to, parse_attribute_to_option, parse_int_to, parse_int_to_option, parse_node_to, parse_node_to_option, parse_vec_node, parse_vec_node_to, read_int, read_node, read_string};
 use crate::r#pub::PubEquiv;
 use crate::seqalign::SeqAlign;
 use crate::seqblock::{EMBLBlock, GBBlock, PDBBlock, PIRBlock, PRFBlock, SPBlock};
@@ -15,9 +14,10 @@ use crate::seqfeat::{BioSource, ModelEvidenceSupport, OrgRef, SeqFeat};
 use crate::seqloc::{SeqId, SeqLoc};
 use crate::seqres::SeqGraph;
 use crate::seqtable::SeqTable;
-use crate::{XmlNode, XmlVecNode};
+use crate::{XmlNode, XmlVecNode, XmlValue};
 use enum_primitive::FromPrimitive;
 use quick_xml::events::{BytesStart, Event};
+use quick_xml::events::attributes::Attributes;
 use quick_xml::Reader;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -74,6 +74,7 @@ impl XmlNode for BioSeq {
 
                     parse_vec_node_to(&name, &id_elem, &mut bioseq.id, reader);
                     parse_node_to_option(&name, &descr_elem, &mut bioseq.descr, reader);
+                    parse_node_to_option(&name, &inst_elem, &mut bioseq.inst, reader);
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -737,6 +738,56 @@ pub enum Repr {
     Other = 255,
 }
 
+impl XmlValue for Repr {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-inst_repr")
+    }
+
+    fn from_attributes(attributes: Attributes) -> Option<Self> {
+        let value = BytesStart::new("value");
+        for attribute in attributes {
+            if let Ok(attr) = attribute {
+                if attr.key == value.name() {
+                    let _inner = attr.unescape_value().unwrap().to_string();
+                    let inner = _inner.get(2.._inner.len()-2).unwrap();
+                    println!("{}", inner);
+                    if inner == "not-set" {
+                        return Self::NotSet.into()
+                    }
+                    if inner == "virtual" {
+                        return Self::Virtual.into()
+                    }
+                    if inner == "raw" {
+                        return Self::Raw.into()
+                    }
+                    if inner == "seg" {
+                        return Self::Seg.into()
+                    }
+                    if inner == "const" {
+                        return Self::Const.into()
+                    }
+                    if inner == "ref" {
+                        return Self::Ref.into()
+                    }
+                    if inner == "consen" {
+                        return Self::Consen.into()
+                    }
+                    if inner == "map" {
+                        return Self::Map.into()
+                    }
+                    if inner == "delta" {
+                        return Self::Delta.into()
+                    }
+                    if inner == "other" {
+                        return Self::Other.into()
+                    }
+                }
+            }
+        }
+        return None
+    }
+}
+
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
 #[repr(u8)]
 /// molecule class in living organism
@@ -754,6 +805,34 @@ pub enum Mol {
     /// just a nucleic acid
     NA,
     Other = 255,
+}
+
+impl XmlValue for Mol {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-inst_mol")
+    }
+
+    fn from_attributes(attributes: Attributes) -> Option<Self> {
+        let value = BytesStart::new("value");
+        for attribute in attributes {
+            if let Ok(attr) = attribute {
+                if attr.key == value.name() {
+                    let _inner = attr.unescape_value().unwrap().to_string();
+                    let inner = _inner.get(2.._inner.len()-2).unwrap();
+                    return match inner {
+                        "not-set" => Self::NotSet.into(),
+                        "dna" => Self::DNA.into(),
+                        "rna" => Self::NotSet.into(),
+                        "aa" => Self::DNA.into(),
+                        "na" => Self::DNA.into(),
+                        "other" => Self::Other.into(),
+                        _ => None
+                    }
+                }
+            }
+        }
+        return None
+    }
 }
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
@@ -830,7 +909,7 @@ impl Default for SeqInst {
     fn default() -> Self {
         let repr = Repr::Other;
         let mol = Mol::Other;
-        let strand = Strand::Other;
+        let strand = Strand::NotSet;
         Self {
             repr, mol,
             length: None,
@@ -840,6 +919,45 @@ impl Default for SeqInst {
             seq_data: None,
             ext: None,
             hist: None,
+        }
+    }
+}
+
+impl XmlNode for SeqInst {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-inst")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut inst = Self::default();
+
+        // elements
+        let repr_element = BytesStart::new("Seq-inst_repr");
+        let mol_element = BytesStart::new("Seq-inst_mol");
+        let length_element = BytesStart::new("Seq-inst_length");
+        let ext_element = BytesStart::new("Seq-inst_ext");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    parse_int_to_option(&name, &length_element, &mut inst.length, reader);
+                    parse_node_to_option(&name, &ext_element, &mut inst.ext, reader);
+                }
+                Event::Empty(e) => {
+                    let name = e.name();
+
+                    parse_attribute_to(&e, &repr_element, &mut inst.repr, reader);
+                    parse_attribute_to(&e, &mol_element, &mut inst.mol, reader);
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return inst.into()
+                    }
+                }
+                _ => ()
+            }
         }
     }
 }
@@ -861,6 +979,38 @@ pub enum SeqExt {
     Delta(DeltaExt),
 }
 
+impl XmlNode for SeqExt {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-ext")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variants
+        let _seg_element = BytesStart::new("Seq-ext_seg");
+        let _ref_element = BytesStart::new("Seq-ext_ref");
+        let _map_element = BytesStart::new("Seq-ext_map");
+        let delta_element = BytesStart::new("Seq-ext_delta");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == delta_element.name() {
+                        return Self::Delta(parse_vec_node(reader, delta_element.to_end())).into();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                },
+                _ => ()
+            }
+        }
+    }
+}
+
 pub type SegExt = Vec<SeqLoc>;
 pub type RefExt = SeqLoc;
 pub type MapExt = Vec<SeqFeat>;
@@ -875,6 +1025,37 @@ pub enum DeltaSeq {
     /// a piece of sequence
     Literal(SeqLiteral),
 }
+
+impl XmlNode for DeltaSeq {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Delta-seq")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variant tags
+        let loc_variant = BytesStart::new("Delta-seq_loc");
+        let _literal_variant = BytesStart::new("Delta-seq_literal");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == loc_variant.name() {
+                        return Self::Loc(read_node(reader).unwrap()).into()
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+impl XmlVecNode for DeltaSeq {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "kebab-case")]

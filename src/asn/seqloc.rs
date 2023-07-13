@@ -8,13 +8,13 @@
 
 use crate::biblio::IdPat;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId};
-use crate::parsing_utils::{parse_int_to_option, parse_string_to, read_int, read_node};
+use crate::parsing_utils::{parse_attribute_to_option, parse_int_to, parse_int_to_option, parse_node_to, parse_string_to, read_int, read_node};
 use crate::seqfeat::FeatId;
-use crate::{XmlNode, XmlVecNode};
+use crate::{XmlNode, XmlVecNode, XmlValue};
 use quick_xml::events::{BytesStart, Event};
+use quick_xml::events::attributes::Attributes;
 use quick_xml::Reader;
 use serde::{Deserialize, Serialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "lowercase")]
@@ -79,6 +79,7 @@ impl XmlNode for SeqId {
         let other_element = BytesStart::new("Seq-id_other");
         let general_element = BytesStart::new("Seq-id_general");
         let gi_element = BytesStart::new("Seq-id_gi");
+        let genbank_element = BytesStart::new("Seq-id_genbank");
 
         loop {
             if let Event::Start(e) = reader.read_event().unwrap() {
@@ -89,6 +90,8 @@ impl XmlNode for SeqId {
                     return SeqId::General(read_node(reader).unwrap()).into();
                 } else if e.name() == gi_element.name() {
                     return SeqId::Gi(read_int(reader).unwrap()).into();
+                } else if e.name() == genbank_element.name() {
+                    return SeqId::Genbank(read_node(reader).unwrap()).into();
                 }
             }
         }
@@ -204,6 +207,35 @@ pub enum SeqLoc {
     Feat(FeatId),
 }
 
+impl XmlNode for SeqLoc {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-loc")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variant tags
+        let int_variant = BytesStart::new("Seq-loc_int");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == int_variant.name() {
+                        return Self::Int(read_node(reader).unwrap()).into()
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct SeqInterval {
@@ -228,6 +260,44 @@ impl Default for SeqInterval {
     }
 }
 
+impl XmlNode for SeqInterval {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-interval")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut interval = SeqInterval::default();
+
+        // elements
+        let from_element = BytesStart::new("Seq-interval_from");
+        let to_element = BytesStart::new("Seq-interval_to");
+        // this tag is skipped, and `Empty` tag for `NaStrand` is used instead
+        let _strand_element = BytesStart::new("Seq-interval_strand");
+        let id_element = BytesStart::new("Seq-interval_id");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    parse_int_to(&name, &from_element, &mut interval.from, reader);
+                    parse_int_to(&name, &to_element, &mut interval.to, reader);
+                    parse_node_to(&name, &id_element, &mut interval.id, reader);
+                }
+                Event::Empty(e) => {
+                    parse_attribute_to_option(&e, &NaStrand::start_bytes(), &mut interval.strand, reader);
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return interval.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
 pub type PackedSeqInt = Vec<SeqInterval>;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -247,8 +317,7 @@ pub struct PackedSeqPnt {
     pub points: Vec<i64>,
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Strand of nucleic acid
 pub enum NaStrand {
     Unknown,
@@ -259,6 +328,40 @@ pub enum NaStrand {
     /// in reverse orientation
     BothRev,
     Other = 255,
+}
+
+impl XmlValue for NaStrand {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Na-strand")
+    }
+
+    fn from_attributes(attributes: Attributes) -> Option<Self> {
+        let value = BytesStart::new("value");
+        for attribute in attributes {
+            if let Ok(attr) = attribute {
+                if attr.key == value.name() {
+                    let _inner = attr.unescape_value().unwrap().to_string();
+                    let inner = _inner.get(2.._inner.len()-2).unwrap();
+                    if inner == "unknown" {
+                        return Self::Unknown.into()
+                    }
+                    if inner == "plus" {
+                        return Self::Plus.into()
+                    }
+                    if inner == "minus" {
+                        return Self::Minus.into()
+                    }
+                    if inner == "both" {
+                        return Self::Both.into()
+                    }
+                    if inner == "both-rev" {
+                        return Self::BothRev.into()
+                    }
+                }
+            }
+        }
+        return None
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
