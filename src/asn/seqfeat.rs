@@ -95,6 +95,11 @@ impl XmlNode for FeatId {
         let local_tag = BytesStart::new("Feat-id_local");
         let general_tag = BytesStart::new("Feat-id_general");
 
+        let forbidden = [
+            &gibb_tag,
+            &giim_tag
+        ];
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -102,6 +107,10 @@ impl XmlNode for FeatId {
 
                     if name == local_tag.name() {
                         return Self::Local(read_node(reader).unwrap()).into();
+                    } else if name == general_tag.name() {
+                        return Self::General(read_node(reader).unwrap()).into();
+                    } else {
+                        check_unimplemented(&name, &forbidden);
                     }
                 }
                 Event::End(e) => {
