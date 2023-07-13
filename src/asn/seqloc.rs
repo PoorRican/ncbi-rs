@@ -8,7 +8,7 @@
 
 use crate::biblio::IdPat;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId};
-use crate::parsing_utils::{parse_attribute_to_option, parse_int_to, parse_int_to_option, parse_node_to, parse_string_to, read_int, read_node};
+use crate::parsing_utils::{check_unimplemented, parse_attribute_to_option, parse_int_to, parse_int_to_option, parse_node_to, parse_string_to, read_int, read_node};
 use crate::seqfeat::FeatId;
 use crate::{XmlNode, XmlVecNode, XmlValue};
 use quick_xml::events::{BytesStart, Event};
@@ -221,7 +221,29 @@ impl XmlNode for SeqLoc {
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
         // variant tags
+        let null_variant = BytesStart::new("Seq-loc_null");
         let int_variant = BytesStart::new("Seq-loc_int");
+        let empty_variant = BytesStart::new("Seq-loc_empty");
+        let whole_variant = BytesStart::new("Seq-loc_whole");
+        let packed_int_variant = BytesStart::new("Seq-loc_packed-int");
+        let pnt_variant = BytesStart::new("Seq-loc_pnt");
+        let packed_pnt_variant = BytesStart::new("Seq-loc_packed_pnt");
+        let mix_variant = BytesStart::new("Seq-loc_mix");
+        let equiv_variant = BytesStart::new("Seq-loc_equiv");
+        let bond_variant = BytesStart::new("Seq-loc_bond");
+        let feat_variant = BytesStart::new("Seq-loc_feat");
+
+        let forbidden = [
+            &null_variant,
+            &empty_variant,
+            &packed_int_variant,
+            &pnt_variant,
+            &packed_pnt_variant,
+            &mix_variant,
+            &equiv_variant,
+            &bond_variant,
+            &feat_variant
+        ];
 
         loop {
             match reader.read_event().unwrap() {
@@ -230,7 +252,11 @@ impl XmlNode for SeqLoc {
 
                     if name == int_variant.name() {
                         return Self::Int(read_node(reader).unwrap()).into()
-                    }
+                    } else if name == whole_variant.name() {
+                        return Self::Whole(read_node(reader).unwrap()).into()
+                    } else {
+                            check_unimplemented(&name, &forbidden);
+                        }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
