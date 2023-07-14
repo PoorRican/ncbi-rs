@@ -409,14 +409,14 @@ impl XmlVecNode for UserObject {}
 pub enum UserData {
     Str(String),
     Int(i64),
-    Real(f64),
+    Real(String),
     Bool(bool),
     // OS(`octal string`),
     /// for using other definitions
     Object(UserObject),
     Strs(Vec<String>),
     Ints(Vec<i64>),
-    Reals(Vec<f64>),
+    Reals(Vec<String>),
     Fields(Vec<UserField>),
     Objects(Vec<UserObject>),
 }

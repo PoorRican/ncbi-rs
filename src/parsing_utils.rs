@@ -128,6 +128,14 @@ where
     }
 }
 
+pub fn read_real(reader: &mut XmlReader) -> Option<String> {
+    if let Event::Text(text) = reader.read_event().unwrap() {
+        bytes_to_string(text.deref()).into()
+    } else {
+        None
+    }
+}
+
 /// Parses the next [`Event::Text`] as an integer
 pub fn read_string(reader: &mut XmlReader) -> Option<String> {
     if let Event::Text(text) = reader.read_event().unwrap() {
