@@ -448,7 +448,11 @@ impl UserData {
     where
         Self: Sized,
     {
-        unimplemented!()
+        let end = BytesEnd::new("User-field_data_reals");
+
+        let items = read_vec_str_unchecked(reader, &end);
+
+        return Self::Reals(items).into();
     }
 
     fn parse_fields(reader: &mut Reader<&[u8]>) -> Option<Self>
@@ -511,7 +515,7 @@ impl XmlNode for UserData {
                         return Self::Int(read_int::<i64>(reader).unwrap()).into();
                     }
                     if name == real_element.name() {
-                        unimplemented!()
+                        return Self::Real(read_real(reader).unwrap()).into()
                     }
                     if name == bool_element.name() {
                         unimplemented!()
