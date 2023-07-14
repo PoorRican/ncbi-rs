@@ -626,8 +626,9 @@ fn parse_bioseq_annot() {
         if let SeqAnnotData::FTable(ftable) = &annot.data {
             assert_eq!(ftable.len(), feats);
         }
+    } else {
+        assert!(false, "data value is not ftable");
     }
-
 }
 
 #[test]
@@ -664,10 +665,7 @@ fn parse_bioseq_annot_gene_feats() {
             assert!(has_gene_data);
             assert_eq!(expected_genes, genes);
 
-        } else {
-            assert!(false, "data value is not ftable");
         }
-
     }
 }
 
@@ -700,10 +698,7 @@ fn parse_bioseq_annot_cdregion_feats() {
             // assert parsed features
             assert!(has_cdregion_data);
             assert_eq!(expected_cdregions, cdregions);
-        } else {
-            assert!(false, "data value is not ftable");
         }
-
     }
 }
 
@@ -730,9 +725,33 @@ fn parse_bioseq_annot_feat_products() {
 
             // assert parsed features
             assert_eq!(expected_products, products);
-        } else {
-            assert!(false, "data value is not ftable");
         }
+    }
+}
 
+#[test]
+fn parse_bioseq_annot_feat_comments() {
+    let bioseq = get_bioseq(DATA1);
+
+    // total number of occurrences of `SeqFeat.products`
+    let expected_comments: usize = 1;
+
+    // track occurrence of object types
+    if let Some(annot) = bioseq.annot {
+        let annot = annot.get(0).unwrap();
+        if let SeqAnnotData::FTable(ftable) = &annot.data {
+            // counter for products
+            let mut comments: usize = 0;
+
+            // inspect parsed features
+            for feat in ftable.iter() {
+                if feat.comment.is_some() {
+                    comments += 1;
+                }
+            }
+
+            // assert parsed features
+            assert_eq!(expected_comments, comments);
+        }
     }
 }
