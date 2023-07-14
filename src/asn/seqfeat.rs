@@ -433,26 +433,48 @@ impl XmlNode for SeqFeatData {
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
         // variant tags
         let gene_tag = BytesStart::new("SeqFeatData_gene");
-        let _org_tag = BytesStart::new("SeqFeatData_org");
+        let org_tag = BytesStart::new("SeqFeatData_org");
         let cdregion_tag = BytesStart::new("SeqFeatData_cdregion");
-        let _prot_tag = BytesStart::new("SeqFeatData_prot");
-        let _rna_tag = BytesStart::new("SeqFeatData_rna");
-        let _pub_tag = BytesStart::new("SeqFeatData_pub");
-        let _seq_tag = BytesStart::new("SeqFeatData_seq");
-        let _imp_tag = BytesStart::new("SeqFeatData_imp");
-        let _region_tag = BytesStart::new("SeqFeatData_region");
-        let _bond_tag = BytesStart::new("SeqFeatData_bond");
-        let _site_tag = BytesStart::new("SeqFeatData_site");
-        let _rsite_tag = BytesStart::new("SeqFeatData_rsite");
-        let _user_tag = BytesStart::new("SeqFeatData_user");
-        let _txinit_tag = BytesStart::new("SeqFeatData_txinit");
-        let _num_tag = BytesStart::new("SeqFeatData_num");
-        let _psec_str_tag = BytesStart::new("SeqFeatData_psec-str");
-        let _non_std_residue_tag = BytesStart::new("SeqFeatData_non-std-residue");
-        let _het_tag = BytesStart::new("SeqFeatData_het");
-        let _biosrc_tag = BytesStart::new("SeqFeatData_biosrc");
-        let _clone_tag = BytesStart::new("SeqFeatData_clone");
-        let _variation_tag = BytesStart::new("SeqFeatData_variation");
+        let prot_tag = BytesStart::new("SeqFeatData_prot");
+        let rna_tag = BytesStart::new("SeqFeatData_rna");
+        let pub_tag = BytesStart::new("SeqFeatData_pub");
+        let seq_tag = BytesStart::new("SeqFeatData_seq");
+        let imp_tag = BytesStart::new("SeqFeatData_imp");
+        let region_tag = BytesStart::new("SeqFeatData_region");
+        let bond_tag = BytesStart::new("SeqFeatData_bond");
+        let site_tag = BytesStart::new("SeqFeatData_site");
+        let rsite_tag = BytesStart::new("SeqFeatData_rsite");
+        let user_tag = BytesStart::new("SeqFeatData_user");
+        let txinit_tag = BytesStart::new("SeqFeatData_txinit");
+        let num_tag = BytesStart::new("SeqFeatData_num");
+        let psec_str_tag = BytesStart::new("SeqFeatData_psec-str");
+        let non_std_residue_tag = BytesStart::new("SeqFeatData_non-std-residue");
+        let het_tag = BytesStart::new("SeqFeatData_het");
+        let biosrc_tag = BytesStart::new("SeqFeatData_biosrc");
+        let clone_tag = BytesStart::new("SeqFeatData_clone");
+        let variation_tag = BytesStart::new("SeqFeatData_variation");
+
+        let forbidden = [
+            org_tag,
+            prot_tag,
+            rna_tag,
+            pub_tag,
+            seq_tag,
+            imp_tag,
+            region_tag,
+            bond_tag,
+            site_tag,
+            rsite_tag,
+            user_tag,
+            txinit_tag,
+            num_tag,
+            psec_str_tag,
+            non_std_residue_tag,
+            het_tag,
+            biosrc_tag,
+            clone_tag,
+            variation_tag
+        ];
 
         loop {
             match reader.read_event().unwrap() {
@@ -462,8 +484,11 @@ impl XmlNode for SeqFeatData {
                     if name == gene_tag.name() {
                         return Self::Gene(read_node(reader).unwrap()).into()
                     }
-                    if name == cdregion_tag.name() {
+                    else if name == cdregion_tag.name() {
                         return Self::CdRegion(read_node(reader).unwrap()).into()
+                    }
+                    else {
+                        check_unimplemented(&name, &forbidden);
                     }
                 }
                 Event::End(e) => {
