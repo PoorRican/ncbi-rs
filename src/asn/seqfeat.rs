@@ -267,7 +267,6 @@ impl XmlNode for SeqFeat {
             &product_tag,
             &qual_tag,
             &title_tag,
-            &ext_tag,
             &cit_tag,
             &exp_ev_tag,
             &xref_tag,
@@ -284,6 +283,7 @@ impl XmlNode for SeqFeat {
                 Event::Start(e) => {
                     let name = e.name();
                     parse_node_to_option(&name, &id_tag, &mut feat.id, reader);
+                    parse_node_to_option(&name, &ext_tag, &mut feat.ext, reader);
                     parse_node_to(&name, &data_tag, &mut feat.data, reader);
                     parse_node_to(&name, &location_tag, &mut feat.location, reader);
 

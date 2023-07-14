@@ -440,7 +440,7 @@ impl UserData {
         return Self::Ints(items).into();
     }
 
-    fn parse_reals(_reader: &mut Reader<&[u8]>) -> Option<Self>
+    fn parse_reals(reader: &mut Reader<&[u8]>) -> Option<Self>
     where
         Self: Sized,
     {

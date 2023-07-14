@@ -4,7 +4,6 @@ use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::name::QName;
 use quick_xml::Reader;
 use std::ops::Deref;
-use std::str::FromStr;
 
 /// [`Reader`] that returns bytes
 ///
