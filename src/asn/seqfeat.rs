@@ -264,7 +264,6 @@ impl XmlNode for SeqFeat {
             &partial_tag,
             &except_tag,
             &comment_tag,
-            &product_tag,
             &title_tag,
             &cit_tag,
             &exp_ev_tag,
@@ -283,6 +282,7 @@ impl XmlNode for SeqFeat {
                     let name = e.name();
                     parse_node_to_option(&name, &id_tag, &mut feat.id, reader);
                     parse_node_to_option(&name, &ext_tag, &mut feat.ext, reader);
+                    parse_node_to_option(&name, &product_tag, &mut feat.product, reader);
                     parse_vec_node_to_option(&name, &qual_tag, &mut feat.qual, reader);
                     parse_node_to(&name, &data_tag, &mut feat.data, reader);
                     parse_node_to(&name, &location_tag, &mut feat.location, reader);

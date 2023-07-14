@@ -622,6 +622,8 @@ fn parse_bioseq_annot() {
     // total number of occurrences of `SeqFeatData::Gene`
     let expected_genes: usize = 88;
     let expected_cdregions: usize = 88;
+    let expected_products: usize = 87;
+
     let genetic_code = Some(vec![GeneticCodeOpt::Id(11)]);
 
     assert!(bioseq.annot.is_some());
@@ -637,6 +639,7 @@ fn parse_bioseq_annot() {
             // counter for gene features
             let mut genes: usize = 0;
             let mut cdregions: usize = 0;
+            let mut products: usize = 0;
 
             // inspect parsed features
             for feat in ftable.iter() {
@@ -649,6 +652,10 @@ fn parse_bioseq_annot() {
                     assert_eq!(cdregion.code, genetic_code);
                     cdregions += 1;
                 }
+
+                if feat.product.is_some() {
+                    products += 1;
+                }
             }
 
             // assert parsed features
@@ -657,6 +664,8 @@ fn parse_bioseq_annot() {
 
             assert!(has_cdregion_data);
             assert_eq!(expected_cdregions, cdregions);
+
+            assert_eq!(expected_products, products);
         } else {
             assert!(false, "data value is not ftable");
         }
