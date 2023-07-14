@@ -266,7 +266,6 @@ impl XmlNode for SeqFeat {
             title_tag,
             cit_tag,
             exp_ev_tag,
-            xref_tag,
             dbxref_tag,
             pseudo_tag,
             except_text_tag,
@@ -286,6 +285,7 @@ impl XmlNode for SeqFeat {
                     parse_node_to(&name, &data_tag, &mut feat.data, reader);
                     parse_node_to(&name, &location_tag, &mut feat.location, reader);
                     parse_string_to(&name, &comment_tag, &mut feat.comment, reader);
+                    parse_vec_node_to_option(&name, &xref_tag, &mut feat.xref, reader);
 
                     check_unimplemented(&name, &forbidden);
                 }
@@ -477,11 +477,46 @@ impl XmlNode for SeqFeatData {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct SeqFeatXref {
     pub id: Option<FeatId>,
     pub data: Option<SeqFeatData>,
 }
+
+impl XmlNode for SeqFeatXref {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("SeqFeatXref")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut xref = Self::default();
+
+        // field tags
+        let data_tag = BytesStart::new("SeqFeatXref_data");
+        let id_tag = BytesStart::new("SeqFeatXref_id");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == data_tag.name() {
+                        xref.data = read_node(reader);
+                    } else if name == id_tag.name() {
+                        xref.id = read_node(reader);
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return xref.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+impl XmlVecNode for SeqFeatXref {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "kebab-case")]
