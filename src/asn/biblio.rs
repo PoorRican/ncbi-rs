@@ -344,7 +344,7 @@ impl XmlNode for CitSub {
                         cit.authors = read_node(reader).unwrap();
                     } else if name == date_element.name() {
                         cit.date = read_node(reader);
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -416,7 +416,7 @@ impl XmlNode for CitGen {
                         gen.title = read_string(reader);
                     } else if name == authors_element.name() {
                         gen.authors = read_node(reader);
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[])
                     }
                 }
@@ -473,7 +473,7 @@ impl XmlNode for AuthListNames {
 
                     if name == std_element.name() {
                         return Self::Std(read_vec_node(reader, std_element.to_end())).into();
-                    } else {
+                    } else if name == Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -520,7 +520,7 @@ impl XmlNode for AuthList {
                         list.names = read_node(reader).unwrap();
                     } else if name == affil_element.name() {
                         list.affil = read_node(reader);
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -690,7 +690,7 @@ impl XmlNode for AffilStd {
                         affil.street = read_string(reader);
                     } else if name == postal_code_element.name() {
                         affil.postal_code = read_string(reader);
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }

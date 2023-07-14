@@ -107,7 +107,7 @@ impl XmlNode for DateStd {
                         date.month = read_int(reader);
                     } else if name == day_element.name() {
                         date.day = read_int(reader);
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -302,7 +302,7 @@ impl XmlNode for NameStd {
                         name_std.first = read_string(reader);
                     } else if name == initials_element.name() {
                         name_std.initials = read_string(reader);
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -436,59 +436,6 @@ pub enum UserData {
     Objects(Vec<UserObject>),
 }
 
-impl UserData {
-    fn parse_strs(reader: &mut Reader<&[u8]>) -> Option<Self>
-    where
-        Self: Sized,
-    {
-        let end = BytesEnd::new("User-field_data_strs");
-
-        let items = read_vec_str_unchecked(reader, &end);
-
-        return Self::Strs(items).into();
-    }
-
-    fn parse_ints(reader: &mut Reader<&[u8]>) -> Option<Self>
-    where
-        Self: Sized,
-    {
-        let end = BytesEnd::new("User-field_data_ints");
-
-        let items = read_vec_int_unchecked(reader, &end);
-
-        return Self::Ints(items).into();
-    }
-
-    fn parse_reals(reader: &mut Reader<&[u8]>) -> Option<Self>
-    where
-        Self: Sized,
-    {
-        let end = BytesEnd::new("User-field_data_reals");
-
-        let items = read_vec_str_unchecked(reader, &end);
-
-        return Self::Reals(items).into();
-    }
-
-    fn parse_fields(reader: &mut Reader<&[u8]>) -> Option<Self>
-    where
-        Self: Sized,
-    {
-        let end = BytesEnd::new("User-field_data_fields");
-
-        return Self::Fields(read_vec_node(reader, end)).into();
-    }
-
-    fn parse_objects(reader: &mut Reader<&[u8]>) -> Option<Self>
-    where
-        Self: Sized,
-    {
-        let end = BytesEnd::new("User-field_data_fields");
-
-        return Self::Objects(read_vec_node(reader, end)).into();
-    }
-}
-
 /// explicitly implemented because a default is not in original spec
 impl Default for UserData {
     fn default() -> Self {
@@ -516,7 +463,7 @@ impl XmlNode for UserData {
         let ints_element = BytesStart::new("User-field_data_ints");
         let reals_element = BytesStart::new("User-field_data_reals");
         let fields_element = BytesStart::new("User-field_data_fields");
-        let objects_element = BytesStart::new("User-field_data_str");
+        let objects_element = BytesStart::new("User-field_data_objects");
 
         loop {
             match reader.read_event().unwrap() {
@@ -534,16 +481,18 @@ impl XmlNode for UserData {
                     } else if name == object_element.name() {
                         return Self::Object(read_node(reader).unwrap()).into();
                     } else if name == strs_element.name() {
-                        return Self::parse_strs(reader);
+                        return Self::Strs(read_vec_str_unchecked(reader, &strs_element.to_end())).into();
                     } else if name == ints_element.name() {
-                        return Self::parse_ints(reader);
+                        return Self::Ints(read_vec_int_unchecked(reader, &ints_element.to_end())).into();
                     } else if name == reals_element.name() {
-                        return Self::parse_reals(reader);
+                        return Self::Reals(read_vec_str_unchecked(reader, &reals_element.to_end())).into();
                     } else if name == fields_element.name() {
-                        return Self::parse_fields(reader);
+                        return Self::Fields(read_vec_node(reader, fields_element.to_end())).into()
+                    } else if name == BytesStart::new("User-field").name() {
+                        return Self::Fields(read_vec_node(reader, BytesStart::new("User-field").to_end())).into()
                     } else if name == objects_element.name() {
-                        return Self::parse_objects(reader);
-                    } else {
+                        return Self::Objects(read_vec_node(reader, objects_element.to_end())).into()
+                    } else if name != BytesStart::new("User-field_label").name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -590,7 +539,7 @@ impl XmlNode for UserField {
                         field.data = read_node(reader).unwrap();
                     } else if name == num_element.name() {
                         field.num = read_int(reader);
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[])
                     }
                 }
@@ -605,3 +554,198 @@ impl XmlNode for UserField {
     }
 }
 impl XmlVecNode for UserField {}
+
+
+#[cfg(test)]
+mod tests {
+    use quick_xml::Reader;
+    use crate::general::UserField;
+    use crate::parsing_utils::read_node;
+
+    #[test]
+    /// tests a bug where nested <User-field_data_fields> is not denoted by tag
+    /// but is instead implied by an <User-field>
+    fn test_fields_parsing_bug() {
+
+        let xml = "<User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>ModelEvidence</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_object>\
+            <User-object>\
+            <User-object_type>\
+            <Object-id>\
+            <Object-id_str>ModelEvidence</Object-id_str>\
+            </Object-id>\
+            </User-object_type>\
+            <User-object_data>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>Method</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_str>Protein Homology</User-field_data_str>\
+            </User-field_data>\
+            </User-field>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>SeedProtein</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_str>gi|378979015</User-field_data_str>\
+            </User-field_data>\
+            </User-field>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>SeedAlignPlacement</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_num>2</User-field_num>\
+            <User-field_data>\
+            <User-field_data_ints>\
+            <User-field_data_ints_E>1232</User-field_data_ints_E>\
+            <User-field_data_ints_E>2884</User-field_data_ints_E>\
+            </User-field_data_ints>\
+            </User-field_data>\
+            </User-field>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>SeedCluster</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_str>927852</User-field_data_str>\
+            </User-field_data>\
+            </User-field>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>SeedProteinSource</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_str>Reference</User-field_data_str>\
+            </User-field_data>\
+            </User-field>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>phages_in_seed_cluster_ratio</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_real>0</User-field_data_real>\
+            </User-field_data>\
+            </User-field>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>Cluster</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_str>ArchId:11439550</User-field_data_str>\
+            </User-field_data>\
+            </User-field>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>ClusterName</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_str>iron ABC transporter permease</User-field_data_str>\
+            </User-field_data>\
+            </User-field>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>BestCDSIdentity</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_real>99.4555</User-field_data_real>\
+            </User-field_data>\
+            </User-field>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>BestHMMHit</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_str>gnl|HMM|NF012738.2</User-field_data_str>\
+            </User-field_data>\
+            </User-field>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>PureAbInitioConcurs</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_bool value=\"true\"/>\
+            </User-field_data>\
+            </User-field>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>ReferenceProteinSupport</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_bool value=\"true\"/>\
+            </User-field_data>\
+            </User-field>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>naming_ev_source</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_str>SPARCLE</User-field_data_str>\
+            </User-field_data>\
+            </User-field>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>prot_support</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_real>567.427</User-field_data_real>\
+            </User-field_data>\
+            </User-field>\
+            <User-field>\
+            <User-field_label>\
+            <Object-id>\
+            <Object-id_str>support</Object-id_str>\
+            </Object-id>\
+            </User-field_label>\
+            <User-field_data>\
+            <User-field_data_real>2565.61</User-field_data_real>\
+            </User-field_data>\
+            </User-field>\
+            </User-object_data>\
+            </User-object>\
+            </User-field_data_object>\
+            </User-field_data>\
+            </User-field>";
+
+        for xml in [xml] {
+            let mut reader = Reader::from_str(xml);
+            let node: UserField = read_node(&mut reader).unwrap();
+            println!("{:?}", node)
+        }
+    }
+}

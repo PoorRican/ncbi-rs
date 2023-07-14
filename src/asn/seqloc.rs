@@ -144,7 +144,7 @@ impl XmlNode for TextseqId {
                         id.release = read_string(reader);
                     } else if name == version_element.name() {
                         id.version = read_int(reader);
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -261,9 +261,9 @@ impl XmlNode for SeqLoc {
                         return Self::Int(read_node(reader).unwrap()).into()
                     } else if name == whole_variant.name() {
                         return Self::Whole(read_node(reader).unwrap()).into()
-                    } else {
-                            check_unexpected(&name, &forbidden);
-                        }
+                    } else if name != Self::start_bytes().name() {
+                        check_unexpected(&name, &forbidden);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {

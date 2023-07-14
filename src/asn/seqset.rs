@@ -127,7 +127,7 @@ impl XmlNode for BioSeqSet {
 
                     if name == seq_set_element.name() {
                         set.seq_set = read_vec_node(reader, seq_set_element.to_end());
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }

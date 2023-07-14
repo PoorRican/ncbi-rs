@@ -109,7 +109,7 @@ impl XmlNode for FeatId {
                         return Self::Local(read_node(reader).unwrap()).into();
                     } else if name == general_tag.name() {
                         return Self::General(read_node(reader).unwrap()).into();
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &forbidden);
                     }
                 }
@@ -294,7 +294,7 @@ impl XmlNode for SeqFeat {
                         feat.comment = read_string(reader);
                     } else if name == xref_tag.name() {
                         feat.xref = Some(read_vec_node(reader, xref_tag.to_end()));
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &forbidden);
                     }
                 }
@@ -498,7 +498,7 @@ impl XmlNode for SeqFeatData {
                     else if name == prot_tag.name() {
                         return Self::Prot(read_node(reader).unwrap()).into();
                     }
-                    else {
+                    else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &forbidden);
                     }
                 }
@@ -752,7 +752,7 @@ impl XmlNode for CdRegion {
                         cdregion.mismatch = read_int(reader);
                     } else if name == stops_tag.name() {
                         cdregion.stops = read_int(reader);
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[])
                     }
                 }
@@ -1933,7 +1933,7 @@ impl XmlNode for GeneRef {
                         gene.db = Some(read_vec_node(reader, db_tag.to_end()));
                     } else if name == locus_tag_tag.name() {
                         gene.locus_tag = read_string(reader);
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &forbidden);
                     }
                 }
@@ -2011,7 +2011,7 @@ impl XmlNode for OrgRef {
                         org_ref.orgname = read_node(reader);
                     } else if name == db_element.name() {
                         org_ref.db = Some(read_vec_node(reader, db_element.to_end()))
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -2141,7 +2141,7 @@ impl XmlNode for OrgName {
                         org_name.name = read_node(reader);
                     } else if name == mod_element.name() {
                         org_name.r#mod = Some(read_vec_node(reader, mod_element.to_end()));
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -2277,7 +2277,7 @@ impl XmlNode for OrgMod {
                         r#mod.subname = read_string(reader).unwrap();
                     } else if name == attrib_element.name() {
                         r#mod.attrib = read_string(reader);
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -2329,7 +2329,7 @@ impl XmlNode for BinomialOrgName {
                         binomial.species = read_string(reader);
                     } else if name == subspecies_element.name() {
                         binomial.subspecies = read_string(reader);
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -2479,7 +2479,7 @@ impl XmlNode for BioSource {
                         source.org = read_node(reader).unwrap();
                     } else if name == subtype_element.name() {
                         source.subtype = Some(read_vec_node(reader, subtype_element.to_end()))
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -2623,7 +2623,7 @@ impl XmlNode for SubSource {
                         source.name = read_string(reader).unwrap();
                     } else if qname == attrib_element.name() {
                         source.attrib = read_string(reader);
-                    } else {
+                    } else if qname != Self::start_bytes().name() {
                         check_unexpected(&qname, &[]);
                     }
                 }
@@ -2709,7 +2709,7 @@ impl XmlNode for ProtRef {
                         prot.activity = read_vec_str_unchecked(reader, &activity_tag.to_end()).into();
                     } else if name == db_tag.name() {
                         prot.db = read_vec_node(reader, db_tag.to_end()).into();
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &forbidden);
                     }
                 }

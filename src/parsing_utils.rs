@@ -143,11 +143,15 @@ where
 }
 
 pub fn check_unexpected(current: &QName, forbidden: &[BytesStart<'static>]) {
+    let mut expected = false;
     for tag in forbidden.iter() {
         if *current == tag.name() {
-
+            expected = true;
             eprintln!("Encountered XML tag {}, which has not been implemented yet...", tag.escape_ascii().to_string())
         }
+    }
+    if !expected {
+        panic!("Encountered {}, which has not been implemented yet...", current.0.escape_ascii().to_string());
     }
 }
 

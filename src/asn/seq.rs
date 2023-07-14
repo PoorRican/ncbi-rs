@@ -413,7 +413,7 @@ impl XmlNode for MolInfo {
                         mol_info.bio_mol = read_node(reader).unwrap();
                     } else if name == tech_element.name() {
                         mol_info.tech = read_node(reader).unwrap();
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -668,7 +668,7 @@ impl XmlNode for PubDesc {
 
                     if name == pub_element.name() {
                         desc.r#pub = read_node(reader).unwrap();
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -959,7 +959,7 @@ impl XmlNode for SeqInst {
                         inst.length = read_int(reader);
                     } else if name == ext_element.name() {
                         inst.ext = read_node(reader);
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[])
                     }
                 }
@@ -970,7 +970,7 @@ impl XmlNode for SeqInst {
                         inst.repr = read_attributes(&e).unwrap();
                     } else if name == mol_element.name() {
                         inst.mol = read_attributes(&e).unwrap();
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
@@ -1467,7 +1467,7 @@ impl XmlNode for SeqAnnot {
 
                     if name == data_tag.name() {
                         annot.data = read_node(reader).unwrap();
-                    } else {
+                    } else if name != Self::start_bytes().name() {
                         check_unexpected(&name, &[]);
                     }
                 }
