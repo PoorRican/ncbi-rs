@@ -234,15 +234,15 @@ impl XmlNode for SeqLoc {
         let feat_variant = BytesStart::new("Seq-loc_feat");
 
         let forbidden = [
-            &null_variant,
-            &empty_variant,
-            &packed_int_variant,
-            &pnt_variant,
-            &packed_pnt_variant,
-            &mix_variant,
-            &equiv_variant,
-            &bond_variant,
-            &feat_variant
+            null_variant,
+            empty_variant,
+            packed_int_variant,
+            pnt_variant,
+            packed_pnt_variant,
+            mix_variant,
+            equiv_variant,
+            bond_variant,
+            feat_variant
         ];
 
         loop {

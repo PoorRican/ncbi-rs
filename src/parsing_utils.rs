@@ -278,7 +278,7 @@ pub fn parse_vec_node_to_option<T: XmlVecNode>(
     }
 }
 
-pub fn check_unimplemented(current: &QName, forbidden: &[&BytesStart<'static>]) {
+pub fn check_unimplemented(current: &QName, forbidden: &[BytesStart<'static>]) {
     for tag in forbidden.iter() {
         if *current == tag.name() {
 

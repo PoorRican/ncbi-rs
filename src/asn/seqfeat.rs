@@ -96,8 +96,8 @@ impl XmlNode for FeatId {
         let general_tag = BytesStart::new("Feat-id_general");
 
         let forbidden = [
-            &gibb_tag,
-            &giim_tag
+            gibb_tag,
+            giim_tag
         ];
 
         loop {
@@ -261,18 +261,18 @@ impl XmlNode for SeqFeat {
 
         // list of XML elements that have not been implemented yet
         let forbidden = [
-            &partial_tag,
-            &except_tag,
-            &title_tag,
-            &cit_tag,
-            &exp_ev_tag,
-            &xref_tag,
-            &dbxref_tag,
-            &pseudo_tag,
-            &except_text_tag,
-            &ids_tag,
-            &exts_tag,
-            &support_tag
+            partial_tag,
+            except_tag,
+            title_tag,
+            cit_tag,
+            exp_ev_tag,
+            xref_tag,
+            dbxref_tag,
+            pseudo_tag,
+            except_text_tag,
+            ids_tag,
+            exts_tag,
+            support_tag
         ];
 
         loop {
