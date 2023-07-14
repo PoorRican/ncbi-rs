@@ -54,7 +54,7 @@
 
 use crate::biblio::{PubMedId, DOI};
 use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing_utils::{check_unimplemented, read_vec_node, read_int, read_node, read_string, read_vec_str_unchecked};
+use crate::parsing_utils::{check_unexpected, read_vec_node, read_int, read_node, read_string, read_vec_str_unchecked};
 use crate::r#pub::PubSet;
 use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
@@ -110,7 +110,7 @@ impl XmlNode for FeatId {
                     } else if name == general_tag.name() {
                         return Self::General(read_node(reader).unwrap()).into();
                     } else {
-                        check_unimplemented(&name, &forbidden);
+                        check_unexpected(&name, &forbidden);
                     }
                 }
                 Event::End(e) => {
@@ -295,7 +295,7 @@ impl XmlNode for SeqFeat {
                     } else if name == xref_tag.name() {
                         feat.xref = Some(read_vec_node(reader, xref_tag.to_end()));
                     } else {
-                        check_unimplemented(&name, &forbidden);
+                        check_unexpected(&name, &forbidden);
                     }
                 }
                 Event::End(e) => {
@@ -499,7 +499,7 @@ impl XmlNode for SeqFeatData {
                         return Self::Prot(read_node(reader).unwrap()).into();
                     }
                     else {
-                        check_unimplemented(&name, &forbidden);
+                        check_unexpected(&name, &forbidden);
                     }
                 }
                 Event::End(e) => {
@@ -753,7 +753,7 @@ impl XmlNode for CdRegion {
                     } else if name == stops_tag.name() {
                         cdregion.stops = read_int(reader);
                     } else {
-                        check_unimplemented(&name, &[])
+                        check_unexpected(&name, &[])
                     }
                 }
                 Event::End(e) => {
@@ -905,7 +905,7 @@ impl XmlNode for GbQual {
                     } else if name == val_tag.name() {
                         qual.val = read_string(reader).unwrap();
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -1934,7 +1934,7 @@ impl XmlNode for GeneRef {
                     } else if name == locus_tag_tag.name() {
                         gene.locus_tag = read_string(reader);
                     } else {
-                        check_unimplemented(&name, &forbidden);
+                        check_unexpected(&name, &forbidden);
                     }
                 }
                 Event::End(e) => {
@@ -2012,7 +2012,7 @@ impl XmlNode for OrgRef {
                     } else if name == db_element.name() {
                         org_ref.db = Some(read_vec_node(reader, db_element.to_end()))
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -2142,7 +2142,7 @@ impl XmlNode for OrgName {
                     } else if name == mod_element.name() {
                         org_name.r#mod = Some(read_vec_node(reader, mod_element.to_end()));
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -2278,7 +2278,7 @@ impl XmlNode for OrgMod {
                     } else if name == attrib_element.name() {
                         r#mod.attrib = read_string(reader);
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -2330,7 +2330,7 @@ impl XmlNode for BinomialOrgName {
                     } else if name == subspecies_element.name() {
                         binomial.subspecies = read_string(reader);
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -2480,7 +2480,7 @@ impl XmlNode for BioSource {
                     } else if name == subtype_element.name() {
                         source.subtype = Some(read_vec_node(reader, subtype_element.to_end()))
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -2624,7 +2624,7 @@ impl XmlNode for SubSource {
                     } else if qname == attrib_element.name() {
                         source.attrib = read_string(reader);
                     } else {
-                        check_unimplemented(&qname, &[]);
+                        check_unexpected(&qname, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -2710,7 +2710,7 @@ impl XmlNode for ProtRef {
                     } else if name == db_tag.name() {
                         prot.db = read_vec_node(reader, db_tag.to_end()).into();
                     } else {
-                        check_unimplemented(&name, &forbidden);
+                        check_unexpected(&name, &forbidden);
                     }
                 }
                 Event::End(e) => {

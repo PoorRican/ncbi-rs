@@ -142,7 +142,7 @@ where
     T::vec_from_reader(reader, end)
 }
 
-pub fn check_unimplemented(current: &QName, forbidden: &[BytesStart<'static>]) {
+pub fn check_unexpected(current: &QName, forbidden: &[BytesStart<'static>]) {
     for tag in forbidden.iter() {
         if *current == tag.name() {
 

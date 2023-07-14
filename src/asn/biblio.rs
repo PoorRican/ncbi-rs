@@ -2,7 +2,7 @@
 //! Adapted from ["biblio.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/biblio/biblio.asn)
 
 use crate::general::{Date, DbTag, PersonId};
-use crate::parsing_utils::{check_unimplemented, read_vec_node, read_node, read_string};
+use crate::parsing_utils::{check_unexpected, read_vec_node, read_node, read_string};
 use crate::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
@@ -345,7 +345,7 @@ impl XmlNode for CitSub {
                     } else if name == date_element.name() {
                         cit.date = read_node(reader);
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -417,7 +417,7 @@ impl XmlNode for CitGen {
                     } else if name == authors_element.name() {
                         gen.authors = read_node(reader);
                     } else {
-                        check_unimplemented(&name, &[])
+                        check_unexpected(&name, &[])
                     }
                 }
                 Event::End(e) => {
@@ -474,7 +474,7 @@ impl XmlNode for AuthListNames {
                     if name == std_element.name() {
                         return Self::Std(read_vec_node(reader, std_element.to_end())).into();
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -521,7 +521,7 @@ impl XmlNode for AuthList {
                     } else if name == affil_element.name() {
                         list.affil = read_node(reader);
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -608,7 +608,7 @@ impl XmlNode for Author {
                     if name == name_element.name() {
                         author.name = read_node(reader).unwrap();
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -691,7 +691,7 @@ impl XmlNode for AffilStd {
                     } else if name == postal_code_element.name() {
                         affil.postal_code = read_string(reader);
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {

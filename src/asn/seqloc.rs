@@ -8,7 +8,7 @@
 
 use crate::biblio::IdPat;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId};
-use crate::parsing_utils::{check_unimplemented, read_attributes, read_int, read_node, read_string};
+use crate::parsing_utils::{check_unexpected, read_attributes, read_int, read_node, read_string};
 use crate::seqfeat::FeatId;
 use crate::{XmlNode, XmlVecNode, XmlValue};
 use quick_xml::events::{BytesStart, Event};
@@ -145,7 +145,7 @@ impl XmlNode for TextseqId {
                     } else if name == version_element.name() {
                         id.version = read_int(reader);
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -262,7 +262,7 @@ impl XmlNode for SeqLoc {
                     } else if name == whole_variant.name() {
                         return Self::Whole(read_node(reader).unwrap()).into()
                     } else {
-                            check_unimplemented(&name, &forbidden);
+                            check_unexpected(&name, &forbidden);
                         }
                 }
                 Event::End(e) => {

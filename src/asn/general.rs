@@ -2,7 +2,7 @@
 //!
 //! As per [general.asn](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/asn_spec/general.asn.html)
 
-use crate::parsing_utils::{check_unimplemented, read_vec_node, read_int, read_node, read_real, read_string, read_vec_int_unchecked, read_vec_str_unchecked};
+use crate::parsing_utils::{check_unexpected, read_vec_node, read_int, read_node, read_real, read_string, read_vec_int_unchecked, read_vec_str_unchecked};
 use crate::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::Reader;
@@ -108,7 +108,7 @@ impl XmlNode for DateStd {
                     } else if name == day_element.name() {
                         date.day = read_int(reader);
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -303,7 +303,7 @@ impl XmlNode for NameStd {
                     } else if name == initials_element.name() {
                         name_std.initials = read_string(reader);
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -544,7 +544,7 @@ impl XmlNode for UserData {
                     } else if name == objects_element.name() {
                         return Self::parse_objects(reader);
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 _ => (),
@@ -591,7 +591,7 @@ impl XmlNode for UserField {
                     } else if name == num_element.name() {
                         field.num = read_int(reader);
                     } else {
-                        check_unimplemented(&name, &[])
+                        check_unexpected(&name, &[])
                     }
                 }
                 Event::End(e) => {

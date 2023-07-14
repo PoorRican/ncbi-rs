@@ -4,7 +4,7 @@
 //! from the NCBI C++ Toolkit
 
 use crate::general::{Date, DbTag, ObjectId};
-use crate::parsing_utils::{check_unimplemented, read_vec_node, read_node};
+use crate::parsing_utils::{check_unexpected, read_vec_node, read_node};
 use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
 use crate::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesStart, Event};
@@ -128,7 +128,7 @@ impl XmlNode for BioSeqSet {
                     if name == seq_set_element.name() {
                         set.seq_set = read_vec_node(reader, seq_set_element.to_end());
                     } else {
-                        check_unimplemented(&name, &[]);
+                        check_unexpected(&name, &[]);
                     }
                 }
                 Event::End(e) => {
