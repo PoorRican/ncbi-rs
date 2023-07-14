@@ -2,9 +2,7 @@
 //! Adapted from ["biblio.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/biblio/biblio.asn)
 
 use crate::general::{Date, DbTag, PersonId};
-use crate::parsing_utils::{
-    parse_node_to, parse_node_to_option, parse_string_to, parse_vec_node, read_node, read_string,
-};
+use crate::parsing_utils::{check_unimplemented, read_vec_node, read_node, read_string};
 use crate::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
@@ -342,8 +340,13 @@ impl XmlNode for CitSub {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_node_to(&name, &authors_element, &mut cit.authors, reader);
-                    parse_node_to_option(&name, &date_element, &mut cit.date, reader);
+                    if name == authors_element.name() {
+                        cit.authors = read_node(reader).unwrap();
+                    } else if name == date_element.name() {
+                        cit.date = read_node(reader);
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -407,9 +410,15 @@ impl XmlNode for CitGen {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_string_to(&name, &cit_element, &mut gen.cit, reader);
-                    parse_string_to(&name, &title_element, &mut gen.title, reader);
-                    parse_node_to_option(&name, &authors_element, &mut gen.authors, reader);
+                    if name == cit_element.name() {
+                        gen.cit = read_string(reader);
+                    } else if name == title_element.name() {
+                        gen.title = read_string(reader);
+                    } else if name == authors_element.name() {
+                        gen.authors = read_node(reader);
+                    } else {
+                        check_unimplemented(&name, &[])
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -463,7 +472,9 @@ impl XmlNode for AuthListNames {
                     let name = e.name();
 
                     if name == std_element.name() {
-                        return Self::Std(parse_vec_node(reader, std_element.to_end())).into();
+                        return Self::Std(read_vec_node(reader, std_element.to_end())).into();
+                    } else {
+                        check_unimplemented(&name, &[]);
                     }
                 }
                 Event::End(e) => {
@@ -505,8 +516,13 @@ impl XmlNode for AuthList {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_node_to(&name, &names_element, &mut list.names, reader);
-                    parse_node_to_option(&name, &affil_element, &mut list.affil, reader);
+                    if name == names_element.name() {
+                        list.names = read_node(reader).unwrap();
+                    } else if name == affil_element.name() {
+                        list.affil = read_node(reader);
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -589,7 +605,11 @@ impl XmlNode for Author {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_node_to(&name, &name_element, &mut author.name, reader);
+                    if name == name_element.name() {
+                        author.name = read_node(reader).unwrap();
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -656,13 +676,23 @@ impl XmlNode for AffilStd {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_string_to(&name, &affil_element, &mut affil.affil, reader);
-                    parse_string_to(&name, &div_element, &mut affil.div, reader);
-                    parse_string_to(&name, &city_element, &mut affil.city, reader);
-                    parse_string_to(&name, &sub_element, &mut affil.sub, reader);
-                    parse_string_to(&name, &country_element, &mut affil.country, reader);
-                    parse_string_to(&name, &street_element, &mut affil.street, reader);
-                    parse_string_to(&name, &postal_code_element, &mut affil.postal_code, reader);
+                    if name == affil_element.name() {
+                        affil.affil = read_string(reader);
+                    } else if name == div_element.name() {
+                        affil.div = read_string(reader);
+                    } else if name == city_element.name() {
+                        affil.city = read_string(reader);
+                    } else if name == sub_element.name() {
+                        affil.sub = read_string(reader);
+                    } else if name == country_element.name() {
+                        affil.country = read_string(reader);
+                    } else if name == street_element.name() {
+                        affil.street = read_string(reader);
+                    } else if name == postal_code_element.name() {
+                        affil.postal_code = read_string(reader);
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {

@@ -6,7 +6,7 @@ use ncbi::general::{
 };
 use ncbi::r#pub::Pub;
 use ncbi::seq::{BioMol, BioSeq, DeltaSeq, Mol, MolInfo, MolTech, PubDesc, Repr, SeqAnnotData, SeqDesc, SeqExt, SeqInst, Strand};
-use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, GeneticCode, GeneticCodeOpt, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SeqFeat, SeqFeatData, SubSource, SubSourceSubType};
+use ncbi::seqfeat::{BinomialOrgName, BioSource, BioSourceGenome, GeneticCodeOpt, OrgMod, OrgModSubType, OrgName, OrgNameChoice, OrgRef, SeqFeatData, SubSource, SubSourceSubType};
 use ncbi::seqloc::{NaStrand, SeqId, SeqInterval, SeqLoc, TextseqId};
 use ncbi::seqset::{BioSeqSet, SeqEntry};
 use ncbi::{get_local_xml, parse_xml, DataType};

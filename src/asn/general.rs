@@ -2,7 +2,7 @@
 //!
 //! As per [general.asn](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/asn_spec/general.asn.html)
 
-use crate::parsing_utils::{parse_int_to, parse_int_to_option, parse_node_to, parse_string_to, parse_vec_node, parse_vec_node_to, read_int, read_node, read_real, read_string, read_vec_int_unchecked, read_vec_str_unchecked};
+use crate::parsing_utils::{check_unimplemented, read_vec_node, read_int, read_node, read_real, read_string, read_vec_int_unchecked, read_vec_str_unchecked};
 use crate::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::Reader;
@@ -101,9 +101,15 @@ impl XmlNode for DateStd {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_int_to(&name, &year_element, &mut date.year, reader);
-                    parse_int_to_option(&name, &month_element, &mut date.month, reader);
-                    parse_int_to_option(&name, &day_element, &mut date.day, reader);
+                    if name == year_element.name() {
+                        date.year = read_int(reader).unwrap();
+                    } else if name == month_element.name() {
+                        date.month = read_int(reader);
+                    } else if name == day_element.name() {
+                        date.day = read_int(reader);
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -177,8 +183,11 @@ impl XmlNode for DbTag {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_string_to(&name, &db_element, &mut tag.db, reader);
-                    parse_node_to(&name, &tag_element, &mut tag.tag, reader);
+                    if name == db_element.name() {
+                        tag.db = read_string(reader).unwrap();
+                    } else if name == tag_element.name() {
+                        tag.tag = read_node(reader).unwrap();
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -287,9 +296,15 @@ impl XmlNode for NameStd {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_string_to(&name, &last_element, &mut name_std.last, reader);
-                    parse_string_to(&name, &first_element, &mut name_std.first, reader);
-                    parse_string_to(&name, &initials_element, &mut name_std.initials, reader);
+                    if name == last_element.name() {
+                        name_std.last = read_string(reader).unwrap();
+                    } else if name == first_element.name() {
+                        name_std.first = read_string(reader);
+                    } else if name == initials_element.name() {
+                        name_std.initials = read_string(reader);
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -384,9 +399,13 @@ impl XmlNode for UserObject {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_string_to(&name, &class_element, &mut object.class, reader);
-                    parse_node_to(&name, &type_element, &mut object.r#type, reader);
-                    parse_vec_node_to(&name, &data_element, &mut object.data, reader);
+                    if name == class_element.name() {
+                        object.class = read_string(reader);
+                    } else if name == type_element.name() {
+                        object.r#type = read_node(reader).unwrap();
+                    } else if name == data_element.name() {
+                        object.data = read_vec_node(reader, data_element.to_end());
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -457,7 +476,7 @@ impl UserData {
     {
         let end = BytesEnd::new("User-field_data_fields");
 
-        return Self::Fields(parse_vec_node(reader, end)).into();
+        return Self::Fields(read_vec_node(reader, end)).into();
     }
 
     fn parse_objects(reader: &mut Reader<&[u8]>) -> Option<Self>
@@ -466,7 +485,7 @@ impl UserData {
     {
         let end = BytesEnd::new("User-field_data_fields");
 
-        return Self::Objects(parse_vec_node(reader, end)).into();
+        return Self::Objects(read_vec_node(reader, end)).into();
     }
 }
 
@@ -506,33 +525,26 @@ impl XmlNode for UserData {
 
                     if name == str_element.name() {
                         return Self::Str(read_string(reader).unwrap()).into();
-                    }
-                    if name == int_element.name() {
+                    } else if name == int_element.name() {
                         return Self::Int(read_int::<i64>(reader).unwrap()).into();
-                    }
-                    if name == real_element.name() {
+                    } else if name == real_element.name() {
                         return Self::Real(read_real(reader).unwrap()).into()
-                    }
-                    if name == bool_element.name() {
+                    } else if name == bool_element.name() {
                         unimplemented!()
-                    }
-                    if name == object_element.name() {
+                    } else if name == object_element.name() {
                         return Self::Object(read_node(reader).unwrap()).into();
-                    }
-                    if name == strs_element.name() {
+                    } else if name == strs_element.name() {
                         return Self::parse_strs(reader);
-                    }
-                    if name == ints_element.name() {
+                    } else if name == ints_element.name() {
                         return Self::parse_ints(reader);
-                    }
-                    if name == reals_element.name() {
+                    } else if name == reals_element.name() {
                         return Self::parse_reals(reader);
-                    }
-                    if name == fields_element.name() {
+                    } else if name == fields_element.name() {
                         return Self::parse_fields(reader);
-                    }
-                    if name == objects_element.name() {
+                    } else if name == objects_element.name() {
                         return Self::parse_objects(reader);
+                    } else {
+                        check_unimplemented(&name, &[]);
                     }
                 }
                 _ => (),
@@ -572,9 +584,15 @@ impl XmlNode for UserField {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_node_to(&name, &label_element, &mut field.label, reader);
-                    parse_node_to(&name, &data_element, &mut field.data, reader);
-                    parse_int_to_option(&name, &num_element, &mut field.num, reader)
+                    if name == label_element.name() {
+                        field.label = read_node(reader).unwrap();
+                    } else if name == data_element.name() {
+                        field.data = read_node(reader).unwrap();
+                    } else if name == num_element.name() {
+                        field.num = read_int(reader);
+                    } else {
+                        check_unimplemented(&name, &[])
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {

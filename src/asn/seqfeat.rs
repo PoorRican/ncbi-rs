@@ -54,11 +54,11 @@
 
 use crate::biblio::{PubMedId, DOI};
 use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing_utils::{check_unimplemented, parse_int_to_option, parse_node_to, parse_node_to_option, parse_string_to, parse_vec_node, parse_vec_node_to_option, read_int, read_node, read_string, read_vec_str_unchecked};
+use crate::parsing_utils::{check_unimplemented, read_vec_node, read_int, read_node, read_string, read_vec_str_unchecked};
 use crate::r#pub::PubSet;
 use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
-use crate::{XmlNode, XmlValue, XmlVecNode};
+use crate::{XmlNode, XmlVecNode};
 use bitflags::bitflags;
 use enum_primitive::FromPrimitive;
 use quick_xml::events::{BytesStart, Event};
@@ -278,16 +278,25 @@ impl XmlNode for SeqFeat {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
                     let name = e.name();
-                    parse_node_to_option(&name, &id_tag, &mut feat.id, reader);
-                    parse_node_to_option(&name, &ext_tag, &mut feat.ext, reader);
-                    parse_node_to_option(&name, &product_tag, &mut feat.product, reader);
-                    parse_vec_node_to_option(&name, &qual_tag, &mut feat.qual, reader);
-                    parse_node_to(&name, &data_tag, &mut feat.data, reader);
-                    parse_node_to(&name, &location_tag, &mut feat.location, reader);
-                    parse_string_to(&name, &comment_tag, &mut feat.comment, reader);
-                    parse_vec_node_to_option(&name, &xref_tag, &mut feat.xref, reader);
-
-                    check_unimplemented(&name, &forbidden);
+                    if name == id_tag.name() {
+                        feat.id = read_node(reader);
+                    } else if name == ext_tag.name() {
+                        feat.ext = read_node(reader);
+                    } else if name == product_tag.name() {
+                        feat.product = read_node(reader);
+                    } else if name == qual_tag.name() {
+                        feat.qual = Some(read_vec_node(reader, qual_tag.to_end()));
+                    } else if name == data_tag.name() {
+                        feat.data = read_node(reader).unwrap();
+                    } else if name == location_tag.name() {
+                        feat.location = read_node(reader).unwrap();
+                    } else if name == comment_tag.name() {
+                        feat.comment = read_string(reader);
+                    } else if name == xref_tag.name() {
+                        feat.xref = Some(read_vec_node(reader, xref_tag.to_end()));
+                    } else {
+                        check_unimplemented(&name, &forbidden);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -735,10 +744,17 @@ impl XmlNode for CdRegion {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_vec_node_to_option(&name, &code_tag, &mut cdregion.code, reader);
-                    parse_int_to_option(&name, &gaps_tag, &mut cdregion.gaps, reader);
-                    parse_int_to_option(&name, &mismatch_tag, &mut cdregion.mismatch, reader);
-                    parse_int_to_option(&name, &stops_tag, &mut cdregion.stops, reader);
+                    if name == code_tag.name() {
+                        cdregion.code = Some(read_vec_node(reader, code_tag.to_end()))
+                    } else if name == gaps_tag.name() {
+                        cdregion.gaps = read_int(reader);
+                    } else if name == mismatch_tag.name() {
+                        cdregion.mismatch = read_int(reader);
+                    } else if name == stops_tag.name() {
+                        cdregion.stops = read_int(reader);
+                    } else {
+                        check_unimplemented(&name, &[])
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -884,8 +900,13 @@ impl XmlNode for GbQual {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_string_to(&name, &qual_tag, &mut qual.qual, reader);
-                    parse_string_to(&name, &val_tag, &mut qual.val, reader);
+                    if name == qual_tag.name() {
+                        qual.qual = read_string(reader).unwrap();
+                    } else if name == val_tag.name() {
+                        qual.val = read_string(reader).unwrap();
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -1889,17 +1910,32 @@ impl XmlNode for GeneRef {
         let locus_tag_tag = BytesStart::new("Gene-ref_locus-tag");
         let form_name_tag = BytesStart::new("Gene-ref_formal-name");
 
+        let forbidden = [
+            pseudo_tag,
+            syn_tag,
+            form_name_tag,
+        ];
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_string_to(&name, &locus_tag, &mut gene.locus, reader);
-                    parse_string_to(&name, &allele_tag, &mut gene.allele, reader);
-                    parse_string_to(&name, &desc_tag, &mut gene.desc, reader);
-                    parse_string_to(&name, &maploc_tag, &mut gene.maploc, reader);
-                    parse_vec_node_to_option(&name, &db_tag, &mut gene.db, reader);
-                    parse_string_to(&name, &locus_tag_tag, &mut gene.locus_tag, reader);
+                    if name == locus_tag.name() {
+                        gene.locus = read_string(reader);
+                    } else if name == allele_tag.name() {
+                        gene.allele = read_string(reader);
+                    } else if name == desc_tag.name() {
+                        gene.desc = read_string(reader);
+                    } else if name == maploc_tag.name() {
+                        gene.maploc = read_string(reader);
+                    } else if name == db_tag.name() {
+                        gene.db = Some(read_vec_node(reader, db_tag.to_end()));
+                    } else if name == locus_tag_tag.name() {
+                        gene.locus_tag = read_string(reader);
+                    } else {
+                        check_unimplemented(&name, &forbidden);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -1969,9 +2005,15 @@ impl XmlNode for OrgRef {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_string_to(&name, &taxname_element, &mut org_ref.taxname, reader);
-                    parse_node_to_option(&name, &orgname_element, &mut org_ref.orgname, reader);
-                    parse_vec_node_to_option(&name, &db_element, &mut org_ref.db, reader);
+                    if name == taxname_element.name() {
+                        org_ref.taxname = read_string(reader);
+                    } else if name == orgname_element.name() {
+                        org_ref.orgname = read_node(reader);
+                    } else if name == db_element.name() {
+                        org_ref.db = Some(read_vec_node(reader, db_element.to_end()))
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -2087,12 +2129,21 @@ impl XmlNode for OrgName {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_string_to(&name, &div_element, &mut org_name.div, reader);
-                    parse_string_to(&name, &attrib_element, &mut org_name.attrib, reader);
-                    parse_string_to(&name, &lineage_element, &mut org_name.lineage, reader);
-                    parse_int_to_option(&name, &gcode_element, &mut org_name.gcode, reader);
-                    parse_node_to_option(&name, &name_element, &mut org_name.name, reader);
-                    parse_vec_node_to_option(&name, &mod_element, &mut org_name.r#mod, reader);
+                    if name == div_element.name() {
+                        org_name.div = read_string(reader);
+                    } else if name == attrib_element.name() {
+                        org_name.attrib = read_string(reader);
+                    } else if name == lineage_element.name() {
+                        org_name.lineage = read_string(reader);
+                    } else if name == gcode_element.name() {
+                        org_name.gcode = read_int(reader);
+                    } else if name == name_element.name() {
+                        org_name.name = read_node(reader);
+                    } else if name == mod_element.name() {
+                        org_name.r#mod = Some(read_vec_node(reader, mod_element.to_end()));
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -2220,9 +2271,15 @@ impl XmlNode for OrgMod {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_node_to(&name, &subtype_element, &mut r#mod.subtype, reader);
-                    parse_string_to(&name, &subname_element, &mut r#mod.subname, reader);
-                    parse_string_to(&name, &attrib_element, &mut r#mod.attrib, reader);
+                    if name == subtype_element.name() {
+                        r#mod.subtype = read_node(reader).unwrap();
+                    } else if name == subname_element.name() {
+                        r#mod.subname = read_string(reader).unwrap();
+                    } else if name == attrib_element.name() {
+                        r#mod.attrib = read_string(reader);
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -2266,9 +2323,15 @@ impl XmlNode for BinomialOrgName {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_string_to(&name, &genus_element, &mut binomial.genus, reader);
-                    parse_string_to(&name, &species_element, &mut binomial.species, reader);
-                    parse_string_to(&name, &subspecies_element, &mut binomial.subspecies, reader);
+                    if name == genus_element.name() {
+                        binomial.genus = read_string(reader).unwrap();
+                    } else if name == species_element.name() {
+                        binomial.species = read_string(reader);
+                    } else if name == subspecies_element.name() {
+                        binomial.subspecies = read_string(reader);
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -2410,9 +2473,15 @@ impl XmlNode for BioSource {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_node_to(&name, &genome_element, &mut source.genome, reader);
-                    parse_node_to(&name, &org_element, &mut source.org, reader);
-                    parse_vec_node_to_option(&name, &subtype_element, &mut source.subtype, reader);
+                    if name == genome_element.name() {
+                        source.genome = read_node(reader).unwrap();
+                    } else if name == org_element.name() {
+                        source.org = read_node(reader).unwrap();
+                    } else if name == subtype_element.name() {
+                        source.subtype = Some(read_vec_node(reader, subtype_element.to_end()))
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if e.name() == Self::start_bytes().to_end().name() {
@@ -2548,9 +2617,15 @@ impl XmlNode for SubSource {
                 Event::Start(e) => {
                     let qname = e.name();
 
-                    parse_node_to(&qname, &subtype_element, &mut source.subtype, reader);
-                    parse_string_to(&qname, &name_element, &mut source.name, reader);
-                    parse_string_to(&qname, &attrib_element, &mut source.attrib, reader);
+                    if qname == subtype_element.name() {
+                        source.subtype = read_node(reader).unwrap();
+                    } else if qname == name_element.name() {
+                        source.name = read_string(reader).unwrap();
+                    } else if qname == attrib_element.name() {
+                        source.attrib = read_string(reader);
+                    } else {
+                        check_unimplemented(&qname, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if e.name() == Self::start_bytes().to_end().name() {
@@ -2633,7 +2708,7 @@ impl XmlNode for ProtRef {
                     } else if name == activity_tag.name() {
                         prot.activity = read_vec_str_unchecked(reader, &activity_tag.to_end()).into();
                     } else if name == db_tag.name() {
-                        prot.db = parse_vec_node(reader, db_tag.to_end()).into();
+                        prot.db = read_vec_node(reader, db_tag.to_end()).into();
                     } else {
                         check_unimplemented(&name, &forbidden);
                     }

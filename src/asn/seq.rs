@@ -5,7 +5,7 @@
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing_utils::{parse_attribute_to, parse_int_to_option, parse_node_to, parse_node_to_option, parse_vec_node, parse_vec_node_to, parse_vec_node_to_option, read_int, read_node, read_string};
+use crate::parsing_utils::{check_unimplemented, read_vec_node, read_attributes, read_int, read_node, read_string};
 use crate::r#pub::PubEquiv;
 use crate::seqalign::SeqAlign;
 use crate::seqblock::{EMBLBlock, GBBlock, PDBBlock, PIRBlock, PRFBlock, SPBlock};
@@ -71,10 +71,15 @@ impl XmlNode for BioSeq {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_vec_node_to(&name, &id_elem, &mut bioseq.id, reader);
-                    parse_node_to_option(&name, &descr_elem, &mut bioseq.descr, reader);
-                    parse_node_to_option(&name, &inst_elem, &mut bioseq.inst, reader);
-                    parse_vec_node_to_option(&name, &annot_elem, &mut bioseq.annot, reader);
+                    if name == id_elem.name() {
+                        bioseq.id = read_vec_node(reader, id_elem.to_end());
+                    } else if name == descr_elem.name() {
+                        bioseq.descr = read_node(reader);
+                    } else if name == inst_elem.name() {
+                        bioseq.inst = read_node(reader);
+                    } else if name == annot_elem.name() {
+                        bioseq.annot = Some(read_vec_node(reader, annot_elem.to_end()));
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -404,8 +409,13 @@ impl XmlNode for MolInfo {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_node_to(&name, &bio_mol_element, &mut mol_info.bio_mol, reader);
-                    parse_node_to(&name, &tech_element, &mut mol_info.tech, reader);
+                    if name == bio_mol_element.name() {
+                        mol_info.bio_mol = read_node(reader).unwrap();
+                    } else if name == tech_element.name() {
+                        mol_info.tech = read_node(reader).unwrap();
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -656,7 +666,11 @@ impl XmlNode for PubDesc {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_node_to(&name, &pub_element, &mut desc.r#pub, reader);
+                    if name == pub_element.name() {
+                        desc.r#pub = read_node(reader).unwrap();
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -941,12 +955,24 @@ impl XmlNode for SeqInst {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_int_to_option(&name, &length_element, &mut inst.length, reader);
-                    parse_node_to_option(&name, &ext_element, &mut inst.ext, reader);
+                    if name == length_element.name() {
+                        inst.length = read_int(reader);
+                    } else if name == ext_element.name() {
+                        inst.ext = read_node(reader);
+                    } else {
+                        check_unimplemented(&name, &[])
+                    }
                 }
                 Event::Empty(e) => {
-                    parse_attribute_to(&e, &repr_element, &mut inst.repr);
-                    parse_attribute_to(&e, &mol_element, &mut inst.mol);
+                    let name = e.name();
+
+                    if name == repr_element.name() {
+                        inst.repr = read_attributes(&e).unwrap();
+                    } else if name == mol_element.name() {
+                        inst.mol = read_attributes(&e).unwrap();
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
@@ -994,7 +1020,7 @@ impl XmlNode for SeqExt {
                     let name = e.name();
 
                     if name == delta_element.name() {
-                        return Self::Delta(parse_vec_node(reader, delta_element.to_end())).into();
+                        return Self::Delta(read_vec_node(reader, delta_element.to_end())).into();
                     }
                 }
                 Event::End(e) => {
@@ -1377,7 +1403,7 @@ impl XmlNode for SeqAnnotData {
                     let name = e.name();
 
                     if name == ftable_tag.name() {
-                        return Self::FTable(parse_vec_node(reader, ftable_tag.to_end())).into()
+                        return Self::FTable(read_vec_node(reader, ftable_tag.to_end())).into()
                     }
                 }
                 Event::End(e) => {
@@ -1439,7 +1465,11 @@ impl XmlNode for SeqAnnot {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_node_to(&name, &data_tag, &mut annot.data, reader);
+                    if name == data_tag.name() {
+                        annot.data = read_node(reader).unwrap();
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {

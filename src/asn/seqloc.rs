@@ -8,7 +8,7 @@
 
 use crate::biblio::IdPat;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId};
-use crate::parsing_utils::{check_unimplemented, parse_attribute_to_option, parse_int_to, parse_int_to_option, parse_node_to, parse_string_to, read_int, read_node};
+use crate::parsing_utils::{check_unimplemented, read_attributes, read_int, read_node, read_string};
 use crate::seqfeat::FeatId;
 use crate::{XmlNode, XmlVecNode, XmlValue};
 use quick_xml::events::{BytesStart, Event};
@@ -136,10 +136,17 @@ impl XmlNode for TextseqId {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_string_to(&name, &name_element, &mut id.name, reader);
-                    parse_string_to(&name, &accession_element, &mut id.accession, reader);
-                    parse_string_to(&name, &release_element, &mut id.release, reader);
-                    parse_int_to_option(&name, &version_element, &mut id.version, reader);
+                    if name == name_element.name() {
+                        id.name = read_string(reader);
+                    } else if name == accession_element.name() {
+                        id.accession = read_string(reader);
+                    } else if name == release_element.name() {
+                        id.release = read_string(reader);
+                    } else if name == version_element.name() {
+                        id.version = read_int(reader);
+                    } else {
+                        check_unimplemented(&name, &[]);
+                    }
                 }
                 Event::End(e) => {
                     if e.name() == Self::start_bytes().to_end().name() {
@@ -313,12 +320,18 @@ impl XmlNode for SeqInterval {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    parse_int_to(&name, &from_element, &mut interval.from, reader);
-                    parse_int_to(&name, &to_element, &mut interval.to, reader);
-                    parse_node_to(&name, &id_element, &mut interval.id, reader);
+                    if name == from_element.name() {
+                        interval.from = read_int(reader).unwrap();
+                    } else if name == to_element.name() {
+                        interval.to = read_int(reader).unwrap();
+                    } else if name == id_element.name() {
+                        interval.id = read_node(reader).unwrap();
+                    }
                 }
                 Event::Empty(e) => {
-                    parse_attribute_to_option(&e, &NaStrand::start_bytes(), &mut interval.strand);
+                    if e.name() == NaStrand::start_bytes().name() {
+                        interval.strand = read_attributes(&e);
+                    }
                 }
                 Event::End(e) => {
                     if Self::is_end(&e) {
