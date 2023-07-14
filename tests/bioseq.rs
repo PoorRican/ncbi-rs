@@ -619,18 +619,31 @@ fn parse_bioseq_annot() {
     // total number of feat id's
     let feats: usize = 176;
 
+    assert!(bioseq.annot.is_some());
+
+    if let Some(annot) = bioseq.annot {
+        let annot = annot.get(0).unwrap();
+        if let SeqAnnotData::FTable(ftable) = &annot.data {
+            assert_eq!(ftable.len(), feats);
+        }
+    }
+
+}
+
+#[test]
+fn parse_bioseq_annot_gene_feats() {
+    let bioseq = get_bioseq(DATA1);
+
+    // total number of feat id's
+    let feats: usize = 176;
+
     // total number of occurrences of `SeqFeatData::Gene`
     let expected_genes: usize = 88;
-    let expected_cdregions: usize = 88;
-    let expected_products: usize = 87;
-
-    let genetic_code = Some(vec![GeneticCodeOpt::Id(11)]);
 
     assert!(bioseq.annot.is_some());
 
     // track occurrence of object types
     let mut has_gene_data = false;
-    let mut has_cdregion_data = false;
     if let Some(annot) = bioseq.annot {
         let annot = annot.get(0).unwrap();
         if let SeqAnnotData::FTable(ftable) = &annot.data {
@@ -638,8 +651,6 @@ fn parse_bioseq_annot() {
 
             // counter for gene features
             let mut genes: usize = 0;
-            let mut cdregions: usize = 0;
-            let mut products: usize = 0;
 
             // inspect parsed features
             for feat in ftable.iter() {
@@ -647,24 +658,77 @@ fn parse_bioseq_annot() {
                     has_gene_data = true;
                     genes += 1;
                 }
-                else if let SeqFeatData::CdRegion(cdregion) = &feat.data {
-                    has_cdregion_data = true;
-                    assert_eq!(cdregion.code, genetic_code);
-                    cdregions += 1;
-                }
-
-                if feat.product.is_some() {
-                    products += 1;
-                }
             }
 
             // assert parsed features
             assert!(has_gene_data);
             assert_eq!(expected_genes, genes);
 
+        } else {
+            assert!(false, "data value is not ftable");
+        }
+
+    }
+}
+
+#[test]
+fn parse_bioseq_annot_cdregion_feats() {
+    let bioseq = get_bioseq(DATA1);
+
+    // total number of occurrences of `SeqFeatData::Gene`
+    let expected_cdregions: usize = 88;
+
+    let genetic_code = Some(vec![GeneticCodeOpt::Id(11)]);
+
+    // track occurrence of object types
+    let mut has_cdregion_data = false;
+    if let Some(annot) = bioseq.annot {
+        let annot = annot.get(0).unwrap();
+        if let SeqAnnotData::FTable(ftable) = &annot.data {
+            // counter for gene features
+            let mut cdregions: usize = 0;
+
+            // inspect parsed features
+            for feat in ftable.iter() {
+                if let SeqFeatData::CdRegion(cdregion) = &feat.data {
+                    has_cdregion_data = true;
+                    assert_eq!(cdregion.code, genetic_code);
+                    cdregions += 1;
+                }
+            }
+
+            // assert parsed features
             assert!(has_cdregion_data);
             assert_eq!(expected_cdregions, cdregions);
+        } else {
+            assert!(false, "data value is not ftable");
+        }
 
+    }
+}
+
+#[test]
+fn parse_bioseq_annot_feat_products() {
+    let bioseq = get_bioseq(DATA1);
+
+    // total number of occurrences of `SeqFeat.products`
+    let expected_products: usize = 87;
+
+    // track occurrence of object types
+    if let Some(annot) = bioseq.annot {
+        let annot = annot.get(0).unwrap();
+        if let SeqAnnotData::FTable(ftable) = &annot.data {
+            // counter for products
+            let mut products: usize = 0;
+
+            // inspect parsed features
+            for feat in ftable.iter() {
+                if feat.product.is_some() {
+                    products += 1;
+                }
+            }
+
+            // assert parsed features
             assert_eq!(expected_products, products);
         } else {
             assert!(false, "data value is not ftable");
