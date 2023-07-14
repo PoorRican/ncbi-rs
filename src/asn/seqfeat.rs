@@ -265,7 +265,6 @@ impl XmlNode for SeqFeat {
             &except_tag,
             &comment_tag,
             &product_tag,
-            &qual_tag,
             &title_tag,
             &cit_tag,
             &exp_ev_tag,
@@ -284,6 +283,7 @@ impl XmlNode for SeqFeat {
                     let name = e.name();
                     parse_node_to_option(&name, &id_tag, &mut feat.id, reader);
                     parse_node_to_option(&name, &ext_tag, &mut feat.ext, reader);
+                    parse_vec_node_to_option(&name, &qual_tag, &mut feat.qual, reader);
                     parse_node_to(&name, &data_tag, &mut feat.data, reader);
                     parse_node_to(&name, &location_tag, &mut feat.location, reader);
 
@@ -799,11 +799,43 @@ pub struct ImpFeat {
     pub descr: Option<String>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct GbQual {
     pub qual: String,
     pub val: String,
 }
+
+impl XmlNode for GbQual {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Gb-qual")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut qual = Self::default();
+
+        // field tags
+        let qual_tag = BytesStart::new("Gb-qual_qual");
+        let val_tag = BytesStart::new("Gb-qual_val");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    parse_string_to(&name, &qual_tag, &mut qual.qual, reader);
+                    parse_string_to(&name, &val_tag, &mut qual.val, reader);
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return qual.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+impl XmlVecNode for GbQual {}
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
 #[repr(u8)]
