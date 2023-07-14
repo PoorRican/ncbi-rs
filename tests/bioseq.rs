@@ -782,3 +782,36 @@ fn parse_bioseq_annot_feat_xrefs() {
         }
     }
 }
+
+#[test]
+fn parse_bioseq_annot_feat_prot() {
+    let bioseq = get_bioseq(DATA1);
+
+    // total number of occurrences of `SeqFeat.products`
+    let expected_occurrences: usize = 1;
+
+    // track occurrence of object types
+    if let Some(annot) = bioseq.annot {
+        let annot = annot.get(0).unwrap();
+        if let SeqAnnotData::FTable(ftable) = &annot.data {
+            // counter for products
+            let mut occurrences: usize = 0;
+
+            // inspect parsed features
+            for feat in ftable.iter() {
+                if let Some(xref) = &feat.xref {
+                    if let Some(xref) = xref.get(0) {
+                        if let Some(data) = &xref.data {
+                            if let SeqFeatData::Prot(_) = data {
+                                occurrences += 1;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // assert parsed features
+            assert_eq!(expected_occurrences, occurrences);
+        }
+    }
+}

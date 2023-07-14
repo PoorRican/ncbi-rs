@@ -54,11 +54,11 @@
 
 use crate::biblio::{PubMedId, DOI};
 use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing_utils::{check_unimplemented, parse_int_to_option, parse_node_to, parse_node_to_option, parse_string_to, parse_vec_node_to_option, read_int, read_node};
+use crate::parsing_utils::{check_unimplemented, parse_int_to_option, parse_node_to, parse_node_to_option, parse_string_to, parse_vec_node, parse_vec_node_to_option, read_int, read_node, read_string, read_vec_str_unchecked};
 use crate::r#pub::PubSet;
 use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
-use crate::{XmlNode, XmlVecNode};
+use crate::{XmlNode, XmlValue, XmlVecNode};
 use bitflags::bitflags;
 use enum_primitive::FromPrimitive;
 use quick_xml::events::{BytesStart, Event};
@@ -456,7 +456,6 @@ impl XmlNode for SeqFeatData {
 
         let forbidden = [
             org_tag,
-            prot_tag,
             rna_tag,
             pub_tag,
             seq_tag,
@@ -486,6 +485,9 @@ impl XmlNode for SeqFeatData {
                     }
                     else if name == cdregion_tag.name() {
                         return Self::CdRegion(read_node(reader).unwrap()).into()
+                    }
+                    else if name == prot_tag.name() {
+                        return Self::Prot(read_node(reader).unwrap()).into();
                     }
                     else {
                         check_unimplemented(&name, &forbidden);
@@ -2575,7 +2577,7 @@ pub enum ProtRefProcessingStatus {
     ProPeptide,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 /// Reference to a protein name
 pub struct ProtRef {
@@ -2596,6 +2598,56 @@ pub struct ProtRef {
 
     /// processing status
     pub processed: ProtRefProcessingStatus,
+}
+
+impl XmlNode for ProtRef {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Prot-ref")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut prot = Self::default();
+
+        // field tags
+        let name_tag = BytesStart::new("Prot-ref_name");
+        let desc_tag = BytesStart::new("Prot-ref_desc");
+        let ec_tag = BytesStart::new("Prot-ref_ec");
+        let activity_tag = BytesStart::new("Prot-ref_activity");
+        let db_tag = BytesStart::new("Prot-ref_db");
+        let processed_tag = BytesStart::new("Prot-ref_processed");
+
+        // attributes that have not been implemented yet
+        let forbidden = [processed_tag];
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == name_tag.name() {
+                        prot.name = read_vec_str_unchecked(reader, &name_tag.to_end()).into();
+                    } else if name == desc_tag.name() {
+                        prot.desc = read_string(reader);
+                    } else if name == ec_tag.name() {
+                        prot.ec = read_vec_str_unchecked(reader, &ec_tag.to_end()).into();
+                    } else if name == activity_tag.name() {
+                        prot.activity = read_vec_str_unchecked(reader, &activity_tag.to_end()).into();
+                    } else if name == db_tag.name() {
+                        prot.db = parse_vec_node(reader, db_tag.to_end()).into();
+                    } else {
+                        check_unimplemented(&name, &forbidden);
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return prot.into()
+                    }
+                }
+                _ => {}
+            }
+        }
+
+    }
 }
 
 #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
