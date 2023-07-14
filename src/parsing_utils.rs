@@ -4,6 +4,7 @@ use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::name::QName;
 use quick_xml::Reader;
 use std::ops::Deref;
+use std::str::FromStr;
 
 /// [`Reader`] that returns bytes
 ///
@@ -165,8 +166,8 @@ pub fn read_vec_str_unchecked(reader: &mut XmlReader, end: &BytesEnd) -> Vec<Str
                 // remove whitespace
                 let text = bytes_to_string(text.deref()).trim().to_string();
                 // do not add empty or escape codes
-                if !(text == "\\\\n" || text.is_empty()) {
-                    items.push(text)
+                if is_alphanum(text.as_str()) {
+                    items.push(text.to_string())
                 }
             }
             Event::End(e) => {
@@ -194,7 +195,13 @@ where
     let mut nums = Vec::new();
     loop {
         match reader.read_event().unwrap() {
-            Event::Text(text) => nums.push(bytes_to_int(text.deref())),
+            Event::Text(text) => {
+                let string = text.deref().escape_ascii().to_string();
+                let string = string.trim();
+                if is_alphanum(string) {
+                    nums.push(bytes_to_int(string.as_bytes()))
+                }
+            },
             Event::End(e) => {
                 if e.name() == end.name() {
                     return nums;
@@ -279,4 +286,9 @@ pub fn check_unimplemented(current: &QName, forbidden: &[&BytesStart<'static>]) 
             eprintln!("Encountered XML tag {}, which has not been implemented yet...", tag.escape_ascii().to_string())
         }
     }
+}
+
+fn is_alphanum(text: &str) -> bool {
+    // do not add empty or escape codes
+    !(text == "\\\\n" || text.is_empty())
 }

@@ -2,11 +2,7 @@
 //!
 //! As per [general.asn](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/asn_spec/general.asn.html)
 
-use crate::parsing_utils::{
-    parse_int_to, parse_int_to_option, parse_node_to, parse_string_to, parse_vec_node,
-    parse_vec_node_to, read_int, read_node, read_string, read_vec_int_unchecked,
-    read_vec_str_unchecked,
-};
+use crate::parsing_utils::{parse_int_to, parse_int_to_option, parse_node_to, parse_string_to, parse_vec_node, parse_vec_node_to, read_int, read_node, read_real, read_string, read_vec_int_unchecked, read_vec_str_unchecked};
 use crate::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use quick_xml::Reader;
