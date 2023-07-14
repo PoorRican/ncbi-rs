@@ -263,7 +263,6 @@ impl XmlNode for SeqFeat {
         let forbidden = [
             &partial_tag,
             &except_tag,
-            &comment_tag,
             &title_tag,
             &cit_tag,
             &exp_ev_tag,
@@ -286,6 +285,7 @@ impl XmlNode for SeqFeat {
                     parse_vec_node_to_option(&name, &qual_tag, &mut feat.qual, reader);
                     parse_node_to(&name, &data_tag, &mut feat.data, reader);
                     parse_node_to(&name, &location_tag, &mut feat.location, reader);
+                    parse_string_to(&name, &comment_tag, &mut feat.comment, reader);
 
                     check_unimplemented(&name, &forbidden);
                 }
