@@ -5,7 +5,7 @@
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing::{check_unexpected, read_vec_node, read_attributes, read_int, read_node, read_string};
+use crate::parsing::{read_vec_node, read_attributes, read_int, read_node, read_string, UnexpectedTags};
 use crate::r#pub::PubEquiv;
 use crate::seqalign::SeqAlign;
 use crate::seqblock::{EMBLBlock, GBBlock, PDBBlock, PIRBlock, PRFBlock, SPBlock};
@@ -404,6 +404,8 @@ impl XmlNode for MolInfo {
         let bio_mol_element = BytesStart::new("MolInfo_biomol");
         let tech_element = BytesStart::new("MolInfo_tech");
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -414,7 +416,7 @@ impl XmlNode for MolInfo {
                     } else if name == tech_element.name() {
                         mol_info.tech = read_node(reader).unwrap();
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &[]);
+                        forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {
@@ -661,6 +663,8 @@ impl XmlNode for PubDesc {
         // elements
         let pub_element = BytesStart::new("Pubdesc_pub");
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -669,7 +673,7 @@ impl XmlNode for PubDesc {
                     if name == pub_element.name() {
                         desc.r#pub = read_node(reader).unwrap();
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &[]);
+                        forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {
@@ -950,6 +954,8 @@ impl XmlNode for SeqInst {
         let length_element = BytesStart::new("Seq-inst_length");
         let ext_element = BytesStart::new("Seq-inst_ext");
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -960,7 +966,7 @@ impl XmlNode for SeqInst {
                     } else if name == ext_element.name() {
                         inst.ext = read_node(reader);
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &[])
+                        forbidden.check(&name);
                     }
                 }
                 Event::Empty(e) => {
@@ -971,7 +977,7 @@ impl XmlNode for SeqInst {
                     } else if name == mol_element.name() {
                         inst.mol = read_attributes(&e).unwrap();
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &[]);
+                        forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {
@@ -1460,6 +1466,8 @@ impl XmlNode for SeqAnnot {
         // attribute tags
         let data_tag = BytesStart::new("Seq-annot_data");
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -1468,7 +1476,7 @@ impl XmlNode for SeqAnnot {
                     if name == data_tag.name() {
                         annot.data = read_node(reader).unwrap();
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &[]);
+                        forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {

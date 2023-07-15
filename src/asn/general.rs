@@ -2,7 +2,7 @@
 //!
 //! As per [general.asn](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/asn_spec/general.asn.html)
 
-use crate::parsing::{check_unexpected, read_vec_node, read_int, read_node, read_real, read_string, read_vec_int_unchecked, read_vec_str_unchecked};
+use crate::parsing::{read_vec_node, read_int, read_node, read_real, read_string, read_vec_int_unchecked, read_vec_str_unchecked, UnexpectedTags};
 use crate::parsing::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
@@ -96,6 +96,8 @@ impl XmlNode for DateStd {
         let month_element = BytesStart::new("Date-std_month");
         let day_element = BytesStart::new("Date-std_day");
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -108,7 +110,7 @@ impl XmlNode for DateStd {
                     } else if name == day_element.name() {
                         date.day = read_int(reader);
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &[]);
+                        forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {
@@ -291,6 +293,8 @@ impl XmlNode for NameStd {
         let first_element = BytesStart::new("Name-std_first");
         let initials_element = BytesStart::new("Name-std_initials");
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -303,7 +307,7 @@ impl XmlNode for NameStd {
                     } else if name == initials_element.name() {
                         name_std.initials = read_string(reader);
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &[]);
+                        forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {
@@ -465,6 +469,8 @@ impl XmlNode for UserData {
         let fields_element = BytesStart::new("User-field_data_fields");
         let objects_element = BytesStart::new("User-field_data_objects");
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -493,7 +499,7 @@ impl XmlNode for UserData {
                     } else if name == objects_element.name() {
                         return Self::Objects(read_vec_node(reader, objects_element.to_end())).into()
                     } else if name != BytesStart::new("User-field_label").name() {
-                        check_unexpected(&name, &[]);
+                        forbidden.check(&name);
                     }
                 }
                 _ => (),
@@ -528,6 +534,8 @@ impl XmlNode for UserField {
         let num_element = BytesStart::new("User-field_num");
         let data_element = BytesStart::new("User-field_data");
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -540,7 +548,7 @@ impl XmlNode for UserField {
                     } else if name == num_element.name() {
                         field.num = read_int(reader);
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &[])
+                        forbidden.check(&name)
                     }
                 }
                 Event::End(e) => {

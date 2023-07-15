@@ -2,7 +2,7 @@
 //! Adapted from ["biblio.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/biblio/biblio.asn)
 
 use crate::general::{Date, DbTag, PersonId};
-use crate::parsing::{check_unexpected, read_vec_node, read_node, read_string};
+use crate::parsing::{read_vec_node, read_node, read_string, UnexpectedTags};
 use crate::parsing::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
@@ -335,6 +335,8 @@ impl XmlNode for CitSub {
             affil: None,
         });
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -345,7 +347,7 @@ impl XmlNode for CitSub {
                     } else if name == date_element.name() {
                         cit.date = read_node(reader);
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &[]);
+                        forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {
@@ -405,6 +407,8 @@ impl XmlNode for CitGen {
         let authors_element = BytesStart::new("Cit-gen_authors");
         let title_element = BytesStart::new("Cit-gen_title");
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -417,7 +421,7 @@ impl XmlNode for CitGen {
                     } else if name == authors_element.name() {
                         gen.authors = read_node(reader);
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &[])
+                        forbidden.check(&name)
                     }
                 }
                 Event::End(e) => {
@@ -466,6 +470,8 @@ impl XmlNode for AuthListNames {
         // variants
         let std_element = BytesStart::new("Auth-list_names_std");
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -474,7 +480,7 @@ impl XmlNode for AuthListNames {
                     if name == std_element.name() {
                         return Self::Std(read_vec_node(reader, std_element.to_end())).into();
                     } else if name == Self::start_bytes().name() {
-                        check_unexpected(&name, &[]);
+                        forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {
@@ -511,6 +517,8 @@ impl XmlNode for AuthList {
         let names_element = BytesStart::new("Auth-list_names");
         let affil_element = BytesStart::new("Auth-list_affil");
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -521,7 +529,7 @@ impl XmlNode for AuthList {
                     } else if name == affil_element.name() {
                         list.affil = read_node(reader);
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &[]);
+                        forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {
@@ -600,6 +608,8 @@ impl XmlNode for Author {
 
         let name_element = BytesStart::new("Author_name");
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -608,7 +618,7 @@ impl XmlNode for Author {
                     if name == name_element.name() {
                         author.name = read_node(reader).unwrap();
                     } else {
-                        check_unexpected(&name, &[]);
+                        forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {
@@ -671,6 +681,8 @@ impl XmlNode for AffilStd {
         let street_element = BytesStart::new("Affil_std_street");
         let postal_code_element = BytesStart::new("Affil_std_postal-code");
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -691,7 +703,7 @@ impl XmlNode for AffilStd {
                     } else if name == postal_code_element.name() {
                         affil.postal_code = read_string(reader);
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &[]);
+                        forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {

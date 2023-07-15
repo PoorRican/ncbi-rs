@@ -1,7 +1,6 @@
 use quick_xml::Reader;
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use atoi::FromRadix10SignedChecked;
-use quick_xml::name::QName;
 use std::ops::Deref;
 use crate::parsing::{XmlNode, XmlValue, XmlVecNode};
 
@@ -141,19 +140,6 @@ where
     E: Into<Option<BytesEnd<'a>>>,
 {
     T::vec_from_reader(reader, end)
-}
-
-pub fn check_unexpected(current: &QName, forbidden: &[BytesStart<'static>]) {
-    let mut expected = false;
-    for tag in forbidden.iter() {
-        if *current == tag.name() {
-            expected = true;
-            eprintln!("Encountered XML tag {}, which has not been implemented yet...", tag.escape_ascii().to_string())
-        }
-    }
-    if !expected {
-        panic!("Encountered {}, which has not been implemented yet...", current.0.escape_ascii().to_string());
-    }
 }
 
 fn is_alphanum(text: &str) -> bool {

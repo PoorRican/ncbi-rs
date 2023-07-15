@@ -136,17 +136,16 @@ pub fn fetch_data(db: EntrezDb, id: &str, r#type: &str, mode: &str) -> DataType 
 #[cfg(test)]
 mod tests {
     use crate::{build_fetch_url, build_search_url, get_local_xml, parse_xml, DataType, EntrezDb};
-    use std::fs;
 
     #[test]
     fn search_url() {
-        let url = build_search_url(EntrezDb::Protein, "deaminase");
+        let _url = build_search_url(EntrezDb::Protein, "deaminase");
     }
 
     #[test]
     fn test_protein() {
         let id = "2520667272";
-        let url = build_fetch_url(EntrezDb::Protein, id, "native", "xml");
+        let _url = build_fetch_url(EntrezDb::Protein, id, "native", "xml");
     }
 
     #[test]

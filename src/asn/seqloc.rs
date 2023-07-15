@@ -8,7 +8,7 @@
 
 use crate::biblio::IdPat;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId};
-use crate::parsing::{check_unexpected, read_attributes, read_int, read_node, read_string};
+use crate::parsing::{read_attributes, read_int, read_node, read_string, UnexpectedTags};
 use crate::seqfeat::FeatId;
 use crate::parsing::{XmlNode, XmlVecNode, XmlValue};
 use quick_xml::events::{BytesStart, Event};
@@ -131,6 +131,8 @@ impl XmlNode for TextseqId {
         let release_element = BytesStart::new("Textseq-id_release");
         let version_element = BytesStart::new("Textseq-id_version");
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -145,7 +147,7 @@ impl XmlNode for TextseqId {
                     } else if name == version_element.name() {
                         id.version = read_int(reader);
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &[]);
+                        forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {
@@ -251,6 +253,7 @@ impl XmlNode for SeqLoc {
             bond_variant,
             feat_variant
         ];
+        let forbidden = UnexpectedTags(&forbidden);
 
         loop {
             match reader.read_event().unwrap() {
@@ -262,7 +265,7 @@ impl XmlNode for SeqLoc {
                     } else if name == whole_variant.name() {
                         return Self::Whole(read_node(reader).unwrap()).into()
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &forbidden);
+                        forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {

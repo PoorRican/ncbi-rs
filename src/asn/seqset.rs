@@ -4,7 +4,7 @@
 //! from the NCBI C++ Toolkit
 
 use crate::general::{Date, DbTag, ObjectId};
-use crate::parsing::{check_unexpected, read_vec_node, read_node};
+use crate::parsing::{read_vec_node, read_node, UnexpectedTags};
 use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
 use crate::parsing::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesStart, Event};
@@ -120,6 +120,8 @@ impl XmlNode for BioSeqSet {
 
         let mut set = Self::default();
 
+        let forbidden = UnexpectedTags(&[]);
+
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -128,7 +130,7 @@ impl XmlNode for BioSeqSet {
                     if name == seq_set_element.name() {
                         set.seq_set = read_vec_node(reader, seq_set_element.to_end());
                     } else if name != Self::start_bytes().name() {
-                        check_unexpected(&name, &[]);
+                        forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {
