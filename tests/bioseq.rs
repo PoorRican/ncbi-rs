@@ -817,12 +817,11 @@ fn parse_bioseq_annot_feat_prot() {
 }
 
 #[test]
-#[ignore]
 fn parse_bioseq_annot_feat_pseudo() {
     let bioseq = get_bioseq(DATA1);
 
     // total number of occurrences of `SeqFeat.products`
-    let expected_occurrences: usize = 1;
+    let expected_occurrences: usize = 2;
 
     // track occurrence of object types
     if let Some(annot) = bioseq.annot {
@@ -833,8 +832,8 @@ fn parse_bioseq_annot_feat_pseudo() {
 
             // inspect parsed features
             for feat in ftable.iter() {
-                if let SeqFeatData::Gene(gene) = &feat.data {
-                    if gene.pseudo {
+                if let Some(pseudo) = feat.pseudo {
+                    if pseudo {
                         occurrences += 1;
                     }
                 }

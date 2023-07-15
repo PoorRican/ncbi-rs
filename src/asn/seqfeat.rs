@@ -54,7 +54,7 @@
 
 use crate::biblio::{PubMedId, DOI};
 use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing::{read_vec_node, read_int, read_node, read_string, read_vec_str_unchecked, UnexpectedTags};
+use crate::parsing::{read_vec_node, read_int, read_node, read_string, read_vec_str_unchecked, UnexpectedTags, read_bool_attribute};
 use crate::r#pub::PubSet;
 use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
@@ -268,7 +268,6 @@ impl XmlNode for SeqFeat {
             cit_tag,
             exp_ev_tag,
             dbxref_tag,
-            pseudo_tag,
             except_text_tag,
             ids_tag,
             exts_tag,
@@ -298,6 +297,11 @@ impl XmlNode for SeqFeat {
                         feat.xref = Some(read_vec_node(reader, xref_tag.to_end()));
                     } else if name != Self::start_bytes().name() {
                         forbidden.check(&name);
+                    }
+                }
+                Event::Empty(e) => {
+                    if e.name() == pseudo_tag.name() {
+                        feat.pseudo = read_bool_attribute(&e);
                     }
                 }
                 Event::End(e) => {
