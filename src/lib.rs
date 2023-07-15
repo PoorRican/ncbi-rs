@@ -4,8 +4,8 @@ extern crate num;
 extern crate quick_xml;
 
 pub mod asn;
-pub mod helpers;
+pub mod eutils;
 pub mod parsing;
 
 pub use asn::*;
-pub use helpers::*;
+pub use eutils::*;

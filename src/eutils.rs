@@ -1,3 +1,5 @@
+//! Helper functions that deal with Entrez eUtils
+
 use crate::seqset::BioSeqSet;
 use crate::parsing::XmlNode;
 use quick_xml::events::Event;
