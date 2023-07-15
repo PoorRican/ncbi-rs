@@ -2,9 +2,9 @@
 //!
 //! As per [general.asn](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/asn_spec/general.asn.html)
 
-use crate::parsing_utils::{check_unexpected, read_vec_node, read_int, read_node, read_real, read_string, read_vec_int_unchecked, read_vec_str_unchecked};
-use crate::{XmlNode, XmlVecNode};
-use quick_xml::events::{BytesEnd, BytesStart, Event};
+use crate::parsing::{check_unexpected, read_vec_node, read_int, read_node, read_real, read_string, read_vec_int_unchecked, read_vec_str_unchecked};
+use crate::parsing::{XmlNode, XmlVecNode};
+use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Deserialize, Serialize};
 
@@ -560,7 +560,7 @@ impl XmlVecNode for UserField {}
 mod tests {
     use quick_xml::Reader;
     use crate::general::UserField;
-    use crate::parsing_utils::read_node;
+    use crate::parsing::read_node;
 
     #[test]
     /// tests a bug where nested <User-field_data_fields> is not denoted by tag

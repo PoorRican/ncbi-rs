@@ -8,8 +8,8 @@ use crate::biblio::{
     CitArt, CitBook, CitGen, CitJour, CitLet, CitPat, CitProc, CitSub, IdPat, PubMedId,
 };
 use crate::medline::MedlineEntry;
-use crate::parsing_utils::read_node;
-use crate::{XmlNode, XmlVecNode};
+use crate::parsing::read_node;
+use crate::parsing::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Deserialize, Serialize};

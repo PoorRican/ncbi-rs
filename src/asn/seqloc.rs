@@ -8,9 +8,9 @@
 
 use crate::biblio::IdPat;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId};
-use crate::parsing_utils::{check_unexpected, read_attributes, read_int, read_node, read_string};
+use crate::parsing::{check_unexpected, read_attributes, read_int, read_node, read_string};
 use crate::seqfeat::FeatId;
-use crate::{XmlNode, XmlVecNode, XmlValue};
+use crate::parsing::{XmlNode, XmlVecNode, XmlValue};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::events::attributes::Attributes;
 use quick_xml::Reader;

@@ -4,9 +4,9 @@
 //! from the NCBI C++ Toolkit
 
 use crate::general::{Date, DbTag, ObjectId};
-use crate::parsing_utils::{check_unexpected, read_vec_node, read_node};
+use crate::parsing::{check_unexpected, read_vec_node, read_node};
 use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
-use crate::{XmlNode, XmlVecNode};
+use crate::parsing::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Deserialize, Serialize};

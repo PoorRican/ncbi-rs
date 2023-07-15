@@ -2,8 +2,8 @@
 //! Adapted from ["biblio.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/biblio/biblio.asn)
 
 use crate::general::{Date, DbTag, PersonId};
-use crate::parsing_utils::{check_unexpected, read_vec_node, read_node, read_string};
-use crate::{XmlNode, XmlVecNode};
+use crate::parsing::{check_unexpected, read_vec_node, read_node, read_string};
+use crate::parsing::{XmlNode, XmlVecNode};
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Deserialize, Serialize};

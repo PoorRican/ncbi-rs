@@ -54,11 +54,11 @@
 
 use crate::biblio::{PubMedId, DOI};
 use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing_utils::{check_unexpected, read_vec_node, read_int, read_node, read_string, read_vec_str_unchecked};
+use crate::parsing::{check_unexpected, read_vec_node, read_int, read_node, read_string, read_vec_str_unchecked};
 use crate::r#pub::PubSet;
 use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
-use crate::{XmlNode, XmlVecNode};
+use crate::parsing::{XmlNode, XmlVecNode};
 use bitflags::bitflags;
 use enum_primitive::FromPrimitive;
 use quick_xml::events::{BytesStart, Event};

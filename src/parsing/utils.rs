@@ -1,11 +1,9 @@
-//! Utility wrappers for parsing XML data into [`XmlNode`] and [`XmlValue`] structures.
-
-use crate::{XmlNode, XmlVecNode, XmlValue};
-use atoi::{atoi, FromRadix10SignedChecked};
-use quick_xml::events::{BytesEnd, BytesStart, Event};
-use quick_xml::name::QName;
 use quick_xml::Reader;
+use quick_xml::events::{BytesEnd, BytesStart, Event};
+use atoi::FromRadix10SignedChecked;
+use quick_xml::name::QName;
 use std::ops::Deref;
+use crate::parsing::{XmlNode, XmlValue, XmlVecNode};
 
 /// [`Reader`] that returns bytes
 ///
@@ -21,7 +19,7 @@ pub fn bytes_to_int<T>(text: &[u8]) -> T
 where
     T: FromRadix10SignedChecked,
 {
-    atoi::<T>(text.as_ref()).expect("Conversion error")
+    atoi::atoi::<T>(text.as_ref()).expect("Conversion error")
 }
 
 /// Parse the given bytes into a [`String`]

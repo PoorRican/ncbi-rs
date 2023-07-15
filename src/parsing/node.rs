@@ -64,7 +64,7 @@ pub trait XmlVecNode: XmlNode {
 
     /// Parse XML data as multiple [`XmlNode`] objects contained by [`Vec`]
     ///
-    /// [`Self::vec_from_reader()`] (or the helper function [`crate::parsing_utils::read_vec_node()`])
+    /// [`Self::vec_from_reader()`] (or the helper function [`crate::parsing::utils::read_vec_node()`])
     /// should be used to parse multiple [`XmlNode`] objects into a vector at once. Using these helper
     /// functions reduces errors in parsing implementation.
     fn vec_from_reader<'a, E>(reader: &mut Reader<&[u8]>, end: E) -> Vec<Self>

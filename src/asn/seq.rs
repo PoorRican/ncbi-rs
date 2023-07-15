@@ -5,7 +5,7 @@
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing_utils::{check_unexpected, read_vec_node, read_attributes, read_int, read_node, read_string};
+use crate::parsing::{check_unexpected, read_vec_node, read_attributes, read_int, read_node, read_string};
 use crate::r#pub::PubEquiv;
 use crate::seqalign::SeqAlign;
 use crate::seqblock::{EMBLBlock, GBBlock, PDBBlock, PIRBlock, PRFBlock, SPBlock};
@@ -13,7 +13,7 @@ use crate::seqfeat::{BioSource, ModelEvidenceSupport, OrgRef, SeqFeat};
 use crate::seqloc::{SeqId, SeqLoc};
 use crate::seqres::SeqGraph;
 use crate::seqtable::SeqTable;
-use crate::{XmlNode, XmlVecNode, XmlValue};
+use crate::parsing::{XmlNode, XmlVecNode, XmlValue};
 use enum_primitive::FromPrimitive;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::events::attributes::Attributes;
