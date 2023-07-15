@@ -5,13 +5,17 @@
 //! Adapted from ["pub.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/pub/pub.asn)
 
 use crate::biblio::{
-    CitArt, CitBook, CitGen, CitJour, CitLet, CitPat, CitProc, CitSub, IdPat,
-    PubMedId,
+    CitArt, CitBook, CitGen, CitJour, CitLet, CitPat, CitProc, CitSub, IdPat, PubMedId,
 };
 use crate::medline::MedlineEntry;
-use std::collections::BTreeSet;
+use crate::parsing::read_node;
+use crate::parsing::{XmlNode, XmlVecNode};
+use quick_xml::events::{BytesStart, Event};
+use quick_xml::Reader;
+use serde::{Deserialize, Serialize};
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "lowercase")]
 pub enum Pub {
     /// general or generic unparsed
     Gen(CitGen),
@@ -45,15 +49,65 @@ pub enum Pub {
     PmId(PubMedId),
 }
 
-pub type PubEquiv = BTreeSet<Pub>;
+impl XmlNode for Pub {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Pub")
+    }
 
-#[derive(PartialEq, Debug)]
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        // variants
+        let sub_element = BytesStart::new("Pub_sub");
+        let gen_element = BytesStart::new("Pub_gen");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == sub_element.name() {
+                        return Pub::Sub(read_node(reader).unwrap()).into();
+                    } else if name == gen_element.name() {
+                        return Pub::Gen(read_node(reader).unwrap()).into();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None;
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+impl XmlVecNode for Pub {}
+
+pub type PubEquiv = Vec<Pub>;
+
+impl XmlNode for PubEquiv {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Pub-equiv")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        return Pub::vec_from_reader(reader, Self::start_bytes().to_end()).into();
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "lowercase")]
 pub enum PubSet {
-    Pub(BTreeSet<Pub>),
-    Medline(BTreeSet<MedlineEntry>),
-    Article(BTreeSet<CitArt>),
-    Journal(BTreeSet<CitJour>),
-    Book(BTreeSet<CitBook>),
-    Proc(BTreeSet<CitProc>),
-    Patent(BTreeSet<CitPat>),
+    Pub(Vec<Pub>),
+    Medline(Vec<MedlineEntry>),
+    Article(Vec<CitArt>),
+    Journal(Vec<CitJour>),
+    Book(Vec<CitBook>),
+    Proc(Vec<CitProc>),
+    Patent(Vec<CitPat>),
 }

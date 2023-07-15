@@ -4,64 +4,94 @@
 //! from the NCBI C++ Toolkit
 
 use crate::general::{Date, DbTag, ObjectId};
+use crate::parsing::{read_vec_node, read_node, UnexpectedTags};
 use crate::seq::{BioSeq, SeqAnnot, SeqDescr};
-use std::collections::BTreeSet;
+use crate::parsing::{XmlNode, XmlVecNode};
+use quick_xml::events::{BytesStart, Event};
+use quick_xml::Reader;
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
 /// internal representation of `class` field for [`BioSeqSet`]
 pub enum BioSeqSetClass {
     #[default]
     NotSet,
+
     /// nuc acid and coded proteins
     NucProt,
+
     /// segmented sequence + parts
     SegSet,
+
     /// constructed sequence + parts
     ConSet,
+
     /// parts for [`BioSeqSetClass::SetSet`] or [`BioSeqSetClass::ConSet`]
     Parts,
+
     /// GenInfo backbone
-    GIBB,
+    Gibb,
+
     /// GenInfo
-    GI,
+    Gi,
+
     /// converted GenBank
-    GenBank,
+    Genbank,
+
     /// converted PIR
-    PIR,
+    Pir,
+
     /// all the seqs from a single publication
     PubSet,
+
     /// a set of equivalent maps or seqs
     Equiv,
+
     /// converted SWISSPROT
-    SWISSPROT,
+    Swissprot,
+
     /// a complete PDB entry
-    PDBEntry,
+    PdbEntry,
+
     /// set of mutations
     MutSet,
+
     /// population study
     PopSet,
+
     /// phylogenetic study
     PhySet,
+
     /// ecological sample study
     EcoSet,
+
     /// genomic products, chrom+mRNA+protein
     GenProdSet,
+
     /// whole genome shotgun project
-    WGSSet,
+    WgsSet,
+
     /// named annotation set
     NamedAnnot,
+
     /// with instantiated mRNA+protein
     NamedAnnotProd,
+
     /// set from a single read
     ReadSet,
+
     /// paired sequences within a read-set
     PairedEndReads,
+
     /// viral segments or mitochondrial mini-circles
     SmallGenomeSet,
+
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// just a collection
 pub struct BioSeqSet {
     pub id: Option<ObjectId>,
@@ -77,11 +107,78 @@ pub struct BioSeqSet {
     pub date: Option<Date>,
     pub descr: Option<SeqDescr>,
     pub seq_set: Vec<SeqEntry>,
-    pub annot: Option<BTreeSet<SeqAnnot>>,
+    pub annot: Option<Vec<SeqAnnot>>,
 }
 
-#[derive(PartialEq, Debug)]
+impl XmlNode for BioSeqSet {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Bioseq-set")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let seq_set_element = BytesStart::new("Bioseq-set_seq-set");
+
+        let mut set = Self::default();
+
+        let forbidden = UnexpectedTags(&[]);
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == seq_set_element.name() {
+                        set.seq_set = read_vec_node(reader, seq_set_element.to_end());
+                    } else if name != Self::start_bytes().name() {
+                        forbidden.check(&name);
+                    }
+                }
+                Event::End(e) => {
+                    if e.name() == Self::start_bytes().to_end().name() {
+                        return set.into();
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub enum SeqEntry {
     Seq(BioSeq),
     Set(BioSeqSet),
 }
+
+impl XmlNode for SeqEntry {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-entry")
+    }
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let seq = BytesStart::new("Seq-entry_seq");
+        let set = BytesStart::new("Seq-entry_set");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == seq.name() {
+                        return Self::Seq(read_node(reader).unwrap()).into();
+                    }
+                    if name == set.name() {
+                        return Self::Set(read_node(reader).unwrap()).into();
+                    }
+                }
+                Event::End(e) => {
+                    // correctly escape "Seq-entry"
+                    if Self::is_end(&e) {
+                        return None;
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+impl XmlVecNode for SeqEntry {}

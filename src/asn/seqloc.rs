@@ -7,27 +7,101 @@
 //! for more information on.
 
 use crate::biblio::IdPat;
-use crate::general::{Date, IntFuzz, ObjectId};
+use crate::general::{Date, DbTag, IntFuzz, ObjectId};
+use crate::parsing::{attribute_value, read_attributes, read_int, read_node, read_string, UnexpectedTags};
 use crate::seqfeat::FeatId;
-use std::collections::BTreeSet;
+use crate::parsing::{XmlNode, XmlVecNode, XmlValue};
+use quick_xml::events::{BytesStart, Event};
+use quick_xml::events::attributes::Attributes;
+use quick_xml::Reader;
+use serde::{Deserialize, Serialize};
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "lowercase")]
 pub enum SeqId {
     Local(ObjectId),
+    /// GenInfo backbone sequence id
     GibbSq(i64),
+
+    /// GenInfo backbone molecule type
     GibbMt(i64),
+
+    /// GenINfo import id
     Giim(GiimportId),
+
     Genbank(TextseqId),
     Embl(TextseqId),
     Pir(TextseqId),
     Swissprot(TextseqId),
     Patent(PatentSeqId),
+    /// left for historical reasons, `Other = ReqSeq`
     Other(TextseqId),
+
+    /// for other databases
+    General(DbTag),
+
+    /// GenInfo integrated database
+    Gi(u64),
+
+    /// DDBJ
+    Ddbj(TextseqId),
+
+    /// PRF SEQDB
+    Prf(TextseqId),
+
+    /// PDB sequence
+    Pdb(PDBSeqId),
+
+    /// Third party annot/seq: Genbank
+    Tpg(TextseqId),
+
+    /// Third party annot/seq: EMBL
+    Tpe(TextseqId),
+
+    /// Third party annot/seq: DDBJ
+    Tpd(TextseqId),
+
+    /// internal NCBI genome pipeline
+    Gpipe(TextseqId),
+
+    #[serde(rename = "named-annot-track")]
+    /// internal named annotation
+    NamedAnnotTrack(TextseqId),
 }
 
-pub type SeqIdSet = BTreeSet<SeqId>;
+impl XmlNode for SeqId {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-id")
+    }
 
-#[derive(PartialEq, Debug)]
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        // variants
+        let other_element = BytesStart::new("Seq-id_other");
+        let general_element = BytesStart::new("Seq-id_general");
+        let gi_element = BytesStart::new("Seq-id_gi");
+        let genbank_element = BytesStart::new("Seq-id_genbank");
+
+        loop {
+            if let Event::Start(e) = reader.read_event().unwrap() {
+                if e.name() == other_element.name() {
+                    return SeqId::Other(read_node(reader).unwrap()).into();
+                }
+                if e.name() == general_element.name() {
+                    return SeqId::General(read_node(reader).unwrap()).into();
+                } else if e.name() == gi_element.name() {
+                    return SeqId::Gi(read_int(reader).unwrap()).into();
+                } else if e.name() == genbank_element.name() {
+                    return SeqId::Genbank(read_node(reader).unwrap()).into();
+                }
+            }
+        }
+    }
+}
+impl XmlVecNode for SeqId {}
+
+pub type SeqIdSet = Vec<SeqId>;
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PatentSeqId {
     /// number of sequence in patent
     pub seqid: u64,
@@ -36,7 +110,7 @@ pub struct PatentSeqId {
     pub cit: IdPat,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct TextseqId {
     pub name: Option<String>,
     pub accession: Option<String>,
@@ -44,14 +118,58 @@ pub struct TextseqId {
     pub version: Option<u64>,
 }
 
-#[derive(PartialEq, Debug)]
+impl XmlNode for TextseqId {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Textseq-id")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut id = Self::default();
+
+        let name_element = BytesStart::new("Textseq-id_name");
+        let accession_element = BytesStart::new("Textseq-id_accession");
+        let release_element = BytesStart::new("Textseq-id_release");
+        let version_element = BytesStart::new("Textseq-id_version");
+
+        let forbidden = UnexpectedTags(&[]);
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == name_element.name() {
+                        id.name = read_string(reader);
+                    } else if name == accession_element.name() {
+                        id.accession = read_string(reader);
+                    } else if name == release_element.name() {
+                        id.release = read_string(reader);
+                    } else if name == version_element.name() {
+                        id.version = read_int(reader);
+                    } else if name != Self::start_bytes().name() {
+                        forbidden.check(&name);
+                    }
+                }
+                Event::End(e) => {
+                    if e.name() == Self::start_bytes().to_end().name() {
+                        return id.into();
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct GiimportId {
     pub id: i64,
     pub db: Option<String>,
     pub release: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct PDBSeqId {
     pub mol: PDBMolId,
     pub rel: Option<Date>,
@@ -61,7 +179,8 @@ pub struct PDBSeqId {
 /// name of mol, should be 4 chars
 pub type PDBMolId = String;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// Defines a location on a [`BioSeq`].
 ///
 /// Class hierarchy makes it possible to use the same type in multiple contexts.
@@ -97,7 +216,71 @@ pub enum SeqLoc {
     Feat(FeatId),
 }
 
-#[derive(PartialEq, Debug)]
+impl SeqLoc {
+    /// default not originally in spec
+    pub fn default() -> Self {
+        Self::Null
+    }
+}
+
+impl XmlNode for SeqLoc {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-loc")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variant tags
+        let null_variant = BytesStart::new("Seq-loc_null");
+        let int_variant = BytesStart::new("Seq-loc_int");
+        let empty_variant = BytesStart::new("Seq-loc_empty");
+        let whole_variant = BytesStart::new("Seq-loc_whole");
+        let packed_int_variant = BytesStart::new("Seq-loc_packed-int");
+        let pnt_variant = BytesStart::new("Seq-loc_pnt");
+        let packed_pnt_variant = BytesStart::new("Seq-loc_packed_pnt");
+        let mix_variant = BytesStart::new("Seq-loc_mix");
+        let equiv_variant = BytesStart::new("Seq-loc_equiv");
+        let bond_variant = BytesStart::new("Seq-loc_bond");
+        let feat_variant = BytesStart::new("Seq-loc_feat");
+
+        let forbidden = [
+            null_variant,
+            empty_variant,
+            packed_int_variant,
+            pnt_variant,
+            packed_pnt_variant,
+            mix_variant,
+            equiv_variant,
+            bond_variant,
+            feat_variant
+        ];
+        let forbidden = UnexpectedTags(&forbidden);
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == int_variant.name() {
+                        return Self::Int(read_node(reader).unwrap()).into()
+                    } else if name == whole_variant.name() {
+                        return Self::Whole(read_node(reader).unwrap()).into()
+                    } else if name != Self::start_bytes().name() {
+                        forbidden.check(&name);
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqInterval {
     pub from: i64,
     pub to: i64,
@@ -107,9 +290,66 @@ pub struct SeqInterval {
     pub fuzz_to: Option<IntFuzz>,
 }
 
-pub type PackedSeqInt = BTreeSet<SeqInterval>;
+impl Default for SeqInterval {
+    fn default() -> Self {
+        Self {
+            from: 0,
+            to: 0,
+            strand: None,
+            id: SeqId::Other(TextseqId::default()),
+            fuzz_from: None,
+            fuzz_to: None
+        }
+    }
+}
 
-#[derive(PartialEq, Debug)]
+impl XmlNode for SeqInterval {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-interval")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut interval = SeqInterval::default();
+
+        // elements
+        let from_element = BytesStart::new("Seq-interval_from");
+        let to_element = BytesStart::new("Seq-interval_to");
+        // this tag is skipped, and `Empty` tag for `NaStrand` is used instead
+        let _strand_element = BytesStart::new("Seq-interval_strand");
+        let id_element = BytesStart::new("Seq-interval_id");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == from_element.name() {
+                        interval.from = read_int(reader).unwrap();
+                    } else if name == to_element.name() {
+                        interval.to = read_int(reader).unwrap();
+                    } else if name == id_element.name() {
+                        interval.id = read_node(reader).unwrap();
+                    }
+                }
+                Event::Empty(e) => {
+                    if e.name() == NaStrand::start_bytes().name() {
+                        interval.strand = read_attributes(&e);
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return interval.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
+pub type PackedSeqInt = Vec<SeqInterval>;
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct SeqPoint {
     pub point: i64,
     pub strand: Option<NaStrand>,
@@ -117,7 +357,8 @@ pub struct SeqPoint {
     pub fuzz: Option<IntFuzz>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct PackedSeqPnt {
     pub strand: Option<NaStrand>,
     pub id: SeqId,
@@ -125,7 +366,7 @@ pub struct PackedSeqPnt {
     pub points: Vec<i64>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Strand of nucleic acid
 pub enum NaStrand {
     Unknown,
@@ -138,7 +379,28 @@ pub enum NaStrand {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+impl XmlValue for NaStrand {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Na-strand")
+    }
+
+    fn from_attributes(attributes: Attributes) -> Option<Self> {
+        if let Some(attributes) = attribute_value(attributes) {
+            match attributes.as_str() {
+                "unknown" => Self::Unknown.into(),
+                "plus" => Self::Plus.into(),
+                "minus" => Self::Minus.into(),
+                "both" => Self::Both.into(),
+                "both-rev" => Self::BothRev.into(),
+                _ => None
+            }
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// bond between residues
 pub struct SeqBond {
     /// connection to at least one residue
@@ -151,4 +413,4 @@ pub struct SeqBond {
 /// this will hold anything
 pub type SeqLocMix = Vec<SeqLoc>;
 /// set of equivalent locations
-pub type SeqLocEquiv = BTreeSet<SeqLoc>;
+pub type SeqLocEquiv = Vec<SeqLoc>;

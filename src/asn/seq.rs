@@ -5,19 +5,24 @@
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
+use crate::parsing::{read_vec_node, read_attributes, read_int, read_node, read_string, UnexpectedTags, attribute_value};
 use crate::r#pub::PubEquiv;
 use crate::seqalign::SeqAlign;
 use crate::seqblock::{EMBLBlock, GBBlock, PDBBlock, PIRBlock, PRFBlock, SPBlock};
-use crate::seqfeat::{
-    BioSource, ModelEvidenceSupport, OrgRef,
-    SeqFeat,
-};
+use crate::seqfeat::{BioSource, ModelEvidenceSupport, OrgRef, SeqFeat};
 use crate::seqloc::{SeqId, SeqLoc};
 use crate::seqres::SeqGraph;
 use crate::seqtable::SeqTable;
-use std::collections::BTreeSet;
+use crate::parsing::{XmlNode, XmlVecNode, XmlValue};
+use enum_primitive::FromPrimitive;
+use quick_xml::events::{BytesStart, Event};
+use quick_xml::events::attributes::Attributes;
+use quick_xml::Reader;
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all = "kebab-case")]
 /// Single continuous biological sequence.
 ///
 /// It can be nucleic acid or protein. It can be fully instantiated (ie: data
@@ -44,13 +49,63 @@ pub struct BioSeq {
     /// descriptors
     pub descr: Option<SeqDescr>,
     /// the sequence data
-    pub inst: SeqInst,
+    pub inst: Option<SeqInst>, // TODO: temporary `Option`
     pub annot: Option<Vec<SeqAnnot>>,
 }
 
-pub type SeqDescr = BTreeSet<SeqDesc>;
+impl XmlNode for BioSeq {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Bioseq")
+    }
 
-#[derive(PartialEq, Debug)]
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut bioseq = Self::default();
+
+        let id_elem = BytesStart::new("Bioseq_id");
+        let descr_elem = BytesStart::new("Bioseq_descr");
+        let inst_elem = BytesStart::new("Bioseq_inst");
+        let annot_elem = BytesStart::new("Bioseq_annot");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == id_elem.name() {
+                        bioseq.id = read_vec_node(reader, id_elem.to_end());
+                    } else if name == descr_elem.name() {
+                        bioseq.descr = read_node(reader);
+                    } else if name == inst_elem.name() {
+                        bioseq.inst = read_node(reader);
+                    } else if name == annot_elem.name() {
+                        bioseq.annot = Some(read_vec_node(reader, annot_elem.to_end()));
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return bioseq.into();
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
+pub type SeqDescr = Vec<SeqDesc>;
+
+impl XmlNode for SeqDescr {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-descr")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        return SeqDesc::vec_from_reader(reader, Self::start_bytes().to_end()).into();
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// # Note
 /// `MolType`, `Modif`, `Method`, and `Org` are consolidated and expanded
 /// in [`OrgRef`]`, [`BioSource`], and [`MolInfo`] in this specification.
@@ -117,103 +172,200 @@ pub enum SeqDesc {
     ModelEv(ModelEvidenceSupport),
 }
 
-#[allow(non_camel_case_types)]
-#[derive(PartialEq, Debug, Default)]
-/// Represents type of biomolecule
-///
-/// # Notes
-/// Non-camelcase types look cleaner for names with "RNA"/"DNA"
-pub enum BioMol {
-    #[default]
-    Unknown,
-    Genomic,
-    PreRNA,
-    /// precursor RNA of any sort
-    mRNA,
-    rRNA,
-    tRNA,
-    snRNA,
-    scRNA,
-    Peptide,
-    OtherGenetic,
-    /// other genetic material
-    Genomic_mRNA,
-    /// reported a mix of genomic dna and cdna sequence
-    cRNA,
-    /// viral RNA genome copy intermediate
-    snoRNA,
-    /// small nucleolar RNA
-    TranscribedRNA,
-    /// transcribed RNA other than existing classes
-    ncRNA,
-    tmRNA,
-    Other = 255,
+impl XmlNode for SeqDesc {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seqdesc")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        // variants
+        let source_element = BytesStart::new("Seqdesc_source");
+        let molinfo_element = BytesStart::new("Seqdesc_molinfo");
+        let pub_element = BytesStart::new("Seqdesc_pub");
+        let comment_element = BytesStart::new("Seqdesc_comment");
+        let user_element = BytesStart::new("Seqdesc_user");
+        let create_element = BytesStart::new("Seqdesc_create-date");
+        let update_element = BytesStart::new("Seqdesc_update-date");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+                    if name == source_element.name() {
+                        return Self::Source(read_node(reader).unwrap()).into();
+                    } else if name == molinfo_element.name() {
+                        return Self::MolInfo(read_node(reader).unwrap()).into();
+                    } else if name == pub_element.name() {
+                        return Self::Pub(read_node(reader).unwrap()).into();
+                    } else if name == comment_element.name() {
+                        return Self::Comment(read_string(reader).unwrap()).into();
+                    } else if name == user_element.name() {
+                        return Self::User(read_node(reader).unwrap()).into();
+                    } else if name == create_element.name() {
+                        return Self::CreateDate(read_node(reader).unwrap()).into()
+                    } else if name == update_element.name() {
+                        return Self::UpdateDate(read_node(reader).unwrap()).into()
+                    }
+                }
+                Event::End(e) => {
+                    // this occurs for a SeqDesc variant that does not yet have a parsing implementation
+                    if Self::is_end(&e) {
+                        return None;
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+impl XmlVecNode for SeqDesc {}
+
+enum_from_primitive! {
+    #[allow(non_camel_case_types)]
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    /// Internal representation of biomolecular type for [`MolInfo`]
+    ///
+    /// # Notes
+    ///
+    /// - Non-camelcase types look cleaner for names with "RNA"/"DNA", therefore non-CamelCase names
+    ///   have been explicitly allowed
+    ///
+    /// - Original implementation lists this as `INTEGER`, therefore it is assumed that
+    ///   serialized representation is an integer
+    pub enum BioMol {
+        #[default]
+        Unknown,
+        Genomic,
+        PreRNA,
+        /// precursor RNA of any sort
+        mRNA,
+        rRNA,
+        tRNA,
+        snRNA,
+        scRNA,
+        Peptide,
+        OtherGenetic,
+        /// other genetic material
+        Genomic_mRNA,
+        /// reported a mix of genomic dna and cdna sequence
+        cRNA,
+        /// viral RNA genome copy intermediate
+        snoRNA,
+        /// small nucleolar RNAGG
+        TranscribedRNA,
+        /// transcribed RNA other than existing classes
+        ncRNA,
+        tmRNA,
+        Other = 255,
+    }
 }
 
-#[allow(non_camel_case_types)]
-#[derive(PartialEq, Debug, Default)]
-pub enum MolTech {
-    #[default]
-    Unknown,
-    /// standard sequencing
-    Standard,
-    /// Expressed Sequence Tag
-    EST,
-    /// Sequence Tagged Site
-    STS,
-    /// One-pass genomic sequence
-    Survey,
-    /// from genetic mapping techniques
-    GeneMap,
-    /// from physical mapping techniques
-    PhysMap,
-    /// derived from other data, not a primary entity
-    Derived,
-    /// conceptual translation
-    ConceptTrans,
-    /// peptide was sequenced
-    SeqPept,
-    /// concept transl. w/ partial pept. seq.
-    Both,
-    /// sequenced peptide, ordered by overlap
-    SeqPeptOverlap,
-    /// sequenced peptide, ordered by homology
-    SeqPeptHomol,
-    /// conceptual translation. supplied by author
-    ConceptTransA,
-    /// unordered High Throughput sequence contig
-    HTGS1,
-    /// ordered High Throughput sequence contig
-    HTGS2,
-    /// finished High Throughput sequence
-    HTGS3,
-    /// full length insert cDNA
-    FLI_cDNA,
-    /// single genomic reads for coordination
-    HTGS0,
-    /// high throughput cDNA,
-    HTC,
-    /// whole genome shotgun sequencing
-    WGS,
-    /// barcode of life project
-    Barcode,
-    /// composite of WGS and HTGS
-    CompositeWH,
-    /// transcriptome shotgun assembly
-    TSA,
-    /// targeted locus sets/studies
-    Targeted,
-    /// use `tech_exp` from [`MolInfo`]
-    Other = 255,
+impl XmlNode for BioMol {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("MolInfo_biomol")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        BioMol::from_u8(read_int::<u8>(reader).unwrap())
+    }
 }
 
-#[derive(PartialEq, Debug, Default)]
+enum_from_primitive! {
+    #[allow(non_camel_case_types)]
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    /// Internal representation of molecular technique for [`MolInfo`]
+    ///
+    /// # Note
+    ///
+    /// Original implementation lists this as `INTEGER`, therefore it is assumed that
+    /// serialized representation is an integer
+    pub enum MolTech {
+        #[default]
+        Unknown,
+        /// standard sequencing
+        Standard,
+        /// Expressed Sequence Tag
+        EST,
+        /// Sequence Tagged Site
+        STS,
+        /// One-pass genomic sequence
+        Survey,
+        /// from genetic mapping techniques
+        GeneMap,
+        /// from physical mapping techniques
+        PhysMap,
+        /// derived from other data, not a primary entity
+        Derived,
+        /// conceptual translation
+        ConceptTrans,
+        /// peptide was sequenced
+        SeqPept,
+        /// concept transl. w/ partial pept. seq.
+        Both,
+        /// sequenced peptide, ordered by overlap
+        SeqPeptOverlap,
+        /// sequenced peptide, ordered by homology
+        SeqPeptHomol,
+        /// conceptual translation. supplied by author
+        ConceptTransA,
+        /// unordered High Throughput sequence contig
+        HTGS1,
+        /// ordered High Throughput sequence contig
+        HTGS2,
+        /// finished High Throughput sequence
+        HTGS3,
+        /// full length insert cDNA
+        FLI_cDNA,
+        /// single genomic reads for coordination
+        HTGS0,
+        /// high throughput cDNA,
+        HTC,
+        /// whole genome shotgun sequencing
+        WGS,
+        /// barcode of life project
+        Barcode,
+        /// composite of WGS and HTGS
+        CompositeWgsHtgs,
+        /// transcriptome shotgun assembly
+        TSA,
+        /// targeted locus sets/studies
+        Targeted,
+        /// use `tech_exp` from [`MolInfo`]
+        Other = 255,
+    }
+}
+
+impl XmlNode for MolTech {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("MolInfo_tech")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        MolTech::from_u8(read_int::<u8>(reader).unwrap())
+    }
+}
+
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
 /// Capture sequence completeness.
 ///
 /// Completeness is not indicated in most records. For genomes, assume
 /// the sequences are incomplete unless specifically marked as complete.
 /// For mRNAs, assume the ends are not known exactly unless marked as having
 /// the left or right end.
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum MolCompleteness {
     #[default]
     Unknown,
@@ -227,7 +379,8 @@ pub enum MolCompleteness {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all = "kebab-case")]
 pub struct MolInfo {
     pub bio_mol: BioMol,
     pub tech: MolTech,
@@ -237,11 +390,57 @@ pub struct MolInfo {
     pub gb_mol_type: Option<String>,
 }
 
+impl XmlNode for MolInfo {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("MolInfo")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        let mut mol_info = Self::default();
+
+        let bio_mol_element = BytesStart::new("MolInfo_biomol");
+        let tech_element = BytesStart::new("MolInfo_tech");
+
+        let forbidden = UnexpectedTags(&[]);
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == bio_mol_element.name() {
+                        mol_info.bio_mol = read_node(reader).unwrap();
+                    } else if name == tech_element.name() {
+                        mol_info.tech = read_node(reader).unwrap();
+                    } else if name != Self::start_bytes().name() {
+                        forbidden.check(&name);
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return mol_info.into();
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
 #[allow(non_camel_case_types)]
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// GenInfo Backbone molecule types
 ///
 /// Captures type of molecule represented
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum GIBBMol {
     Unknown,
     Genomic,
@@ -260,8 +459,14 @@ pub enum GIBBMol {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// GenInfo Backbone Modifiers
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum GIBBMod {
     DNA,
     RNA,
@@ -303,11 +508,17 @@ pub enum GIBBMod {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// Sequencing method
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum GIBBMethod {
     /// Conceptual translation
-    ConceptTrans,
+    ConceptTrans = 1,
     /// Peptide was sequenced
     SeqPept,
     /// concept transl. w/ partial pept. seq.
@@ -321,7 +532,8 @@ pub enum GIBBMethod {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// Any display numbering system
 pub enum Numbering {
     /// continuous numbering
@@ -334,7 +546,8 @@ pub enum Numbering {
     Real(NumReal),
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all = "kebab-case")]
 /// continuous display numbering system
 pub struct NumCont {
     /// number assigned to first residue
@@ -350,7 +563,8 @@ pub struct NumCont {
     pub ascending: bool,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// any tags to residues
 pub struct NumEnum {
     /// number of tags to follow
@@ -359,8 +573,14 @@ pub struct NumEnum {
     pub names: Vec<String>,
 }
 
-#[derive(PartialEq, Debug)]
-/// type of reference
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of type of reference for [`NumRef`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum NumRefType {
     NotSet,
     /// by segmented or const seq sources
@@ -369,7 +589,8 @@ pub enum NumRefType {
     Aligns,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// Number by reference to other sequences
 pub struct NumRef {
     /// type of reference
@@ -378,7 +599,8 @@ pub struct NumRef {
     pub aligns: Option<SeqAlign>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// Mapping to floating point system
 /// from an integer system used by [`BioSeq`]
 /// `position = (a * int_position) + b`
@@ -388,7 +610,8 @@ pub struct NumReal {
     pub units: Option<String>,
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all = "kebab-case")]
 /// type of reference in a GenBank record
 pub enum PubDescRefType {
     #[default]
@@ -402,7 +625,8 @@ pub enum PubDescRefType {
     NoTarget,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
+#[serde(rename_all = "kebab-case")]
 pub struct PubDesc {
     pub r#pub: PubEquiv,
     pub name: Option<String>,
@@ -425,10 +649,49 @@ pub struct PubDesc {
     pub ref_type: PubDescRefType,
 }
 
+impl XmlNode for PubDesc {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Pubdesc")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        let mut desc = Self::default();
+
+        // elements
+        let pub_element = BytesStart::new("Pubdesc_pub");
+
+        let forbidden = UnexpectedTags(&[]);
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == pub_element.name() {
+                        desc.r#pub = read_node(reader).unwrap();
+                    } else if name != Self::start_bytes().name() {
+                        forbidden.check(&name);
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return desc.into();
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
 /// Cofactor, prosthetic group, inhibitor, etc
 pub type Heterogen = String;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// Representation class for [`SeqInst`]
 ///
 /// Stored by [`SeqInst`] and is independent of [`Mol`]
@@ -466,6 +729,11 @@ pub type Heterogen = String;
 ///          The feature table is part of [`SeqInst`] because for a map, it is
 ///          an essential part of instantiating the map [`BioSeq`], not merely
 ///          annotation on a known sequence.
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum Repr {
     /// empty
     NotSet,
@@ -488,9 +756,41 @@ pub enum Repr {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+impl XmlValue for Repr {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-inst_repr")
+    }
+
+    fn from_attributes(attributes: Attributes) -> Option<Self> {
+        if let Some(attributes) = attribute_value(attributes) {
+            match attributes.as_str() {
+                "not-set" => Self::NotSet.into(),
+                "virtual" => Self::Virtual.into(),
+                "raw" => Self::Raw.into(),
+                "seg" => Self::Seg.into(),
+                "const" => Self::Const.into(),
+                "ref" => Self::Ref.into(),
+                "consen" => Self::Consen.into(),
+                "map" => Self::Map.into(),
+                "delta" => Self::Delta.into(),
+                "other" => Self::Other.into(),
+                _ => None
+            }
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// molecule class in living organism
 ///  > cdna = rna
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum Mol {
     NotSet,
     DNA,
@@ -501,8 +801,36 @@ pub enum Mol {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug, Default)]
-/// Topology of biomolecule
+impl XmlValue for Mol {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-inst_mol")
+    }
+
+    fn from_attributes(attributes: Attributes) -> Option<Self> {
+        if let Some(attributes) = attribute_value(attributes) {
+            match attributes.as_str() {
+                "not-set" => Self::NotSet.into(),
+                "dna" => Self::DNA.into(),
+                "rna" => Self::NotSet.into(),
+                "aa" => Self::DNA.into(),
+                "na" => Self::DNA.into(),
+                "other" => Self::Other.into(),
+                _ => None
+            }
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
+/// Internal representation of biomolecule topology for [`SeqInst`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum Topology {
     NotSet,
     #[default]
@@ -512,8 +840,14 @@ pub enum Topology {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
-/// Strandedness in living organism
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of strandedness in living organism for [`SeqInst`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum Strand {
     NotSet,
     /// single strand
@@ -524,7 +858,8 @@ pub enum Strand {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// Instances of sequences
 ///
 /// Represents things like: is DNA, RNA, or protein? Is it circular or linear?
@@ -558,9 +893,79 @@ pub struct SeqInst {
     pub hist: Option<SeqHist>,
 }
 
+impl Default for SeqInst {
+    fn default() -> Self {
+        let repr = Repr::Other;
+        let mol = Mol::Other;
+        let strand = Strand::NotSet;
+        Self {
+            repr, mol,
+            length: None,
+            fuzz: None,
+            topology: Default::default(),
+            strand,
+            seq_data: None,
+            ext: None,
+            hist: None,
+        }
+    }
+}
+
+impl XmlNode for SeqInst {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-inst")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut inst = Self::default();
+
+        // elements
+        let repr_element = BytesStart::new("Seq-inst_repr");
+        let mol_element = BytesStart::new("Seq-inst_mol");
+        let length_element = BytesStart::new("Seq-inst_length");
+        let ext_element = BytesStart::new("Seq-inst_ext");
+
+        let forbidden = UnexpectedTags(&[]);
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == length_element.name() {
+                        inst.length = read_int(reader);
+                    } else if name == ext_element.name() {
+                        inst.ext = read_node(reader);
+                    } else if name != Self::start_bytes().name() {
+                        forbidden.check(&name);
+                    }
+                }
+                Event::Empty(e) => {
+                    let name = e.name();
+
+                    if name == repr_element.name() {
+                        inst.repr = read_attributes(&e).unwrap();
+                    } else if name == mol_element.name() {
+                        inst.mol = read_attributes(&e).unwrap();
+                    } else if name != Self::start_bytes().name() {
+                        forbidden.check(&name);
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return inst.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
 // Sequence extensions for representing more complex types
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub enum SeqExt {
     /// segmented sequences
     Seg(SegExt),
@@ -574,12 +979,45 @@ pub enum SeqExt {
     Delta(DeltaExt),
 }
 
+impl XmlNode for SeqExt {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-ext")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variants
+        let _seg_element = BytesStart::new("Seq-ext_seg");
+        let _ref_element = BytesStart::new("Seq-ext_ref");
+        let _map_element = BytesStart::new("Seq-ext_map");
+        let delta_element = BytesStart::new("Seq-ext_delta");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == delta_element.name() {
+                        return Self::Delta(read_vec_node(reader, delta_element.to_end())).into();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                },
+                _ => ()
+            }
+        }
+    }
+}
+
 pub type SegExt = Vec<SeqLoc>;
 pub type RefExt = SeqLoc;
 pub type MapExt = Vec<SeqFeat>;
 pub type DeltaExt = Vec<DeltaSeq>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub enum DeltaSeq {
     /// point to a sequence
     Loc(SeqLoc),
@@ -588,7 +1026,39 @@ pub enum DeltaSeq {
     Literal(SeqLiteral),
 }
 
-#[derive(PartialEq, Debug)]
+impl XmlNode for DeltaSeq {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Delta-seq")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variant tags
+        let loc_variant = BytesStart::new("Delta-seq_loc");
+        let _literal_variant = BytesStart::new("Delta-seq_literal");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == loc_variant.name() {
+                        return Self::Loc(read_node(reader).unwrap()).into()
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+impl XmlVecNode for DeltaSeq {}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqLiteral {
     /// must give a length in residues
     pub length: u64,
@@ -600,30 +1070,34 @@ pub struct SeqLiteral {
     pub seq_data: Option<SeqData>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// internal structure for storing sequence history deletion status
 pub enum SeqHistDeleted {
     Bool(bool),
     Date(Date),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// Sequence history record
 /// assembly: records how seq was assembled from others
 pub struct SeqHist {
-    pub assembly: Option<BTreeSet<SeqAlign>>,
+    pub assembly: Option<Vec<SeqAlign>>,
     pub replaces: Option<SeqHistRec>,
     pub replaced_by: Option<SeqHistRec>,
     pub deleted: Option<SeqHistDeleted>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqHistRec {
     pub date: Option<Date>,
-    pub ids: BTreeSet<SeqId>,
+    pub ids: Vec<SeqId>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// Sequence representations
 pub enum SeqData {
     /// IUPAC 1 letter nuc acid code
@@ -660,8 +1134,14 @@ pub enum SeqData {
     Gap(SeqGap),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// internal structure for `type` field in [`SeqGap`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum SeqGapType {
     Unknown,
     #[deprecated]
@@ -681,21 +1161,30 @@ pub enum SeqGapType {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation for linkage status for [`SeqGap`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum SeqGapLinkage {
     Unlinked,
     Linked,
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqGap {
     pub r#type: SeqGapType,
     pub linkage: Option<SeqGapLinkage>,
-    pub linkage_evidence: Option<BTreeSet<LinkageEvidence>>,
+    pub linkage_evidence: Option<Vec<LinkageEvidence>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// internal representation for `type` in [`LinkageEvidence`]
 pub enum LinkageEvidenceType {
     PairedEnds,
@@ -712,7 +1201,8 @@ pub enum LinkageEvidenceType {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct LinkageEvidence {
     pub r#type: LinkageEvidenceType,
 }
@@ -762,7 +1252,8 @@ pub type NCBIPaa = Vec<u8>;
 /// Codes 0-25, 1 per byte
 pub type NCBIStdAa = Vec<u8>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// This is a replica of [`TextSeqId`]
 ///
 /// This is specific for annotations, and exists to maintain a semantic difference
@@ -774,7 +1265,8 @@ pub struct TextAnnotId {
     pub version: Option<u64>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub enum AnnotId {
     Local(ObjectId),
     NCBI(u64),
@@ -784,7 +1276,8 @@ pub enum AnnotId {
 
 pub type AnnotDescr = Vec<AnnotDesc>;
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub enum AnnotDesc {
     /// a short name for this collection
     Name(String),
@@ -808,8 +1301,14 @@ pub enum AnnotDesc {
     Region(SeqLoc),
 }
 
-#[derive(PartialEq, Debug)]
-/// Class of align [`SeqAnnot`]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of align type for [`SeqAnnot`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum AlignType {
     /// set of alignments to the same sequence
     Ref,
@@ -820,14 +1319,22 @@ pub enum AlignType {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct AlignDef {
     pub align_type: AlignType,
     /// used for the one ref [`SeqId`] for now
-    pub ids: Option<BTreeSet<SeqId>>,
+    pub ids: Option<Vec<SeqId>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of source DB for [`SeqAnnot`]
+///
+/// # Note
+///
+/// Original implementation lists this as `INTEGER`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum SeqAnnotDB {
     GenBank,
     EMBL,
@@ -839,27 +1346,118 @@ pub enum SeqAnnotDB {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "lowercase")]
 /// Internal representation for `data` choice in [`SeqAnnot`]
 pub enum SeqAnnotData {
-    FTable(BTreeSet<SeqFeat>),
-    Align(BTreeSet<SeqAlign>),
-    Graph(BTreeSet<SeqGraph>),
+    FTable(Vec<SeqFeat>),
+    Align(Vec<SeqAlign>),
+    Graph(Vec<SeqGraph>),
+
     /// used for communication between tools
-    IDS(BTreeSet<SeqId>),
+    IDS(Vec<SeqId>),
+
     /// used for communication between tools
-    Locs(BTreeSet<SeqLoc>),
+    Locs(Vec<SeqLoc>),
+
+    #[serde(rename = "seq-table")]
     /// features in table form
     SeqTable(SeqTable),
 }
 
-#[derive(PartialEq, Debug)]
+impl XmlNode for SeqAnnotData {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-annot_data")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variant tags
+        let ftable_tag = BytesStart::new("Seq-annot_data_ftable");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == ftable_tag.name() {
+                        return Self::FTable(read_vec_node(reader, ftable_tag.to_end())).into()
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqAnnot {
-    pub id: Option<BTreeSet<AnnotId>>,
+    pub id: Option<Vec<AnnotId>>,
     pub db: Option<SeqAnnotDB>,
+
     /// source if `db` [`SeqAnnotDB::Other`]
     pub name: Option<String>,
+
     /// used only for standalone [`SeqAnnot`]'s
     pub desc: Option<AnnotDescr>,
+
     pub data: SeqAnnotData,
 }
+
+impl SeqAnnot {
+    /// default not originally in spec
+    pub fn default() -> Self {
+        Self::new(SeqAnnotData::FTable(vec![]))
+    }
+
+    pub fn new(data: SeqAnnotData) -> Self {
+        Self {
+            id: None,
+            db: None,
+            name: None,
+            desc: None,
+            data,
+        }
+    }
+}
+
+impl XmlNode for SeqAnnot {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-annot")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut annot = SeqAnnot::default();
+
+        // attribute tags
+        let data_tag = BytesStart::new("Seq-annot_data");
+
+        let forbidden = UnexpectedTags(&[]);
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == data_tag.name() {
+                        annot.data = read_node(reader).unwrap();
+                    } else if name != Self::start_bytes().name() {
+                        forbidden.check(&name);
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return annot.into()
+                    }
+                }
+                _ => ()
+            }
+        }
+    }
+}
+impl XmlVecNode for SeqAnnot {}

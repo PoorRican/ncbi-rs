@@ -4,10 +4,18 @@
 //! from the NCBI C++ Toolkit.
 
 use crate::general::{Date, DbTag, ObjectId};
-use crate::seqloc::{SeqId};
-use std::collections::BTreeSet;
+use crate::seqloc::SeqId;
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of DB code for [`EMBLDbNameCode`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer
 pub enum EMBLDbNameCode {
     EMBL,
     GenBank,
@@ -29,19 +37,27 @@ pub enum EMBLDbNameCode {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "lowercase")]
 pub enum EMBLDbName {
     Code(EMBLDbNameCode),
     Name(String),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct EMBLXref {
-    pub db_name: EMBLDbName,
+    pub dbname: EMBLDbName,
     pub id: Vec<ObjectId>,
 }
 
-#[derive(PartialEq, Debug, Default)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+#[repr(u8)]
+/// Internal representation of block class for [`EMBLBlockClass`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum EMBLBlockClass {
     NotSet,
     #[default]
@@ -50,7 +66,14 @@ pub enum EMBLBlockClass {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// Internal representation of block division for [`EMBLBlockClass`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum EMBLBlockDiv {
     Fun,
     Inv,
@@ -70,7 +93,7 @@ pub enum EMBLBlockDiv {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct EMBLBlock {
     pub class: EMBLBlockClass,
     pub div: EMBLBlockDiv,
@@ -81,8 +104,14 @@ pub struct EMBLBlock {
     pub xref: Option<Vec<EMBLXref>>,
 }
 
-#[derive(PartialEq, Debug)]
-/// internal representation of `class` field for [`SPBlock`]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+/// internal representation of `class` for [`SPBlock`]
+///
+/// # Note
+///
+/// Original implementation lists this as `ENUMERATED`, therefore it is assumed that
+/// serialized representation is an integer.
 pub enum SPBlockClass {
     NotSet,
     /// conforms to all SWISSPROT checks
@@ -92,29 +121,30 @@ pub enum SPBlockClass {
     Other = 255,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// SWISSPROT specific descriptions
 pub struct SPBlock {
     pub class: SPBlockClass,
 
     /// old SWISSPROT id's
-    pub extra_acc: Option<BTreeSet<String>>,
+    pub extra_acc: Option<Vec<String>>,
 
     /// seq known to start with Met
     /// Should default to false
     pub imeth: bool,
 
     /// plasmid names carrying gene
-    pub plasnm: Option<BTreeSet<String>>,
+    pub plasnm: Option<Vec<String>>,
 
     /// xref to other sequences
-    pub seqref: Option<BTreeSet<SeqId>>,
+    pub seqref: Option<Vec<SeqId>>,
 
     /// xref to non-sequence db's
-    pub dbref: Option<BTreeSet<DbTag>>,
+    pub dbref: Option<Vec<DbTag>>,
 
     /// keywords
-    pub keywords: Option<BTreeSet<String>>,
+    pub keywords: Option<Vec<String>>,
 
     /// creation date
     pub created: Option<Date>,
@@ -126,7 +156,8 @@ pub struct SPBlock {
     pub annotupd: Option<Date>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// PIR specific descriptions
 pub struct PIRBlock {
     /// had punctuation in sequence?
@@ -150,10 +181,11 @@ pub struct PIRBlock {
     pub seq_raw: Option<String>,
 
     /// xref to other sequences
-    pub seqref: Option<BTreeSet<SeqId>>,
+    pub seqref: Option<Vec<SeqId>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct GBBlock {
     pub extra_accessions: Option<Vec<String>>,
     /// source line
@@ -174,14 +206,15 @@ pub struct GBBlock {
     pub taxonomy: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// Protein Research Foundation specific definition
 pub struct PRFBlock {
     pub extra_src: Option<PRFExtraSrc>,
     pub keywords: Option<Vec<String>>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PRFExtraSrc {
     pub host: Option<String>,
     pub part: Option<String>,
@@ -190,7 +223,8 @@ pub struct PRFExtraSrc {
     pub taxon: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// PDB specific descriptions
 pub struct PDBBlock {
     /// deposition date: month,year
@@ -207,7 +241,7 @@ pub struct PDBBlock {
     pub replace: Option<PDBReplace>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct PDBReplace {
     pub date: Date,
 

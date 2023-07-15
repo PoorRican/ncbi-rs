@@ -1,9 +1,13 @@
 //! Interface to table readers
 //!
 //! Adapted from ["seqtable.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/C_DOC/lxr/source/asn/seqtable.asn)
-use crate::seqloc::{SeqId, SeqLoc, SeqInterval};
 
-#[derive(PartialEq, Debug)]
+use crate::seqloc::{SeqId, SeqInterval, SeqLoc};
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
+
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
 /// known column data types
 pub enum ColumnInfoFieldId {
     // position types
@@ -38,17 +42,18 @@ pub enum ColumnInfoFieldId {
     // various data fields
     DataImpKey,
     DataRegion,
-    DataCdRegionFrame,
+    DataCdregionFrame,
 
     // extra fields, see also special values for str below
     ExtType,
     QualQual,
     QualVal,
-    DbXrefDb,
-    DbXrefTag,
+    DbxrefDb,
+    DbxrefTag,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 /// Unsure on how this object is used
 ///
 /// Nor do I know of any examples of the use of `field_name`. It *could*
@@ -80,7 +85,7 @@ pub struct SeqTableColumnInfo {
     pub field_name: Option<String>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct CommonStringTable {
     /// set of possible values
     pub strings: Vec<String>,
@@ -89,7 +94,7 @@ pub struct CommonStringTable {
     pub indexes: Vec<usize>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct CommonBytesTable {
     /// set of possible values
     pub bytes: Vec<Vec<u8>>,
@@ -98,7 +103,7 @@ pub struct CommonBytesTable {
     pub indexes: Vec<usize>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Not to sure what the purpose of this class is.
 ///
 /// Also unsure about original comments on scaling.
@@ -117,7 +122,7 @@ pub struct ScaledIntMultiData {
     pub max: Option<i32>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Pretty sure that this class is meant for using double's
 pub struct ScaledRealMultiData {
     // output data[i] = data[i] * mul + add
@@ -126,7 +131,7 @@ pub struct ScaledRealMultiData {
     pub data: Box<SeqTableMultiData>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Seems to be an artifact from C++ implementation in ASN.1 spec
 ///
 /// Unsure on utility.
@@ -140,7 +145,8 @@ pub struct BVectorData {
     pub data: Vec<u8>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub enum SeqTableMultiData {
     /// a set of 4-byte integers, one per row
     Int(Vec<u32>),
@@ -177,19 +183,27 @@ pub enum SeqTableMultiData {
 
     /// scaled data (int/bit -> real)
     RealScaled(ScaledRealMultiData),
+
     /// # Original comment:
     ///     a set of bit, represented as a serialized bvector
     ///     see include/util/bitset/bm.h
     BitVector(BVectorData),
+
+    #[serde(rename = "int1")]
     /// a set of signed 1-byte integers encoded as sequential octets
     Int1(Vec<u8>),
+
+    #[serde(rename = "int2")]
     /// a set of signed 2-byte integers
     Int2(Vec<u16>),
+
+    #[serde(rename = "int3")]
     /// a set of signed 8-byte integers
     Int8(Vec<u64>),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "lowercase")]
 pub enum SeqTableSingleData {
     Int(u64),
     Real(f64),
@@ -202,7 +216,8 @@ pub enum SeqTableSingleData {
     Int8(u8),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub enum SeqTableSparseIndex {
     /// Indexes of rows with values
     Indexes(Vec<u64>),
@@ -217,10 +232,11 @@ pub enum SeqTableSparseIndex {
     /// # Original comment:
     ///     Bitset of rows with values, as serialized bvector<>,
     ///     see include/util/bitset/bm.h
-    BitSetBVector(BVectorData),
+    BitSetBvector(BVectorData),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqTableColumn {
     /// column description or reference to previously defined info
     pub header: SeqTableColumnInfo,
@@ -238,7 +254,8 @@ pub struct SeqTableColumn {
     pub sparse_other: Option<SeqTableSingleData>,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct SeqTable {
     /// type of features in this table
     ///
@@ -249,7 +266,7 @@ pub struct SeqTable {
 
     /// subtype of features in this table, ...
     ///
-    /// Original comment:
+    /// # Original comment:
     ///
     ///     ... defined in header SeqFeatData.hpp
     pub feat_subtype: Option<usize>,

@@ -3,11 +3,11 @@ name = "ncbi"
 authors = ["Josué D. Figueroa"]
 description = "Rust data structures for NCBI APIs"
 repository = "https://github.com/PoorRican/ncbi-rs/"
-keywords = ["bioinformatics", "ncbi", "dna", "biology", "parser"]
+keywords = ["bioinformatics", "ncbi", "dna", "computational biology", "parser"]
 categories = ["science", "data-structures", "database", "parser-implementations"]
 license = "GPL-3.0-only"
 
-version = "0.1.0-beta"
+version = "0.2.0-beta"
 edition = "2021"
 
 [badges]
@@ -16,3 +16,14 @@ maintenance = { status = "actively-developed" }
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bitflags = { version = "2.3.2", features = ["serde"] }
+serde = { version = "1.0.164", features = ["derive"] }
+serde_repr = "0.1.12"
+quick-xml = { version = "0.29.0", features = ["serialize"]}
+atoi = "2.0.0"
+enum_primitive = "0.1.1"
+num = "0.4.0"
+reqwest = { version = "0.11.18", features = ["blocking"] }
+
+# standard crate data is left out
+[dev-dependencies]
