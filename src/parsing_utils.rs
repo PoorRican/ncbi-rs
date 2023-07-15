@@ -1,3 +1,5 @@
+//! Utility wrappers for parsing XML data into [`XmlNode`] and [`XmlValue`] structures.
+
 use crate::{XmlNode, XmlVecNode, XmlValue};
 use atoi::{atoi, FromRadix10SignedChecked};
 use quick_xml::events::{BytesEnd, BytesStart, Event};
@@ -52,7 +54,7 @@ pub fn read_real(reader: &mut XmlReader) -> Option<String> {
     }
 }
 
-/// Parses the next [`Event::Text`] as an integer
+/// Parses the next available [`Event::Text`] data as an integer
 pub fn read_string(reader: &mut XmlReader) -> Option<String> {
     if let Event::Text(text) = reader.read_event().unwrap() {
         bytes_to_string(text.deref()).into()
@@ -61,6 +63,7 @@ pub fn read_string(reader: &mut XmlReader) -> Option<String> {
     }
 }
 
+/// Parses the next available XML data as a [`XmlNode`]
 pub fn read_node<T: XmlNode>(reader: &mut XmlReader) -> Option<T> {
     T::from_reader(reader)
 }
