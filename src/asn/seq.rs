@@ -5,7 +5,7 @@
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing::{read_vec_node, read_attributes, read_int, read_node, read_string, UnexpectedTags};
+use crate::parsing::{read_vec_node, read_attributes, read_int, read_node, read_string, UnexpectedTags, attribute_value};
 use crate::r#pub::PubEquiv;
 use crate::seqalign::SeqAlign;
 use crate::seqblock::{EMBLBlock, GBBlock, PDBBlock, PIRBlock, PRFBlock, SPBlock};
@@ -762,46 +762,23 @@ impl XmlValue for Repr {
     }
 
     fn from_attributes(attributes: Attributes) -> Option<Self> {
-        let value = BytesStart::new("value");
-        for attribute in attributes {
-            if let Ok(attr) = attribute {
-                if attr.key == value.name() {
-                    let _inner = attr.unescape_value().unwrap().to_string();
-                    let inner = _inner.get(2.._inner.len()-2).unwrap();
-                    if inner == "not-set" {
-                        return Self::NotSet.into()
-                    }
-                    if inner == "virtual" {
-                        return Self::Virtual.into()
-                    }
-                    if inner == "raw" {
-                        return Self::Raw.into()
-                    }
-                    if inner == "seg" {
-                        return Self::Seg.into()
-                    }
-                    if inner == "const" {
-                        return Self::Const.into()
-                    }
-                    if inner == "ref" {
-                        return Self::Ref.into()
-                    }
-                    if inner == "consen" {
-                        return Self::Consen.into()
-                    }
-                    if inner == "map" {
-                        return Self::Map.into()
-                    }
-                    if inner == "delta" {
-                        return Self::Delta.into()
-                    }
-                    if inner == "other" {
-                        return Self::Other.into()
-                    }
-                }
+        if let Some(attributes) = attribute_value(attributes) {
+            match attributes.as_str() {
+                "not-set" => Self::NotSet.into(),
+                "virtual" => Self::Virtual.into(),
+                "raw" => Self::Raw.into(),
+                "seg" => Self::Seg.into(),
+                "const" => Self::Const.into(),
+                "ref" => Self::Ref.into(),
+                "consen" => Self::Consen.into(),
+                "map" => Self::Map.into(),
+                "delta" => Self::Delta.into(),
+                "other" => Self::Other.into(),
+                _ => None
             }
+        } else {
+            None
         }
-        return None
     }
 }
 
@@ -830,25 +807,19 @@ impl XmlValue for Mol {
     }
 
     fn from_attributes(attributes: Attributes) -> Option<Self> {
-        let value = BytesStart::new("value");
-        for attribute in attributes {
-            if let Ok(attr) = attribute {
-                if attr.key == value.name() {
-                    let _inner = attr.unescape_value().unwrap().to_string();
-                    let inner = _inner.get(2.._inner.len()-2).unwrap();
-                    return match inner {
-                        "not-set" => Self::NotSet.into(),
-                        "dna" => Self::DNA.into(),
-                        "rna" => Self::NotSet.into(),
-                        "aa" => Self::DNA.into(),
-                        "na" => Self::DNA.into(),
-                        "other" => Self::Other.into(),
-                        _ => None
-                    }
-                }
+        if let Some(attributes) = attribute_value(attributes) {
+            match attributes.as_str() {
+                "not-set" => Self::NotSet.into(),
+                "dna" => Self::DNA.into(),
+                "rna" => Self::NotSet.into(),
+                "aa" => Self::DNA.into(),
+                "na" => Self::DNA.into(),
+                "other" => Self::Other.into(),
+                _ => None
             }
+        } else {
+            None
         }
-        return None
     }
 }
 

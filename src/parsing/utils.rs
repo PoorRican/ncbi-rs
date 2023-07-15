@@ -2,6 +2,7 @@ use quick_xml::Reader;
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use atoi::FromRadix10SignedChecked;
 use std::ops::Deref;
+use quick_xml::events::attributes::Attributes;
 use crate::parsing::{XmlNode, XmlValue, XmlVecNode};
 
 /// [`Reader`] that returns bytes
@@ -29,6 +30,32 @@ pub fn bytes_to_string(text: &[u8]) -> String {
 /// parse the given tag for its attributes
 pub fn read_attributes<T: XmlValue>(current: &BytesStart) -> Option<T> {
     T::from_attributes(current.html_attributes())
+}
+
+pub fn read_bool_attribute(current: &BytesStart) -> Option<bool> {
+    if let Some(attributes) = attribute_value(current.html_attributes()) {
+        match attributes.as_str() {
+            "true" => Some(true),
+            "false" => Some(false),
+            _ => None
+        }
+    } else {
+        None
+    }
+}
+
+pub fn attribute_value(attributes: Attributes) -> Option<String> {
+    let value = BytesStart::new("value");
+    for attribute in attributes {
+        if let Ok(attr) = attribute {
+            if attr.key == value.name() {
+                let _inner = attr.unescape_value().unwrap().to_string();
+                let inner = _inner.get(2.._inner.len() - 2).unwrap();
+                return Some(inner.to_string())
+            }
+        }
+    }
+    return None
 }
 
 /// Parses the next [`Event::Text`] as an integer

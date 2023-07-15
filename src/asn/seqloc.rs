@@ -8,7 +8,7 @@
 
 use crate::biblio::IdPat;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId};
-use crate::parsing::{read_attributes, read_int, read_node, read_string, UnexpectedTags};
+use crate::parsing::{attribute_value, read_attributes, read_int, read_node, read_string, UnexpectedTags};
 use crate::seqfeat::FeatId;
 use crate::parsing::{XmlNode, XmlVecNode, XmlValue};
 use quick_xml::events::{BytesStart, Event};
@@ -385,31 +385,18 @@ impl XmlValue for NaStrand {
     }
 
     fn from_attributes(attributes: Attributes) -> Option<Self> {
-        let value = BytesStart::new("value");
-        for attribute in attributes {
-            if let Ok(attr) = attribute {
-                if attr.key == value.name() {
-                    let _inner = attr.unescape_value().unwrap().to_string();
-                    let inner = _inner.get(2.._inner.len()-2).unwrap();
-                    if inner == "unknown" {
-                        return Self::Unknown.into()
-                    }
-                    if inner == "plus" {
-                        return Self::Plus.into()
-                    }
-                    if inner == "minus" {
-                        return Self::Minus.into()
-                    }
-                    if inner == "both" {
-                        return Self::Both.into()
-                    }
-                    if inner == "both-rev" {
-                        return Self::BothRev.into()
-                    }
-                }
+        if let Some(attributes) = attribute_value(attributes) {
+            match attributes.as_str() {
+                "unknown" => Self::Unknown.into(),
+                "plus" => Self::Plus.into(),
+                "minus" => Self::Minus.into(),
+                "both" => Self::Both.into(),
+                "both-rev" => Self::BothRev.into(),
+                _ => None
             }
+        } else {
+            None
         }
-        return None
     }
 }
 
