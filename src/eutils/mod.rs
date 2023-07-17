@@ -1,5 +1,10 @@
 //! Helper functions that deal with Entrez eUtils
 
+mod esearchresult;
+
+/// reexport modules
+pub use esearchresult::ESearchResult;
+
 use crate::seqset::BioSeqSet;
 use crate::parsing::XmlNode;
 use quick_xml::events::Event;
@@ -8,6 +13,7 @@ use std::{fs, io};
 
 const BASE: &str = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/";
 
+#[derive(Copy, Clone, Debug)]
 /// # See Also
 ///
 /// [Entrez Unique Identifiers table](https://www.ncbi.nlm.nih.gov/books/NBK25497/table/chapter2.T._entrez_unique_identifiers_ui/)
