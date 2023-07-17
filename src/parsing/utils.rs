@@ -171,5 +171,33 @@ where
 
 fn is_alphanum(text: &str) -> bool {
     // do not add empty or escape codes
-    !(text == "\\\\n" || text.is_empty())
+    !(text == r"\n" || text == r"\\\\n" || text == "\\\\n" ||text == "\n" || text.is_empty())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::parsing::utils::is_alphanum;
+
+    #[test]
+    fn test_is_alphanum() {
+        // the following should all be false
+        let test = r"\n";
+        assert!(!is_alphanum(test));
+
+        let test = r"\\\\n";
+        assert!(!is_alphanum(test));
+
+        let test = "\\\\n";
+        assert!(!is_alphanum(test));
+
+        let test = "\n";
+        assert!(!is_alphanum(test));
+
+        let test = "";
+        assert!(!is_alphanum(test));
+
+        // should be true
+        let test = "a string";
+        assert!(is_alphanum(test));
+    }
 }
