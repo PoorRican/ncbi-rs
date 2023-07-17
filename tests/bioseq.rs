@@ -24,8 +24,8 @@ fn get_bioseq(path: &str) -> BioSeq {
 }
 
 fn get_seq_set(path: &str) -> BioSeqSet {
-    let data = get_local_xml(path);
-    let parsed = parse_xml(data.as_str()).unwrap();
+    let data = get_local_xml(path).expect("No data read from file");
+    let parsed = parse_xml(data.as_str()).expect("XML could not be parsed");
     if let DataType::BioSeqSet(set) = parsed {
         return set;
     } else {
