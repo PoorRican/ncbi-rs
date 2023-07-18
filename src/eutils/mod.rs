@@ -3,8 +3,10 @@
 mod esearchresult;
 mod esearch;
 mod eutil;
+mod efetch;
 
 /// reexport modules
+pub use efetch::{EFetch, DataType};
 pub use eutil::EUtil;
 pub use esearch::ESearch;
 pub use esearchresult::ESearchResult;
@@ -50,6 +52,24 @@ pub enum EntrezDb {
     Structure,
     Taxonomy,
 }
+
+/// Represent sequence databases
+///
+/// These databases use accession.versions to index data
+/// instead of numeric uid values.
+///
+/// # See Also
+///
+/// Note under "Special note for sequence databases in the
+/// "id" section in the [EUtils book](https://www.ncbi.nlm.nih.gov/books/n/helpeutils/chapter4/#chapter4.EFetch)
+const SEQUENCE_DB: [EntrezDb; 5] = [
+    EntrezDb::Genome,
+    EntrezDb::Gene,
+    EntrezDb::Protein,
+    EntrezDb::Nucleotide,
+    EntrezDb::PopSet,
+];
+
 impl EntrezDb {
     pub fn as_str(&self) -> &str {
         match self {
@@ -82,30 +102,6 @@ impl EntrezDb {
             Self::Taxonomy => "taxonomy",
         }
     }
-}
-
-/// View [EFetch documentation](https://www.ncbi.nlm.nih.gov/books/NBK25499/table/chapter4.T._valid_values_of__retmode_and/?report=objectonly)
-/// for a valid list of `retmode` and `rettype` values
-pub fn build_fetch_url(db: EntrezDb, id: &str, r#type: &str, mode: &str) -> String {
-    let mut url_str = format!("{}efetch.fcgi?", BASE);
-    url_str.push_str(&(format!("db={}", db.as_str())));
-    url_str.push_str(&(format!("&id={}", id)));
-
-    url_str.push_str(&(format!("&rettype={}", r#type)));
-    url_str.push_str(&(format!("&retmode={}", mode)));
-
-    url_str
-}
-
-/// Encapsulate high-level types returned by EUtils
-///
-/// This captures the possible return values from parsed XML. While each NCBI
-/// database returns it's own type, knowledge of query is not necessary for
-/// parsing.
-pub enum DataType {
-    BioSeqSet(BioSeqSet),
-    /// placeholder for other types
-    EtAl,
 }
 
 /// Parse an XML string
@@ -155,22 +151,10 @@ pub fn get_local_xml(path: &str) -> Result<String, io::Error> {
         .to_string())
 }
 
-pub fn fetch(db: EntrezDb, id: &str, r#type: &str, mode: &str) -> DataType {
-    let url = build_fetch_url(db, id, r#type, mode);
-    let response = reqwest::blocking::get(url).unwrap().text().unwrap();
-    parse_xml(response.as_str()).unwrap()
-}
-
 #[cfg(test)]
 mod tests {
     use std::ops::Not;
-    use crate::{build_fetch_url, get_local_xml, parse_xml, DataType, EntrezDb};
-
-    #[test]
-    fn test_protein() {
-        let id = "2520667272";
-        let _url = build_fetch_url(EntrezDb::Protein, id, "native", "xml");
-    }
+    use crate::{get_local_xml, parse_xml, DataType};
 
     #[test]
     fn test_parse_xml() {
@@ -192,17 +176,5 @@ mod tests {
         let data = get_local_xml("tests/data/2.xml");
         assert!(data.is_err());
 
-    }
-
-
-    #[test]
-    fn test_article_set() {
-        let id = "37332098";
-        let db = EntrezDb::PubMed;
-
-        let url = build_fetch_url(db, id, "xml", "xml");
-        let _ = reqwest::blocking::get(url).unwrap().text().unwrap();
-        //let expected = from_str(text.as_str()).unwrap();
-        //assert!(expected.is_empty().not())
     }
 }

@@ -94,7 +94,7 @@ mod tests {
     use crate::{ESearchResult, get_local_xml};
     use crate::parsing::XmlNode;
 
-    const DATA1: &str = "tests/data/deaminase_protein_search.xml";
+    const DATA1: &str = "tests/data/deaminase_genome_search.xml";
 
     #[test]
     fn read_from_xml() {

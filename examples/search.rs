@@ -1,5 +1,5 @@
 //! Example of using the [`ESearch`] module
-use ncbi::{EntrezDb, ESearch};
+use ncbi::{EntrezDb, ESearch, EUtil};
 
 fn main() {
     let builder = ESearch::new(EntrezDb::Protein)
