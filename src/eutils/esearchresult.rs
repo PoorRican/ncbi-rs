@@ -1,7 +1,7 @@
 use std::slice::Iter;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
-use crate::parsing::{read_int, read_vec_int_unchecked, XmlNode};
+use crate::parsing::{read_int, read_vec_str_unchecked, XmlNode};
 
 #[derive(Default, Debug, Clone, PartialEq)]
 /// The following tags have not been implemented:
@@ -16,7 +16,9 @@ pub struct ESearchResult {
     count: u64,
     ret_max: u64,
     ret_start: u64,
-    id_list: Vec<u64>,
+
+    /// id's should be stored as a String to account for accession.version strings
+    id_list: Vec<String>,
 }
 
 impl ESearchResult {
@@ -66,7 +68,7 @@ impl XmlNode for ESearchResult {
                     } else if name == ret_start_tag.name() {
                         result.ret_start = read_int(reader).unwrap();
                     } else if name == id_list_tag.name() {
-                        result.id_list = read_vec_int_unchecked(reader, &id_list_tag.to_end())
+                        result.id_list = read_vec_str_unchecked(reader, &id_list_tag.to_end())
                     }
                 }
                 Event::End(e) => {
@@ -97,7 +99,7 @@ mod tests {
             count: 2,
             ret_start: 0,
             ret_max: 2,
-            id_list: vec![11294, 1387]
+            id_list: vec!["11294".to_string(), "1387".to_string()]
         };
 
         let parsed = ESearchResult::from_reader(&mut reader).unwrap();
