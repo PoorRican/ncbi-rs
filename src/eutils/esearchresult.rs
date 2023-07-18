@@ -46,8 +46,8 @@ impl ESearchResult {
         self.ret_start
     }
 
-    /// Returns an iter of `id_list`
-    pub fn id_list_iter(&self) -> Iter<String> {
+    /// Iterate through `id_list`
+    pub fn iter_id_list(&self) -> Iter<String> {
         self.id_list.iter()
     }
 }
