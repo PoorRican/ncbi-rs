@@ -1,3 +1,4 @@
+use std::slice::Iter;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use crate::parsing::{read_int, read_vec_int_unchecked, XmlNode};
@@ -16,6 +17,24 @@ pub struct ESearchResult {
     ret_max: u64,
     ret_start: u64,
     id_list: Vec<u64>,
+}
+
+impl ESearchResult {
+    pub fn count(&self) -> u64 {
+        self.count
+    }
+
+    pub fn ret_max(&self) -> u64 {
+        self.ret_max
+    }
+
+    pub fn ret_start(&self) -> u64 {
+        self.ret_start
+    }
+
+    pub fn id_list(&self) -> Iter<String> {
+        self.id_list.iter()
+    }
 }
 
 impl XmlNode for ESearchResult {
