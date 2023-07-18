@@ -17,16 +17,6 @@ pub struct ESearch<'a> {
 impl<'a> ESearch<'a> {
     const ENDPOINT: &'static str = "esearch.fcgi?";
 
-    pub fn new(db: EntrezDb) -> Self {
-        Self {
-            db,
-            term: None,
-            ret_start: None,
-            ret_max: None,
-            field: None
-        }
-    }
-
     pub fn term(mut self, term: &'a str) -> Self {
         self.term = Some(term);
         self
@@ -55,6 +45,16 @@ impl<'a> ESearch<'a> {
 }
 
 impl EUtil for ESearch<'_> {
+    fn new(db: EntrezDb) -> Self {
+        Self {
+            db,
+            term: None,
+            ret_start: None,
+            ret_max: None,
+            field: None
+        }
+    }
+
     fn build_url(&self) -> Url {
         let mut url = Url::parse(BASE).unwrap();
         url = url.join(Self::ENDPOINT).unwrap();
