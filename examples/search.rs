@@ -12,7 +12,7 @@ fn main() {
         assert!(result.count() >= 3403057);
         assert_eq!(result.ret_max(), 500);
         assert_eq!(result.ret_start(), 1500);
-        assert_eq!(result.id_list().count(), 500);
+        assert_eq!(result.id_list_iter().count(), 500);
 
         println!("{:?}", result)
     }

@@ -40,7 +40,8 @@ impl ESearchResult {
         self.ret_start
     }
 
-    pub fn id_list(&self) -> Iter<String> {
+    /// Returns an iter of `id_list`
+    pub fn id_list_iter(&self) -> Iter<String> {
         self.id_list.iter()
     }
 }
