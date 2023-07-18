@@ -4,14 +4,20 @@ use quick_xml::Reader;
 use crate::parsing::{read_int, read_vec_str_unchecked, XmlNode};
 
 #[derive(Default, Debug, Clone, PartialEq)]
-/// The following tags have not been implemented:
+/// Encapsulates data returned from [`ESearch`]
+///
+/// This is an intermediate data format that contains ID's to be retrieved
+/// via [`EFetch`] or any of the other Entrez tools.
+///
+/// The following elements have not been implemented because they deal with
+/// how the users query is translated:
 /// - `TranslationSet`
 /// - `TranslationStack`
 /// - `QueryTranslation`
 ///
-/// These terms have not been implemented because they deal with internal
-/// DB relationships. This level of refinement is accomplished by [`ESearch`]
-/// builder functions.
+/// These might be useful to parse in the future because it might nail down
+/// query anomalies for those who aren't previously familiar with NCBI's query
+/// syntax.
 pub struct ESearchResult {
     /// total number of results from this query
     count: u64,
@@ -51,8 +57,8 @@ impl XmlNode for ESearchResult {
         BytesStart::new("eSearchResult")
     }
 
-    /// Unknown tags are explicitly not caught by [`UnexpectedTags`]. This
-    /// record is only used to fetch biological data which requires ID values.
+    /// Unknown tags are explicitly not caught by [`UnexpectedTags`] as mentioned
+    /// above. The priority is to parse the id list.
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
         let mut result = Self::default();
 
