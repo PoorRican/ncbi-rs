@@ -13,8 +13,14 @@ use crate::parsing::{read_int, read_vec_str_unchecked, XmlNode};
 /// DB relationships. This level of refinement is accomplished by [`ESearch`]
 /// builder functions.
 pub struct ESearchResult {
+    /// total number of results from this query
     count: u64,
+
+
+    /// maximum number of values to return
     ret_max: u64,
+
+    /// index of result in respect to `Self::count`
     ret_start: u64,
 
     /// id's should be stored as a String to account for accession.version strings
