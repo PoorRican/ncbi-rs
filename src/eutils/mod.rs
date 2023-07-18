@@ -1,4 +1,19 @@
-//! Helper functions that deal with Entrez eUtils
+//! Search and get data from NCBI
+//!
+//! This module contains implementations of NCBI's EUtils/Entrez.
+//!
+//! All NCBI databases have been summed up in [`EntrezDb`], but not all
+//! are able to be parsed as of yet. Only a few sequence databases have
+//! been implemented.
+//!
+//! # Utilities
+//!
+//! [`ESearch`] is used to perform queries on a given database. A list
+//! of ID's is returned for use in [`EFetch`].
+//!
+//! [`EFetch`] is used to take the list of ID's from [`ESearch`] and fetch
+//! the biological data. This library focuses on parsing the ASN.1 format
+//! (implemented [`crate::asn`]), because which contains the most metadata.
 
 mod esearchresult;
 mod esearch;
@@ -104,6 +119,7 @@ impl EntrezDb {
     }
 }
 
+#[deprecated]
 /// Parse an XML string
 ///
 /// Since XML strings will only be found with high-level objects,
