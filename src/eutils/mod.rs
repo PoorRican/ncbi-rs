@@ -1,8 +1,12 @@
 //! Helper functions that deal with Entrez eUtils
 
 mod esearchresult;
+mod esearch;
+mod eutil;
 
 /// reexport modules
+pub use eutil::EUtil;
+pub use esearch::ESearch;
 pub use esearchresult::ESearchResult;
 
 use crate::seqset::BioSeqSet;
@@ -13,7 +17,7 @@ use std::{fs, io};
 
 const BASE: &str = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/";
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 /// # See Also
 ///
 /// [Entrez Unique Identifiers table](https://www.ncbi.nlm.nih.gov/books/NBK25497/table/chapter2.T._entrez_unique_identifiers_ui/)
@@ -78,18 +82,6 @@ impl EntrezDb {
             Self::Taxonomy => "taxonomy",
         }
     }
-}
-
-pub fn build_search_url(db: EntrezDb, term: &str) -> String {
-    let mut url_str = format!("{}esearch.fcgi?", BASE);
-    url_str.push_str(&(format!("db={}", db.as_str())));
-    url_str.push_str(&(format!("&term={}", term)));
-
-    let ret = "xml";
-    url_str.push_str(&(format!("&rettype={}", ret)));
-    url_str.push_str(&(format!("&retmode={}", ret)));
-
-    url_str
 }
 
 /// View [EFetch documentation](https://www.ncbi.nlm.nih.gov/books/NBK25499/table/chapter4.T._valid_values_of__retmode_and/?report=objectonly)
@@ -172,12 +164,7 @@ pub fn fetch(db: EntrezDb, id: &str, r#type: &str, mode: &str) -> DataType {
 #[cfg(test)]
 mod tests {
     use std::ops::Not;
-    use crate::{build_fetch_url, build_search_url, get_local_xml, parse_xml, DataType, EntrezDb};
-
-    #[test]
-    fn search_url() {
-        let _url = build_search_url(EntrezDb::Protein, "deaminase");
-    }
+    use crate::{build_fetch_url, get_local_xml, parse_xml, DataType, EntrezDb};
 
     #[test]
     fn test_protein() {
