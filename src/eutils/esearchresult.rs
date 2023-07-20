@@ -34,6 +34,14 @@ pub struct ESearchResult {
 }
 
 impl ESearchResult {
+    pub fn new(count: u64, ret_max: u64, ret_start: u64, id_list: Vec<String>) -> Self {
+        Self {
+            count,
+            ret_max,
+            ret_start,
+            id_list
+        }
+    }
     pub fn count(&self) -> u64 {
         self.count
     }
