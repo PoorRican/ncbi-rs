@@ -11,6 +11,9 @@ use crate::parsing::XmlNode;
 /// What is returned by this API is a list of ID's that
 /// are used to get the biological data associated with the query.
 ///
+/// Search terms are really meant to be fed via a UI and not
+/// so much hardcoded as Rust would not be the most practical choice.
+///
 /// # Examples
 ///
 /// ### A basic search query:
@@ -40,6 +43,23 @@ use crate::parsing::XmlNode;
 /// use ncbi::{EntrezDb, ESearch, EUtil};
 /// let results = ESearch::new(EntrezDb::Protein)
 ///                     .term("decarboxylase")
+///                     .start(1000)
+///                     .max(500)
+///                     .search();
+/// assert_eq!(results.as_ref().unwrap().ret_start(), 1000);
+/// assert_eq!(results.as_ref().unwrap().ret_max(), 500);
+/// ```
+///
+/// ### Using NCBI syntax
+///
+/// ```
+/// use ncbi::{EntrezDb, ESearch, EUtil};
+///
+/// let term = "\"Escherichia coli\"[Organism] AND (bacteria[filter]\
+/// AND biomol_genomic[PROP] AND plasmid[filter])";
+///
+/// let results = ESearch::new(EntrezDb::Protein)
+///                     .term(term)
 ///                     .start(1000)
 ///                     .max(500)
 ///                     .search();
@@ -110,7 +130,7 @@ impl<'a> ESearch<'a> {
     ///                 .max(400);
     /// let url = builder.build_url();
     /// assert!(url.as_str()
-    ///            .contains("?retmax=400"))
+    ///            .contains("&retmax=400"))
     /// ```
     pub fn max(mut self, ret_max: usize) -> Self {
         self.ret_max = Some(ret_max);
@@ -139,7 +159,7 @@ impl<'a> ESearch<'a> {
     ///                 .field("organism");
     /// let url = builder.build_url();
     /// assert!(url.as_str()
-    ///            .contains("?retmax=400"))
+    ///            .contains("&field=organism"))
     /// ```
     pub fn field(mut self, field: &'a str) -> Self {
         self.field = Some(field);
@@ -151,10 +171,10 @@ impl<'a> ESearch<'a> {
     ///
     /// # Example
     ///
+    /// A simple query for the term "bacteria":
     /// ```
     /// use ncbi::{ESearch, EntrezDb, EUtil, ESearchResult};
     ///
-    /// // note
     /// let results = ESearch::new(EntrezDb::Genome)
     ///                 .term("bacteria")
     ///                 .search();
