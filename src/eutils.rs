@@ -1,6 +1,7 @@
 //! Helper functions that deal with Entrez eUtils
 
 use crate::seqset::BioSeqSet;
+use crate::entrezgene::EntrezgeneSet;
 use crate::parsing::XmlNode;
 use quick_xml::events::Event;
 use quick_xml::Reader;
@@ -99,8 +100,10 @@ pub fn build_fetch_url(db: EntrezDb, id: &str, r#type: &str, mode: &str) -> Stri
     url_str
 }
 
+//FIXME: Please a comment what this is about
 pub enum DataType {
     BioSeqSet(BioSeqSet),
+    EntrezgeneSet(EntrezgeneSet),
     /// placeholder for other types
     EtAl,
 }
@@ -153,6 +156,11 @@ mod tests {
         let data = get_local_xml("tests/data/2519734237.xml");
         match parse_xml(data.as_str()).unwrap() {
             DataType::BioSeqSet(_) => (),
+            _ => assert!(false),
+        }
+        let data = get_local_xml("tp73.genbank.xml");
+        match parse_xml(data.as_str()).unwrap() {
+            DataType::EntrezgeneSet(_) => (),
             _ => assert!(false),
         }
     }
