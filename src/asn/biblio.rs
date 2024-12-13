@@ -286,7 +286,7 @@ pub enum CitSubMedium {
 /// Cite a direct data submission
 ///
 /// # Original Comment
-///     See "NCBI-Submit" for the form of a direct sequence submission
+/// See "NCBI-Submit" for the form of a direct sequence submission
 pub struct CitSub {
     /// not necessarily authors of the paper
     pub authors: AuthList,

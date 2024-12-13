@@ -81,18 +81,17 @@ pub struct DenseDiag {
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// The densest packing for sequence alignments only.
 ///
-///
 /// # Description
 ///
 /// A start of -1 indicates a gap for that sequence of length lens.
 ///
-///      id=100  AAGGCCTTTTAGAGATGATGATGATGATGA
-///      id=200  AAGGCCTTTTAG.......GATGATGATGA
-///      id=300  ....CCTTTTAGAGATGATGAT....ATGA
+///  id=100  AAGGCCTTTTAGAGATGATGATGATGATGA
+///  id=200  AAGGCCTTTTAG.......GATGATGATGA
+///  id=300  ....CCTTTTAGAGATGATGAT....ATGA
 ///
-///      dim = 3, numseg = 6, ids = { 100, 200, 300 }
-///      starts = { 0,0,-1, 4,4,0, 12,-1,8, 19,12,15, 22,15,-1, 26,19,18 }
-///      lens = { 4, 8, 7, 3, 4, 4 }
+///  dim = 3, numseg = 6, ids = { 100, 200, 300 }
+///  starts = { 0,0,-1, 4,4,0, 12,-1,8, 19,12,15, 22,15,-1, 26,19,18 }
+///  lens = { 4, 8, 7, 3, 4, 4 }
 ///
 pub struct DenseSeg {
     // TODO: default 2

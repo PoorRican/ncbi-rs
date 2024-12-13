@@ -716,15 +716,15 @@ pub struct CdRegion {
     /// number of stop codons on above
     ///
     /// ### Original Comment:
-    ///     each code is 64 cells long, in the order where:
-    ///     `T=0, C=1, A=2, G=3, TTT=0, TTC=1, CTA=4, ...`
+    /// each code is 64 cells long, in the order where:
+    /// `T=0, C=1, A=2, G=3, TTT=0, TTC=1, CTA=4, ...`
     ///
-    ///     NOTE: this order does NOT correspond to a [`SeqData`] encoding.
-    ///     It is "natural" to codon usage instead. The value in each cell is
-    ///     the AA coded for start=AA coded only if first in peptide in start
-    ///     array, if codon is not a legitimate start codon, that cell will
-    ///     have the "gap" symbol for that alphabet. Otherwise it will have the
-    ///     AA encoded when that codon is used at the start.
+    /// NOTE: this order does NOT correspond to a [`SeqData`] encoding.
+    /// It is "natural" to codon usage instead. The value in each cell is
+    /// the AA coded for start=AA coded only if first in peptide in start
+    /// array, if codon is not a legitimate start codon, that cell will
+    /// have the "gap" symbol for that alphabet. Otherwise it will have the
+    /// AA encoded when that codon is used at the start.
     pub stops: Option<u64>,
 }
 
@@ -1330,10 +1330,10 @@ pub enum VariantAlleleState {
 /// for fields that were moved here, specifically `allele_frequency`, and
 /// `quality_codes`:
 ///
-///     The case of multiple alleles for a SNP would be described by
-///     parent-features of type `VariationSet.diff_alleles`, where the child
-///     features of type `VariationINst`, all at the same location, would
-///     describe individual alleles.
+/// The case of multiple alleles for a SNP would be described by
+/// parent-features of type `VariationSet.diff_alleles`, where the child
+/// features of type `VariationINst`, all at the same location, would
+/// describe individual alleles.
 ///
 pub struct VariantProperties {
     pub version: u64,
@@ -1789,15 +1789,15 @@ pub enum RnaRefType {
     rRNA,
 
     /// ### Original Comment:
-    ///     will become ncRNA, with RNAGen.class = snRNA
+    /// will become ncRNA, with RNAGen.class = snRNA
     snRNA,
 
     /// ### Original Comment:
-    ///     will become ncRNA, with RNAGen.class = snRNA
+    /// will become ncRNA, with RNAGen.class = snRNA
     scRNA,
 
     /// ### Original Comment:
-    ///     will become ncRNA, with RNAGen.class = snRNA
+    /// will become ncRNA, with RNAGen.class = snRNA
     snoRNA,
 
     /// non-coding RNA; subsumes `snRNA`, `scRNA` and `snoRNA`
