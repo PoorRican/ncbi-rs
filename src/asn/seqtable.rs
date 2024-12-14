@@ -63,25 +63,25 @@ pub struct SeqTableColumnInfo {
     /// identification of column data in the objects described by the table
     pub field_id: Option<ColumnInfoFieldId>,
     /// # Original Comment:
-    ///     any column can be identified by ASN.1 text locator string
-    ///        -- with omitted object type.
-    ///        -- examples:
-    ///        --   "data.gene.locus" for SeqFeat.data.gene.locus
-    ///        --   "data.imp.key" for SeqFeat.data.imp.key
-    ///        --   "qual.qual"
-    ///        --    - SeqFeat.qual is SEQUENCE so several columns are allowed
-    ///        --      see also "Q.xxx" special value for shorter qual representation
-    ///        --   "ext.type.str"
-    ///        --   "ext.data.label.str"
-    ///        --   "ext.data.data.int"
-    ///        --      see also "E.xxx" special value for shorter ext representation
-    ///        -- special values start with capital letter:
-    ///        --   "E.xxx" - ext.data.label.str = xxx, ext.data.data = data
-    ///        --    - SeqFeat.ext.data is SEQUENCE so several columns are allowed
-    ///        --   "Q.xxx" - qual.qual = xxx, qual.val = data
-    ///        --    - SeqFeat.qual is SEQUENCE so several columns are allowed
-    ///        --   "D.xxx" - dbxref.id = xxx, dbxref.tag = data
-    ///        --    - SeqFeat.dbxref is SET so several columns are allowed
+    ///  any column can be identified by ASN.1 text locator string
+    ///  -- with omitted object type.
+    ///  -- examples:
+    ///  --   "data.gene.locus" for SeqFeat.data.gene.locus
+    ///  --   "data.imp.key" for SeqFeat.data.imp.key
+    ///  --   "qual.qual"
+    ///  --    - SeqFeat.qual is SEQUENCE so several columns are allowed
+    ///  --      see also "Q.xxx" special value for shorter qual representation
+    ///  --   "ext.type.str"
+    ///  --   "ext.data.label.str"
+    ///  --   "ext.data.data.int"
+    ///  --      see also "E.xxx" special value for shorter ext representation
+    ///  -- special values start with capital letter:
+    ///  --   "E.xxx" - ext.data.label.str = xxx, ext.data.data = data
+    ///  --    - SeqFeat.ext.data is SEQUENCE so several columns are allowed
+    ///  --   "Q.xxx" - qual.qual = xxx, qual.val = data
+    ///  --    - SeqFeat.qual is SEQUENCE so several columns are allowed
+    ///  --   "D.xxx" - dbxref.id = xxx, dbxref.tag = data
+    ///  --    - SeqFeat.dbxref is SET so several columns are allowed
     pub field_name: Option<String>,
 }
 
@@ -116,8 +116,8 @@ pub struct ScaledIntMultiData {
     /// Unsure on functionality.
     ///
     /// # Original comment:
-    ///     min/max scaled value
-    ///     should be set if scaled values may not fit in 32-bit signed integer
+    /// min/max scaled value
+    /// should be set if scaled values may not fit in 32-bit signed integer
     pub min: Option<i32>,
     pub max: Option<i32>,
 }
@@ -137,9 +137,9 @@ pub struct ScaledRealMultiData {
 /// Unsure on utility.
 ///
 /// # Original comment:
-///     Class for serializing bm::bvector<>     //[ likely a c++ construct ]
-///     see include/util/bitset/bm.h
-///     Since bvector<> serialization doesn't keep size we have to add it explicitly
+///  Class for serializing bm::bvector<>     //[ likely a c++ construct ]
+///  see include/util/bitset/bm.h
+///  Since bvector<> serialization doesn't keep size we have to add it explicitly
 pub struct BVectorData {
     pub size: u64,
     pub data: Vec<u8>,
@@ -185,8 +185,8 @@ pub enum SeqTableMultiData {
     RealScaled(ScaledRealMultiData),
 
     /// # Original comment:
-    ///     a set of bit, represented as a serialized bvector
-    ///     see include/util/bitset/bm.h
+    /// a set of bit, represented as a serialized bvector,
+    /// see include/util/bitset/bm.h
     BitVector(BVectorData),
 
     #[serde(rename = "int1")]
@@ -230,8 +230,8 @@ pub enum SeqTableSparseIndex {
     IndexesDelta(Vec<u64>),
 
     /// # Original comment:
-    ///     Bitset of rows with values, as serialized bvector<>,
-    ///     see include/util/bitset/bm.h
+    /// Bitset of rows with values, as serialized bvector<>,
+    /// see include/util/bitset/bm.h
     BitSetBvector(BVectorData),
 }
 
@@ -261,14 +261,14 @@ pub struct SeqTable {
     ///
     /// Original comment:
     ///
-    ///     ... equal to Seq-feat.data variant index
+    /// ... equal to Seq-feat.data variant index
     pub feat_type: usize,
 
     /// subtype of features in this table, ...
     ///
     /// # Original comment:
     ///
-    ///     ... defined in header SeqFeatData.hpp
+    /// ... defined in header SeqFeatData.hpp
     pub feat_subtype: Option<usize>,
 
     /// number of rows
