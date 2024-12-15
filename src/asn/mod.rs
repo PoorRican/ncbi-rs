@@ -2,6 +2,7 @@ pub mod biblio;
 pub mod general;
 pub mod medline;
 pub mod r#pub;
+pub mod scoremat;
 pub mod seq;
 pub mod seqalign;
 pub mod seqblock;
