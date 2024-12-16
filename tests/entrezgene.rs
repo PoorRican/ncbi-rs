@@ -9,8 +9,6 @@ mod tests {
     use ncbi::parsing::{XmlNode,read_node};
 
     #[test]
-
-    #[test]
     fn test_gene_track_parsing() {
     let xml = r#"
 <Gene-track>
@@ -24,9 +22,10 @@ mod tests {
         assert!(track.is_some());
     }
 
+    #[test]
     fn test_parse_entrezgene_tp73() {
         // Path to the test file
-        let file_path = "tp73.genbank.xml";
+        let file_path = "tests/data/tp73.genbank.xml";
         let mut file = File::open(file_path).expect("Error opening test file.");
 
         // Read file content into a string
@@ -59,6 +58,8 @@ mod tests {
         assert!(entrezgene.is_some(), "The Entrezgene object was not parsed correctly.");
 
         let gene = entrezgene.unwrap();
+        //println!("{:?}",gene);
+        println!("{:?}",gene.gene.locus);
 
         // Example assertions to verify parsed data
         assert_eq!(
@@ -67,17 +68,20 @@ mod tests {
             "Gene locus is not 'TP73' as expected."
         );
 
+        println!("{:?}",gene.gene.desc);
         assert_eq!(
             gene.gene.desc.as_deref(),
             Some("tumor protein p73"),
             "Gene description is not 'tumor protein p73' as expected."
         );
 
+        println!("{:?}",gene.track_info);
         assert!(
             gene.track_info.is_some(),
             "Track information is missing from the parsed data."
         );
 
+        println!("{:?}",gene.r#type);
         assert_eq!(
             gene.r#type,
             EntrezgeneType::ProteinCoding,
