@@ -8,21 +8,29 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Deserialize, Serialize};
 
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "lowercase")]
 /// Model precise timestamp or an un-parsed string
 ///
 /// The string form is a fall-back for when the input data cannot be parsed
 /// into the standard date fields. It should only be used as a last resort to
 /// accommodate old data, as it is impossible to compute or index on.
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
-#[serde(rename_all = "lowercase")]
 pub enum Date {
     Str(String),
+    Date(DateStd),
     Std(DateStd),
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "lowercase")]
+pub struct DateUStd {
+    #[serde(rename = "Date-std")]
+    pub DateHStd: DateStd,
 }
 
 impl Default for Date {
     fn default() -> Self {
-        Self::Std(DateStd {
+        Self::Date(DateStd {
             year: 2023,
             ..DateStd::default()
         })
@@ -34,34 +42,35 @@ impl XmlNode for Date {
         BytesStart::new("Date")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
-        let forbidden = UnexpectedTags(&[]);
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        // variants
+        let std_element = BytesStart::new("Date-std");
+        let std_u_element = BytesStart::new("Date_std");
 
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
+                    //println!("{:?}", e.name());
                     let name = e.name();
-                    if name == BytesStart::new("Date_std").name() {
-                        // Handle the nested <Date_std> wrapper
-                        if let Some(std) = DateStd::from_reader(reader) {
-                            return Some(Date::Std(std));
-                        }
-                    } else if name == Self::start_bytes().name() {
-                        // Handle direct string content for <Date>
-                        return read_string(reader).map(Date::Str);
-                    } else {
-                        forbidden.check(&name);
+
+                    if name == std_element.name() {
+                        return Date::Date(read_node(reader).unwrap()).into();
+                    }
+                    if name == std_u_element.name() {
+                        return Date::Date(read_node(reader).unwrap()).into();
                     }
                 }
                 Event::End(e) => {
-                    if e.name() == Self::start_bytes().to_end().name() {
-                        break;
+                    if Self::is_end(&e) {
+                        return None;
                     }
                 }
                 _ => (),
             }
         }
-        None
     }
 }
 
@@ -95,7 +104,7 @@ impl XmlNode for DateStd {
     {
         let mut date = Self::default();
 
-        // Elements
+        // elements
         let year_element = BytesStart::new("Date-std_year");
         let month_element = BytesStart::new("Date-std_month");
         let day_element = BytesStart::new("Date-std_day");
@@ -130,8 +139,8 @@ impl XmlNode for DateStd {
                     }
                 }
                 Event::End(e) => {
-                    if e.name() == Self::start_bytes().to_end().name() {
-                        return Some(date);
+                    if Self::is_end(&e) {
+                        return date.into();
                     }
                 }
                 _ => (),
@@ -139,7 +148,6 @@ impl XmlNode for DateStd {
         }
     }
 }
-
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// Can tag or name anything

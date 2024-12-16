@@ -326,6 +326,8 @@ impl XmlNode for Entrezgene {
     }
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        println!("Starting parsing of <Entrezgene>");
+  
         let mut gene = Entrezgene {
             track_info: None,
             r#type: EntrezgeneType::Unknown,
@@ -359,43 +361,48 @@ impl XmlNode for Entrezgene {
 
         loop {
             match reader.read_event().unwrap() {
-                Event::Start(e) => match e.name().as_ref() {
-                    b"track-info" => gene.track_info = read_node(reader),
-                    b"Entrezgene_track-info" => gene.track_info = read_node(reader),
-                    b"type" => gene.r#type = read_node(reader).unwrap(),
-                    b"Entrezgene_type" => gene.r#type = read_node(reader).unwrap(),
-                    b"source" => gene.source = read_node(reader).unwrap(),
-                    b"Entrezgene_source" => gene.source = read_node(reader).unwrap_or_default(),
-                    b"gene" => gene.gene = read_node(reader).unwrap(),
-                    b"Entrezgene_gene" => gene.gene = read_node(reader).unwrap(),
-                    b"prot" => gene.prot = read_node(reader),
-                    b"Entrezgene_prot" => gene.prot = read_node(reader),
-                    b"rna" => gene.rna = read_node(reader),
-                    b"summary" => gene.summary = read_string(reader),
-                    b"Entrezgene_summary" => gene.summary = read_string(reader),
-                    b"location" => gene.location = Some(read_vec_node(reader, e.to_end())),
-                    b"Entrezgene_location" => gene.location = Some(read_vec_node(reader, e.to_end())),
-                    b"gene-source" => gene.gene_source = read_node(reader),
-                    b"Entrezgene_gene-source" => gene.gene_source = read_node(reader),
-                    b"locus" => gene.locus = Some(read_vec_node(reader, e.to_end())),
-                    b"Entrezgene_locus" => gene.locus = Some(read_vec_node(reader, e.to_end())),
-                    b"properties" => gene.properties = Some(read_vec_node(reader, e.to_end())),
-                    b"Entrezgene_properties" => gene.properties = Some(read_vec_node(reader, e.to_end())),
-                    b"comments" => gene.comments = Some(read_vec_node(reader, e.to_end())),
-                    b"Entrezgene_comments" => gene.comments = Some(read_vec_node(reader, e.to_end())),
-                    b"unique-keys" => gene.unique_keys = Some(read_vec_node(reader, e.to_end())),
-                    b"Entrezgene_unique-keys" => gene.unique_keys = Some(read_vec_node(reader, e.to_end())),
-                    b"xtra-index-terms" =>  gene.xtra_index_terms = Some(read_vec_node(reader, e.to_end())),
-                    b"Entrezgene_xtra-index-terms" =>  gene.xtra_index_terms = Some(read_vec_node(reader, e.to_end())),
-                    b"xtra-properties" => gene.xtra_properties = Some(read_vec_node(reader, e.to_end())) ,
-                    b"Entrezgene_xtra-properties" => gene.xtra_properties = Some(read_vec_node(reader, e.to_end())) ,
-                    b"xtra-iq" => gene.xtra_iq = Some(read_vec_node(reader, e.to_end())),
-                    b"Entrezgene_xtra-iq" => gene.xtra_iq = Some(read_vec_node(reader, e.to_end())),
-                    b"non-unique-keys" => gene.non_unique_keys = Some(read_vec_node(reader, e.to_end())) ,
-                    b"Entrezgene_non-unique-keys" => gene.non_unique_keys = Some(read_vec_node(reader, e.to_end())) ,
-                    _ => forbidden.check(&e.name()),
-                },
+                Event::Start(e) => {
+                    println!("D Entrezgene: Encountered tag {:?}", e.name());
+                    match e.name().as_ref() {
+                        b"track-info" => gene.track_info = read_node(reader),
+                        b"Entrezgene_track-info" => gene.track_info = read_node(reader),
+                        b"type" => gene.r#type = read_node(reader).unwrap(),
+                        b"Entrezgene_type" => gene.r#type = read_node(reader).unwrap(),
+                        b"source" => gene.source = read_node(reader).unwrap(),
+                        b"Entrezgene_source" => gene.source = read_node(reader).unwrap_or_default(),
+                        b"gene" => gene.gene = read_node(reader).unwrap(),
+                        b"Entrezgene_gene" => gene.gene = read_node(reader).unwrap(),
+                        b"prot" => gene.prot = read_node(reader),
+                        b"Entrezgene_prot" => gene.prot = read_node(reader),
+                        b"rna" => gene.rna = read_node(reader),
+                        b"summary" => gene.summary = read_string(reader),
+                        b"Entrezgene_summary" => gene.summary = read_string(reader),
+                        b"location" => gene.location = Some(read_vec_node(reader, e.to_end())),
+                        b"Entrezgene_location" => gene.location = Some(read_vec_node(reader, e.to_end())),
+                        b"gene-source" => gene.gene_source = read_node(reader),
+                        b"Entrezgene_gene-source" => gene.gene_source = read_node(reader),
+                        b"locus" => gene.locus = Some(read_vec_node(reader, e.to_end())),
+                        b"Entrezgene_locus" => gene.locus = Some(read_vec_node(reader, e.to_end())),
+                        b"properties" => gene.properties = Some(read_vec_node(reader, e.to_end())),
+                        b"Entrezgene_properties" => gene.properties = Some(read_vec_node(reader, e.to_end())),
+                        b"comments" => gene.comments = Some(read_vec_node(reader, e.to_end())),
+                        b"Entrezgene_comments" => gene.comments = Some(read_vec_node(reader, e.to_end())),
+                        b"unique-keys" => gene.unique_keys = Some(read_vec_node(reader, e.to_end())),
+                        b"Entrezgene_unique-keys" => gene.unique_keys = Some(read_vec_node(reader, e.to_end())),
+                        b"xtra-index-terms" =>  gene.xtra_index_terms = Some(read_vec_node(reader, e.to_end())),
+                        b"Entrezgene_xtra-index-terms" =>  gene.xtra_index_terms = Some(read_vec_node(reader, e.to_end())),
+                        b"xtra-properties" => gene.xtra_properties = Some(read_vec_node(reader, e.to_end())) ,
+                        b"Entrezgene_xtra-properties" => gene.xtra_properties = Some(read_vec_node(reader, e.to_end())) ,
+                        b"xtra-iq" => gene.xtra_iq = Some(read_vec_node(reader, e.to_end())),
+                        b"Entrezgene_xtra-iq" => gene.xtra_iq = Some(read_vec_node(reader, e.to_end())),
+                        b"non-unique-keys" => gene.non_unique_keys = Some(read_vec_node(reader, e.to_end())) ,
+                        b"Entrezgene_non-unique-keys" => gene.non_unique_keys = Some(read_vec_node(reader, e.to_end())) ,
+                        _ => forbidden.check(&e.name()),
+                    }
+                },    
                 Event::End(e) => {
+                    println!("D: Entrezgene: Finished parsing {:?}", e.name());
+
                     if e.name() == Self::start_bytes().name() {
                         return Some(gene);
                     }
@@ -544,6 +551,7 @@ impl XmlNode for GeneCommentary {
                     b"Gene-commentary_genomic-coords" => commentary.genomic_coords = Some(read_vec_node(reader, e.to_end())) ,
                     b"Gene-commentary_comment" => commentary.comment = Some(read_vec_node(reader, e.to_end())) ,
                     b"Gene-commentary_create-date" => commentary.create_date = read_node(reader) ,
+                    b"Gene-commentary_update-date" => commentary.update_date = read_node(reader) ,
                     _ => forbidden.check(&e.name()),
                 },
                 Event::End(e) => {
@@ -697,31 +705,54 @@ impl Default for Maps {
 }
 
 impl XmlNode for Vec<Entrezgene> {
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
-        let mut vec = Vec::new();
-        let mut buf = Vec::new();
-
-        while let Ok(event) = reader.read_event_into(&mut buf) {
-            match event {
-                Event::Start(ref e) if e.name().as_ref() == b"Entrezgene" => {
-                    if let Some(entrezgene) = Entrezgene::from_reader(reader) {
-                        vec.push(entrezgene);
-                    }
-                }
-                Event::End(ref e) if e.name().as_ref() == b"EntrezgeneSet" => {
-                    return Some(vec);
-                }
-                Event::Eof => break,
-                _ => (),
-            }
-            buf.clear();
-        }
-
-        None
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Entrezgene-Set")
     }
 
-    fn start_bytes() -> BytesStart<'static> {
-        BytesStart::new("EntrezgeneSet")
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut genes = Vec::new();
+        let forbidden = UnexpectedTags(&[]);
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+        
+                    if name == BytesStart::new("Entrezgene").name() {
+                        if let Some(entrezgene) = read_node::<Entrezgene>(reader) {
+                            genes.push(entrezgene);
+                        } else {
+                            println!("Skipping a failed <Entrezgene>");
+                        }
+                    } else {
+                        forbidden.check(&name); // Check unexpected tags here
+                    }
+                }
+                Event::End(e) if e.name() == Self::start_bytes().to_end().name() => {
+                    println!("Successfully finished parsing <Entrezgene-Set>");
+                    return Some(genes);
+                }
+                Event::Text(e) => {
+                    // Step 1: Store the unescaped string into a variable
+                    let unescaped = e.unescape().unwrap_or_default();
+                    
+                    // Step 2: Trim the string to remove unnecessary whitespace
+                    let text = unescaped.trim();
+                    
+                    if !text.is_empty() {
+                        println!("Unexpected text between nodes: '{}'", text);
+                    }
+                }
+
+                Event::Eof => {
+                    println!("Unexpected EOF while parsing <Entrezgene-Set>");
+                    break;
+                }
+                _ => (), // Catch all other events
+            }
+        }
+        
+        None
     }
 }
 

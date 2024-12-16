@@ -5,10 +5,25 @@ mod tests {
     use quick_xml::Reader;
     use quick_xml::events::Event;
 
-    use ncbi::entrezgene::{Entrezgene, EntrezgeneType};
-    use ncbi::parsing::XmlNode;
+    use ncbi::entrezgene::{Entrezgene, EntrezgeneType, GeneTrack};
+    use ncbi::parsing::{XmlNode,read_node};
 
     #[test]
+
+    #[test]
+    fn test_gene_track_parsing() {
+    let xml = r#"
+<Gene-track>
+        <Gene-track_geneid>12345</Gene-track_geneid>
+</Gene-track>
+"#;
+        let mut reader = Reader::from_str(xml);
+        reader.trim_text(true);
+    
+        let track: Option<GeneTrack> = read_node(&mut reader);
+        assert!(track.is_some());
+    }
+
     fn test_parse_entrezgene_tp73() {
         // Path to the test file
         let file_path = "tp73.genbank.xml";
