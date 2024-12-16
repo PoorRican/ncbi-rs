@@ -8,6 +8,9 @@ Currently, the only specification that's been implemented is the [NCBI ASN.1 bio
 sequence data](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/C_DOC/lxr/source/asn/) format,
 and seems to be the first non-official, publicly available implementation of this spec.
 
+That work is currently being exended for XML exports of Entrez gene descriptions,
+as described [here](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/entrezgene/).
+
 
 # License
 

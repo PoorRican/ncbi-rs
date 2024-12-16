@@ -1,4 +1,5 @@
 pub mod biblio;
+pub mod entrezgene;
 pub mod general;
 pub mod medline;
 pub mod r#pub;

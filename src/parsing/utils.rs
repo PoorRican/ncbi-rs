@@ -89,7 +89,11 @@ pub fn read_string(reader: &mut XmlReader) -> Option<String> {
 
 /// Parses the next available XML data as a [`XmlNode`]
 pub fn read_node<T: XmlNode>(reader: &mut XmlReader) -> Option<T> {
-    T::from_reader(reader)
+    let result=T::from_reader(reader);
+    if result.is_none() {
+        println!("Failed to parse node for {}", std::any::type_name::<T>());
+    }
+    result
 }
 
 /// Parse each [`BytesText`] within the enclosed element as a [`String`]

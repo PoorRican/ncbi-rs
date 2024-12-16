@@ -65,6 +65,7 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::str::FromStr;
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "lowercase")]
@@ -1921,13 +1922,6 @@ impl XmlNode for GeneRef {
         let locus_tag_tag = BytesStart::new("Gene-ref_locus-tag");
         let form_name_tag = BytesStart::new("Gene-ref_formal-name");
 
-        let forbidden = [
-            pseudo_tag,
-            syn_tag,
-            form_name_tag,
-        ];
-        let forbidden = UnexpectedTags(&forbidden);
-
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
@@ -1945,8 +1939,12 @@ impl XmlNode for GeneRef {
                         gene.db = Some(read_vec_node(reader, db_tag.to_end()));
                     } else if name == locus_tag_tag.name() {
                         gene.locus_tag = read_string(reader);
-                    } else if name != Self::start_bytes().name() {
-                        forbidden.check(&name);
+                    } else if name == syn_tag.name() {
+                        gene.syn = Some(read_vec_node(reader, syn_tag.to_end()));
+                    } else if name == form_name_tag.name() {
+                        gene.formal_name = read_node(reader);
+                    } else if name == pseudo_tag.name() {
+                        gene.pseudo = read_bool_attribute(&e)?;
                     }
                 }
                 Event::End(e) => {
@@ -1960,12 +1958,25 @@ impl XmlNode for GeneRef {
     }
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
 #[repr(u8)]
 pub enum GeneNomenclatureStatus {
+    #[default] // Not explicitly set in standard
     Unknown,
     Official,
     Interim,
+}
+
+impl FromStr for GeneNomenclatureStatus {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "official" => Ok(GeneNomenclatureStatus::Official),
+            "interim" => Ok(GeneNomenclatureStatus::Interim),
+            _ => Ok(GeneNomenclatureStatus::Unknown),
+        }
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -1975,6 +1986,59 @@ pub struct GeneNomenclature {
     pub name: Option<String>,
     pub source: Option<DbTag>,
 }
+
+impl Default for GeneNomenclature {
+    fn default() -> Self {
+        Self {
+            status: GeneNomenclatureStatus::default(),
+            symbol: None,
+            name: None,
+            source: None,
+        }
+    }
+}
+
+impl XmlNode for GeneNomenclature {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Gene-nomenclature")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut nomenclature = GeneNomenclature::default();
+
+        let status_element = BytesStart::new("Gene-nomenclature_status");
+        let symbol_element = BytesStart::new("Gene-nomenclature_symbol");
+        let name_element = BytesStart::new("Gene-nomenclature_name");
+        let pseudo_element = false;
+
+        //let forbidden = UnexpectedTags(&[]);
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == status_element.name() {
+                        if let Some(status_string) = read_string(reader) {
+                            nomenclature.status = GeneNomenclatureStatus::from_str(&status_string).unwrap_or_default();
+                        }
+                    } else if name == symbol_element.name() {
+                        nomenclature.symbol = Some(read_string(reader).unwrap_or_default());
+                    } else if name == name_element.name() {
+                        nomenclature.name = Some(read_string(reader).unwrap_or_default());
+                    }
+                }
+                Event::End(e) => {
+                    if e.name() == Self::start_bytes().to_end().name() {
+                        return Some(nomenclature);
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// Reference to an organism
@@ -2009,6 +2073,7 @@ impl XmlNode for OrgRef {
         let mut org_ref = OrgRef::default();
 
         let taxname_element = BytesStart::new("Org-ref_taxname");
+        let common_element = BytesStart::new("Org-ref_common");
         let db_element = BytesStart::new("Org-ref_db");
         let orgname_element = BytesStart::new("Org-ref_orgname");
 
@@ -2021,6 +2086,8 @@ impl XmlNode for OrgRef {
 
                     if name == taxname_element.name() {
                         org_ref.taxname = read_string(reader);
+                    } else if name == common_element.name() {
+                        org_ref.common = read_string(reader);
                     } else if name == orgname_element.name() {
                         org_ref.orgname = read_node(reader);
                     } else if name == db_element.name() {
@@ -2136,6 +2203,7 @@ impl XmlNode for OrgName {
         let mod_element = BytesStart::new("OrgName_mod");
         let lineage_element = BytesStart::new("OrgName_lineage");
         let gcode_element = BytesStart::new("OrgName_gcode");
+        let mgcode_element = BytesStart::new("OrgName_mgcode");
         let div_element = BytesStart::new("OrgName_div");
 
         let forbidden = UnexpectedTags(&[]);
@@ -2153,6 +2221,8 @@ impl XmlNode for OrgName {
                         org_name.lineage = read_string(reader);
                     } else if name == gcode_element.name() {
                         org_name.gcode = read_int(reader);
+                    } else if name == mgcode_element.name() {
+                        org_name.mgcode = read_int(reader);
                     } else if name == name_element.name() {
                         org_name.name = read_node(reader);
                     } else if name == mod_element.name() {
@@ -2456,6 +2526,55 @@ pub enum BioSourceOrigin {
     Other = 255,
 }
 
+impl XmlNode for BioSourceOrigin {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("BioSource_origin")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        match reader.read_event().unwrap() {
+            // Handle Start tag with "value" attribute
+            Event::Start(ref e) => {
+                if let Some(attr) = e.attributes()
+                    .filter_map(|a| a.ok())
+                    .find(|a| a.key.as_ref() == b"value")
+                {
+                    let value = String::from_utf8(attr.value.to_vec()).ok()?;
+                    return Some(match value.as_str() {
+                        "natural" => BioSourceOrigin::Natural,
+                        "natmut" => BioSourceOrigin::NatMut,
+                        "mut" => BioSourceOrigin::Mut,
+                        "artificial" => BioSourceOrigin::Artificial,
+                        "synthetic" => BioSourceOrigin::Synthetic,
+                        _ => BioSourceOrigin::Other, // Catch unrecognized values
+                    });
+                }
+            }
+            // Handle Text content inside the tag
+            Event::Text(e) => {
+                let text = e.unescape().ok()?.into_owned();
+                return Some(match text.as_str() {
+                    "natural" => BioSourceOrigin::Natural,
+                    "natmut" => BioSourceOrigin::NatMut,
+                    "mut" => BioSourceOrigin::Mut,
+                    "artificial" => BioSourceOrigin::Artificial,
+                    "synthetic" => BioSourceOrigin::Synthetic,
+                    _ => BioSourceOrigin::Other, // Catch unrecognized values
+                });
+            }
+            // Exit on End tag
+            Event::End(e) => {
+                if e.name() == Self::start_bytes().to_end().name() {
+                    return Some(BioSourceOrigin::Unknown);
+                }
+            }
+            _ => (),
+        }
+
+        Some(BioSourceOrigin::Unknown) // Default fallback
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 pub struct BioSource {
@@ -2484,7 +2603,7 @@ impl XmlNode for BioSource {
         let mut source = Self::default();
 
         let genome_element = BytesStart::new("BioSource_genome");
-        let _origin_element = BytesStart::new("BioSource_origin");
+        let origin_element = BytesStart::new("BioSource_origin");
         let org_element = BytesStart::new("BioSource_org");
         let subtype_element = BytesStart::new("BioSource_subtype");
 
@@ -2501,6 +2620,10 @@ impl XmlNode for BioSource {
                         source.org = read_node(reader).unwrap();
                     } else if name == subtype_element.name() {
                         source.subtype = Some(read_vec_node(reader, subtype_element.to_end()))
+                    } else if name == origin_element.name() {
+                        source.origin = read_node(reader).unwrap();
+                    } else if name != Self::start_bytes().name() {
+                        forbidden.check(&name);
                     } else if name != Self::start_bytes().name() {
                         forbidden.check(&name);
                     }
