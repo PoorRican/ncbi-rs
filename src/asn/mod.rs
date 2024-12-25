@@ -15,3 +15,4 @@ pub mod seqloc;
 pub mod seqres;
 pub mod seqset;
 pub mod seqtable;
+pub mod entrezgene;
