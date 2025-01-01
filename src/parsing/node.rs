@@ -55,7 +55,7 @@ pub trait XmlNode {
         Self: Sized;
 
     fn is_end(element: &BytesEnd) -> bool {
-        element.name() == Self::start_bytes().name()
+        element.name() == Self::start_bytes().to_end().name()
     }
 }
 

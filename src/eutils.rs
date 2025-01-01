@@ -5,6 +5,7 @@ use crate::parsing::XmlNode;
 use quick_xml::events::Event;
 use quick_xml::Reader;
 use std::fs;
+use crate::entrezgene::EntrezGeneSet;
 
 const BASE: &str = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/";
 
@@ -101,6 +102,7 @@ pub fn build_fetch_url(db: EntrezDb, id: &str, r#type: &str, mode: &str) -> Stri
 
 pub enum DataType {
     BioSeqSet(BioSeqSet),
+    EntrezGeneSet(EntrezGeneSet),
     /// placeholder for other types
     EtAl,
 }
@@ -110,9 +112,19 @@ pub fn parse_xml(response: &str) -> Result<DataType, ()> {
     loop {
         match reader.read_event().unwrap() {
             Event::Start(e) => {
-                if e.name() == BioSeqSet::start_bytes().name() {
-                    let set = BioSeqSet::from_reader(&mut reader).unwrap();
-                    return Ok(DataType::BioSeqSet(set));
+                let bio_seq_bytes = BioSeqSet::start_bytes();
+                let entrez_gene_bytes = EntrezGeneSet::start_bytes();
+                // TODO: start bytes should be constant literals
+                match e.name() {
+                    name if name == bio_seq_bytes.name() => {
+                        let set = BioSeqSet::from_reader(&mut reader).unwrap();
+                        return Ok(DataType::BioSeqSet(set));
+                    },
+                    name if name == entrez_gene_bytes.name() => {
+                        let set = EntrezGeneSet::from_reader(&mut reader).unwrap();
+                        return Ok(DataType::EntrezGeneSet(set));
+                    },
+                    _ => (),
                 }
             }
             Event::Eof => break,

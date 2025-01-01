@@ -80,6 +80,31 @@ pub struct DateStd {
     pub second: Option<u8>,
 }
 
+impl DateStd {
+    pub fn new_from_ymd<T>(year: u16, month: T, day: T) -> Self
+    where T: Into<Option<u8>>{
+        Self {
+            year,
+            month: month.into(),
+            day: day.into(),
+            ..Self::default()
+        }
+    }
+
+    pub fn new_from_ymd_hms<T>(year: u16, month: T, day: T, hour: T, minute: T, second: T) -> Self
+    where T: Into<Option<u8>>{
+        Self {
+            year,
+            month: month.into(),
+            day: day.into(),
+            hour: hour.into(),
+            minute: minute.into(),
+            second: second.into(),
+            ..Self::default()
+        }
+    }
+}
+
 impl XmlNode for DateStd {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Date-std")
@@ -95,6 +120,10 @@ impl XmlNode for DateStd {
         let year_element = BytesStart::new("Date-std_year");
         let month_element = BytesStart::new("Date-std_month");
         let day_element = BytesStart::new("Date-std_day");
+        let season_element = BytesStart::new("Date-std_season");
+        let hour_element = BytesStart::new("Date-std_hour");
+        let minute_element = BytesStart::new("Date-std_minute");
+        let second_element = BytesStart::new("Date-std_second");
 
         let forbidden = UnexpectedTags(&[]);
 
@@ -109,6 +138,14 @@ impl XmlNode for DateStd {
                         date.month = read_int(reader);
                     } else if name == day_element.name() {
                         date.day = read_int(reader);
+                    } else if name == season_element.name() {
+                        date.season = read_string(reader);
+                    } else if name == hour_element.name() {
+                        date.hour = read_int(reader);
+                    } else if name == minute_element.name() {
+                        date.minute = read_int(reader);
+                    } else if name == second_element.name() {
+                        date.second = read_int(reader);
                     } else if name != Self::start_bytes().name() {
                         forbidden.check(&name);
                     }

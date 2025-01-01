@@ -87,6 +87,29 @@ pub fn read_string(reader: &mut XmlReader) -> Option<String> {
     }
 }
 
+/// Consumes all XML data until first [`Event::Text`] or [`Event::End`] is found
+///
+/// Reads `123456` when reader is at <tag><inner>123<nested>456</nested</inner>789</tag>
+pub fn greedy_read_string(reader: &mut XmlReader) -> Option<String> {
+    let mut data = String::default();
+    loop {
+        match reader.read_event().unwrap() {
+            Event::Text(text) => {
+                let extracted = bytes_to_string(text.deref());
+                if is_alphanum(extracted.trim()) {
+                    data.push_str(extracted.as_str())
+                }
+            }
+            Event::End(_) => {
+                return data.trim()
+                    .to_string()
+                    .into()
+            }
+            _ => (),
+        }
+    }
+}
+
 /// Parses the next available XML data as a [`XmlNode`]
 pub fn read_node<T: XmlNode>(reader: &mut XmlReader) -> Option<T> {
     T::from_reader(reader)
