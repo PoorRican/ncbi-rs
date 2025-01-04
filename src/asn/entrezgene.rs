@@ -163,7 +163,7 @@ pub enum GeneCommentaryType {
     MRna = 3 ,
     #[serde(rename = "rRNA")]
     RRna = 4 ,
-    #[serde(rename = "rRNA")]
+    #[serde(rename = "tRNA")]
     TRna = 5 ,
     #[serde(rename = "snRNA")]
     SnRNA = 6 ,
@@ -319,6 +319,38 @@ pub struct XtraTerms {  //-- see note 2
 
 /// # Implementations
 
+fn read_gene_track_status(reader: &mut Reader<&[u8]>) -> Option<GeneTrackStatus> {
+    let text = read_string(reader)?;        
+    let num_value = text.parse::<u8>().ok()?; 
+    match num_value {
+        0 => Some(GeneTrackStatus::Live),
+        1 => Some(GeneTrackStatus::Secondary),
+        2 => Some(GeneTrackStatus::Discontinued),
+        // Using "Discontinued" as a fallback for unknown values.
+        _ => Some(GeneTrackStatus::Discontinued),
+    }
+}
+
+fn read_entrezgene_type(reader: &mut Reader<&[u8]>) -> Option<EntrezgeneType> {
+   let text = read_string(reader)?;
+   let num_value = text.parse::<u8>().ok()?;
+   // Mit dem num_value auf das Enum abbilden:
+   Some(match num_value {
+       1 => EntrezgeneType::TRna,
+       2 => EntrezgeneType::RRna,
+       3 => EntrezgeneType::SnRna,
+       4 => EntrezgeneType::ScRna,
+       5 => EntrezgeneType::SnoRna,
+       6 => EntrezgeneType::ProteinCoding,
+       7 => EntrezgeneType::Pseudo,
+       8 => EntrezgeneType::Transposon,
+       9 => EntrezgeneType::MiscRna,
+       10 => EntrezgeneType::NcRna,
+       11 => EntrezgeneType::BiologicalRegion,
+       255 => EntrezgeneType::Other,
+       _ => EntrezgeneType::Unknown, // Fallback
+   })
+}
 
 impl XmlNode for Entrezgene {
     fn start_bytes() -> BytesStart<'static> {
@@ -350,6 +382,7 @@ impl XmlNode for Entrezgene {
             non_unique_keys: None,
         };
 
+
         use quick_xml::events::BytesStart;
 
         let forbidden_tags = [
@@ -367,7 +400,11 @@ impl XmlNode for Entrezgene {
                         b"track-info" => gene.track_info = read_node(reader),
                         b"Entrezgene_track-info" => gene.track_info = read_node(reader),
                         b"type" => gene.r#type = read_node(reader).unwrap(),
-                        b"Entrezgene_type" => gene.r#type = read_node(reader).unwrap(),
+                        b"Entrezgene_type" => {
+                            if let Some(t) = read_entrezgene_type(reader) {
+                                gene.r#type = t;
+                            }
+                        }
                         b"source" => gene.source = read_node(reader).unwrap(),
                         b"Entrezgene_source" => gene.source = read_node(reader).unwrap_or_default(),
                         b"gene" => gene.gene = read_node(reader).unwrap(),
@@ -526,29 +563,22 @@ impl XmlNode for GeneCommentary {
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => match e.name().as_ref() {
-                    b"type" => commentary.r#type = read_node(reader).unwrap(),
-                    b"Gene-commentary_type" => commentary.r#type = read_node(reader).unwrap(),
-                    b"heading" => commentary.heading = read_string(reader),
-                    b"Gene-commentary_heading" => commentary.heading = read_string(reader),
-                    b"label" => commentary.label = read_string(reader),
-                    b"Gene-commentary_label" => commentary.label = read_string(reader),
-                    b"text" => commentary.text = read_string(reader),
-                    b"Gene-commentary_text" => commentary.text = read_string(reader),
-                    b"accession" => commentary.accession = read_string(reader),
-                    b"Gene-commentary_accession" => commentary.accession = read_string(reader),
-                    b"version" => commentary.version = Some(read_string(reader).unwrap().parse().unwrap()),
-                    b"Gene-commentary_version" => commentary.version = Some(read_string(reader).unwrap().parse().unwrap()),
-                    b"xtra-properties" => commentary.xtra_properties = Some(read_vec_node(reader, e.to_end())) ,
-                    b"Gene-commentary_xtra-properties" => commentary.xtra_properties = Some(read_vec_node(reader, e.to_end())) ,
-                    b"refs" => commentary.refs = Some(read_vec_node(reader, e.to_end())),
-                    b"Gene-commentary_refs" => commentary.comment = Some(read_vec_node(reader, e.to_end())) ,
-                    b"seqs" => commentary.seqs = Some(read_vec_node(reader, e.to_end())),
-                    b"Gene-commentary_seqs" => commentary.seqs = Some(read_vec_node(reader, e.to_end())) ,
-                    b"source" => commentary.seqs = Some(read_vec_node(reader, e.to_end())),
-                    b"Gene-commentary_source" => commentary.source = Some(read_vec_node(reader, e.to_end())) ,
+                    b"type" | b"Gene-commentary_type" => {
+                        if let Some(t) = read_gene_commentary_type(reader) {
+                            commentary.r#type = t;
+                        }
+                    }
+                    b"heading" | b"Gene-commentary_heading" => commentary.heading = read_string(reader),
+                    b"label" | b"Gene-commentary_label" => commentary.label = read_string(reader),
+                    b"text" | b"Gene-commentary_text" => commentary.text = read_string(reader),
+                    b"accession" | b"Gene-commentary_accession" => commentary.accession = read_string(reader),
+                    b"version" | b"Gene-commentary_version" => commentary.version = Some(read_string(reader).unwrap().parse().unwrap()),
+                    b"xtra-properties" | b"Gene-commentary_xtra-properties" => commentary.xtra_properties = Some(read_vec_node(reader, e.to_end())) ,
+                    b"refs" | b"Gene-commentary_refs" => commentary.comment = Some(read_vec_node(reader, e.to_end())) ,
+                    b"seqs" | b"Gene-commentary_seqs" => commentary.seqs = Some(read_vec_node(reader, e.to_end())) ,
+                    b"source" | b"Gene-commentary_source" => commentary.source = Some(read_vec_node(reader, e.to_end())) ,
+                    b"genomic-coords" | b"Gene-commentary_genomic-coords" => commentary.genomic_coords = Some(read_vec_node(reader, e.to_end())) ,
                     b"Gene-commentary_products" => commentary.products = Some(read_vec_node(reader, e.to_end())) ,
-                    b"genomic-coords" => commentary.genomic_coords = Some(read_vec_node(reader, e.to_end())) ,
-                    b"Gene-commentary_genomic-coords" => commentary.genomic_coords = Some(read_vec_node(reader, e.to_end())) ,
                     b"Gene-commentary_comment" => commentary.comment = Some(read_vec_node(reader, e.to_end())) ,
                     b"Gene-commentary_create-date" => commentary.create_date = read_node(reader) ,
                     b"Gene-commentary_update-date" => commentary.update_date = read_node(reader) ,
@@ -598,51 +628,55 @@ impl XmlNode for EntrezgeneType {
     }
 }
 
+fn read_gene_commentary_type(reader: &mut Reader<&[u8]>) -> Option<GeneCommentaryType> {
+    let text: String = read_string(reader).unwrap_or_default();         // read_string is assumed to return Option<String>
+    match text.as_str() {
+        "1"|"Genomic" => Some(GeneCommentaryType::Genomic) ,
+        "2"|"pre-RNA" => Some(GeneCommentaryType::PreRna) ,
+        "3"|"mRNA" => Some(GeneCommentaryType::MRna) ,
+        "4"|"rRNA" => Some(GeneCommentaryType::RRna) ,
+        "5"|"tRNA" => Some(GeneCommentaryType::TRna) ,
+        "6"|"snRNA" => Some(GeneCommentaryType::SnRNA) ,
+        "7"|"scRNA" => Some(GeneCommentaryType::ScRNA) ,
+        "8"|"peptide" => Some(GeneCommentaryType::Peptide) ,
+        "9"|"other-genetic" => Some(GeneCommentaryType::OtherGenetic) ,
+        "10"|"genome-mRNA" => Some(GeneCommentaryType::GenomicMrna) ,
+        "11"|"cRNA" => Some(GeneCommentaryType::CRna) ,
+        "12"|"mature-peptide" => Some(GeneCommentaryType::MaturePeptide) ,
+        "13"|"pre-protein" => Some(GeneCommentaryType::PreProtein) ,
+        "14"|"miscRNA" => Some(GeneCommentaryType::MiscRNA)  ,
+        "15"|"snoRNA" => Some(GeneCommentaryType::SnoRNA) ,
+        "16"|"property" => Some(GeneCommentaryType::Property) , //-- used to display tag/value pair
+                //-- for this type label is used as property tag, text is used as property value, 
+                //-- other fields are not used.
+        "17"|"reference" =>Some(GeneCommentaryType::Reference) , //-- currently not used             
+        "18"|"generif" => Some(GeneCommentaryType::Generif) ,   //-- to include generif in the main blob             
+        "19"|"phenotype" => Some(GeneCommentaryType::Phenotype),  //-- to display phenotype information
+        "20"|"complex" => Some(GeneCommentaryType::Complex) ,   //-- used (but not limited) to identify resulting 
+                //-- interaction complexes
+        "21"|"compound" => Some(GeneCommentaryType::Compound) ,  //-- pubchem entities
+        "22"|"ncRNA" => Some(GeneCommentaryType::NcRna) , 
+        "23"|"gene-group" => Some(GeneCommentaryType::GeneGroup) ,//-- for relationship sets (such as pseudogene / parent gene)
+        "24"|"assembly" => Some(GeneCommentaryType::Assembly) ,  //-- for full assembly accession
+        "25"|"assembly-unit" => Some(GeneCommentaryType::AssemblyUnit) , //-- for the assembly unit corresponding to the refseq
+        "26"|"c-region" => Some(GeneCommentaryType::CRegion) ,
+        "27"|"d-segment" => Some(GeneCommentaryType::DSegment) ,
+        "28"|"j-segment" => Some(GeneCommentaryType::JSegment) ,
+        "29"|"v-segment" => Some(GeneCommentaryType::VSegment) ,
+        "254"|"comment" => Some(GeneCommentaryType::Comment) ,
+        "255"|"other" => Some(GeneCommentaryType::Other) ,
+        &_ => Some(GeneCommentaryType::Other) ,
+    } // match
+}
+
+
 impl XmlNode for GeneCommentaryType {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Gene-commentary-type")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
-        let text = read_string(reader).unwrap_or_default();
-        match text.as_str() {
-            "Genomic" => Some(Self::Genomic) ,
-            "pre-RNA" => Some(Self::PreRna) ,
-            "mRNA" => Some(Self::MRna) ,
-            "rRNA" => Some(Self::RRna) ,
-            "rRNA" => Some(Self::TRna) ,
-            "snRNA" => Some(Self::SnRNA) ,
-            "scRNA" => Some(Self::ScRNA) ,
-            "peptide" => Some(Self::Peptide) ,
-            "other-genetic" => Some(Self::OtherGenetic) ,
-            "genome-mRNA" => Some(Self::GenomicMrna) ,
-            "cRNA" => Some(Self::CRna) ,
-            "mature-peptide" => Some(Self::MaturePeptide) ,
-            "pre-protein" => Some(Self::PreProtein) ,
-            "miscRNA" => Some(Self::MiscRNA)  ,
-            "snoRNA" => Some(Self::SnoRNA) ,
-            "property" => Some(Self::Property) , //-- used to display tag/value pair
-                     //-- for this type label is used as property tag, text is used as property value, 
-                     //-- other fields are not used.
-             "reference" =>Some(Self::Reference) , //-- currently not used             
-             "generif" => Some(Self::Generif) ,   //-- to include generif in the main blob             
-             "phenotype" => Some(Self::Phenotype),  //-- to display phenotype information
-             "complex" => Some(Self::Complex) ,   //-- used (but not limited) to identify resulting 
-                     //-- interaction complexes
-             "compound" => Some(Self::Compound) ,  //-- pubchem entities
-             "ncRNA" => Some(Self::NcRna) , 
-             "gene-group" => Some(Self::GeneGroup) ,//-- for relationship sets (such as pseudogene / parent gene)
-             "assembly" => Some(Self::Assembly) ,  //-- for full assembly accession
-             "assembly-unit" => Some(Self::AssemblyUnit) , //-- for the assembly unit corresponding to the refseq
-             "c-region" => Some(Self::CRegion) ,
-             "d-segment" => Some(Self::DSegment) ,
-             "j-segment" => Some(Self::JSegment) ,
-             "v-segment" => Some(Self::VSegment) ,
-             "comment" => Some(Self::Comment) ,
-             "other" => Some(Self::Other) ,
-             &_ => Some(Self::Other) ,
-        }
-             
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<GeneCommentaryType> {
+        read_gene_commentary_type(reader)
     }
 }
 impl XmlNode for GeneTrackStatus {
