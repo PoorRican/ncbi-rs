@@ -2432,29 +2432,42 @@ impl XmlNode for BioSourceGenome {
     }
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
-#[repr(u8)]
-pub enum BioSourceOrigin {
-    #[default]
-    Unknown,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    pub enum BioSourceOrigin {
+        #[default]
+        Unknown = 0,
 
-    /// normal biological entity
-    Natural,
+        /// normal biological entity
+        Natural = 1,
 
-    /// naturally occurring mutant
-    NatMut,
+        /// naturally occurring mutant
+        NatMut,
 
-    /// artificially mutagenized
-    Mut,
+        /// artificially mutagenized
+        Mut,
 
-    /// artificially engineered
-    Artificial,
+        /// artificially engineered
+        Artificial,
 
-    /// purely synthetic
-    Synthetic,
+        /// purely synthetic
+        Synthetic,
 
-    Other = 255,
+        Other = 255,
+    }
 }
+
+impl XmlNode for BioSourceOrigin {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("BioSource_genome")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        Self::from_u8(read_int(reader).unwrap())
+    }
+}
+
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
