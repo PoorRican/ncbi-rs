@@ -8,7 +8,7 @@
 
 use crate::biblio::IdPat;
 use crate::general::{Date, DbTag, IntFuzz, ObjectId};
-use crate::parsing::{attribute_value, read_attributes, read_int, read_node, read_string, UnexpectedTags};
+use crate::parsing::{attribute_value, read_attributes, read_vec_node, read_int, read_node, read_string, UnexpectedTags};
 use crate::seqfeat::FeatId;
 use crate::parsing::{XmlNode, XmlVecNode, XmlValue};
 use quick_xml::events::{BytesStart, Event};
@@ -222,60 +222,49 @@ impl SeqLoc {
         Self::Null
     }
 }
-
 impl XmlNode for SeqLoc {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Seq-loc")
     }
 
-    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
-        // variant tags
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
         let null_variant = BytesStart::new("Seq-loc_null");
-        let int_variant = BytesStart::new("Seq-loc_int");
         let empty_variant = BytesStart::new("Seq-loc_empty");
         let whole_variant = BytesStart::new("Seq-loc_whole");
-        let packed_int_variant = BytesStart::new("Seq-loc_packed-int");
-        let pnt_variant = BytesStart::new("Seq-loc_pnt");
-        let packed_pnt_variant = BytesStart::new("Seq-loc_packed_pnt");
+        let int_variant = BytesStart::new("Seq-loc_int");
         let mix_variant = BytesStart::new("Seq-loc_mix");
-        let equiv_variant = BytesStart::new("Seq-loc_equiv");
-        let bond_variant = BytesStart::new("Seq-loc_bond");
-        let feat_variant = BytesStart::new("Seq-loc_feat");
 
-        let forbidden = [
-            null_variant,
-            empty_variant,
-            packed_int_variant,
-            pnt_variant,
-            packed_pnt_variant,
-            mix_variant,
-            equiv_variant,
-            bond_variant,
-            feat_variant
-        ];
-        let forbidden = UnexpectedTags(&forbidden);
+        let forbidden_tags = [BytesStart::new("unknown-tag")];
+        let forbidden = UnexpectedTags(&forbidden_tags);
 
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
                     let name = e.name();
 
-                    if name == int_variant.name() {
-                        return Self::Int(read_node(reader).unwrap()).into()
+                    if name == null_variant.name() {
+                        return Some(Self::Null);
+                    } else if name == empty_variant.name() {
+                        return Some(Self::Empty(read_node(reader).unwrap()));
                     } else if name == whole_variant.name() {
-                        return Self::Whole(read_node(reader).unwrap()).into()
+                        return Some(Self::Whole(read_node(reader).unwrap()));
+                    } else if name == int_variant.name() {
+                        return Some(Self::Int(read_node(reader).unwrap()));
+                    } else if name == mix_variant.name() {
+                        return Some(Self::Mix(read_node(reader).unwrap()));
                     } else if name != Self::start_bytes().name() {
                         forbidden.check(&name);
                     }
                 }
                 Event::End(e) => {
-                    if Self::is_end(&e) {
-                        return None
+                    if e.name() == Self::start_bytes().to_end().name() {
+                        break;
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
+        None
     }
 }
 
@@ -410,7 +399,19 @@ pub struct SeqBond {
     pub b: Option<SeqPoint>,
 }
 
-/// this will hold anything
-pub type SeqLocMix = Vec<SeqLoc>;
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
+pub struct SeqLocMix(pub Vec<SeqLoc>);
+
+impl XmlNode for SeqLocMix {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-loc_mix")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        Some(Self(read_vec_node(reader, Self::start_bytes().to_end())))
+    }
+}
+
+
 /// set of equivalent locations
 pub type SeqLocEquiv = Vec<SeqLoc>;
