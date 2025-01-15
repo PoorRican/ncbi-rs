@@ -18,6 +18,14 @@ use serde::{Deserialize, Serialize};
 pub enum Date {
     Str(String),
     Date(DateStd),
+    Std(DateStd),
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "lowercase")]
+pub struct DateUStd {
+    #[serde(rename = "Date-std")]
+    pub DateHStd: DateStd,
 }
 
 impl Default for Date {
@@ -40,13 +48,18 @@ impl XmlNode for Date {
     {
         // variants
         let std_element = BytesStart::new("Date-std");
+        let std_u_element = BytesStart::new("Date_std");
 
         loop {
             match reader.read_event().unwrap() {
                 Event::Start(e) => {
+                    //println!("{:?}", e.name());
                     let name = e.name();
 
                     if name == std_element.name() {
+                        return Date::Date(read_node(reader).unwrap()).into();
+                    }
+                    if name == std_u_element.name() {
                         return Date::Date(read_node(reader).unwrap()).into();
                     }
                 }
@@ -95,6 +108,10 @@ impl XmlNode for DateStd {
         let year_element = BytesStart::new("Date-std_year");
         let month_element = BytesStart::new("Date-std_month");
         let day_element = BytesStart::new("Date-std_day");
+        let season_element = BytesStart::new("Date-std_season");
+        let hour_element = BytesStart::new("Date-std_hour");
+        let minute_element = BytesStart::new("Date-std_minute");
+        let second_element = BytesStart::new("Date-std_second");
 
         let forbidden = UnexpectedTags(&[]);
 
@@ -109,6 +126,14 @@ impl XmlNode for DateStd {
                         date.month = read_int(reader);
                     } else if name == day_element.name() {
                         date.day = read_int(reader);
+                    } else if name == season_element.name() {
+                        date.season = read_string(reader);
+                    } else if name == hour_element.name() {
+                        date.hour = read_int(reader);
+                    } else if name == minute_element.name() {
+                        date.minute = read_int(reader);
+                    } else if name == second_element.name() {
+                        date.second = read_int(reader);
                     } else if name != Self::start_bytes().name() {
                         forbidden.check(&name);
                     }
