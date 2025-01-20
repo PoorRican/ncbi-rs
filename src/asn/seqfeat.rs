@@ -2502,28 +2502,30 @@ impl XmlNode for BioSourceGenome {
     }
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
-#[repr(u8)]
-pub enum BioSourceOrigin {
-    #[default]
-    Unknown,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    pub enum BioSourceOrigin {
+        #[default]
+        Unknown = 0,
 
-    /// normal biological entity
-    Natural,
+        /// normal biological entity
+        Natural = 1,
 
-    /// naturally occurring mutant
-    NatMut,
+        /// naturally occurring mutant
+        NatMut,
 
-    /// artificially mutagenized
-    Mut,
+        /// artificially mutagenized
+        Mut,
 
-    /// artificially engineered
-    Artificial,
+        /// artificially engineered
+        Artificial,
 
-    /// purely synthetic
-    Synthetic,
+        /// purely synthetic
+        Synthetic,
 
-    Other = 255,
+        Other = 255,
+    }
 }
 
 impl XmlNode for BioSourceOrigin {
@@ -2532,46 +2534,7 @@ impl XmlNode for BioSourceOrigin {
     }
 
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
-        match reader.read_event().unwrap() {
-            // Handle Start tag with "value" attribute
-            Event::Start(ref e) => {
-                if let Some(attr) = e.attributes()
-                    .filter_map(|a| a.ok())
-                    .find(|a| a.key.as_ref() == b"value")
-                {
-                    let value = String::from_utf8(attr.value.to_vec()).ok()?;
-                    return Some(match value.as_str() {
-                        "natural" => BioSourceOrigin::Natural,
-                        "natmut" => BioSourceOrigin::NatMut,
-                        "mut" => BioSourceOrigin::Mut,
-                        "artificial" => BioSourceOrigin::Artificial,
-                        "synthetic" => BioSourceOrigin::Synthetic,
-                        _ => BioSourceOrigin::Other, // Catch unrecognized values
-                    });
-                }
-            }
-            // Handle Text content inside the tag
-            Event::Text(e) => {
-                let text = e.unescape().ok()?.into_owned();
-                return Some(match text.as_str() {
-                    "natural" => BioSourceOrigin::Natural,
-                    "natmut" => BioSourceOrigin::NatMut,
-                    "mut" => BioSourceOrigin::Mut,
-                    "artificial" => BioSourceOrigin::Artificial,
-                    "synthetic" => BioSourceOrigin::Synthetic,
-                    _ => BioSourceOrigin::Other, // Catch unrecognized values
-                });
-            }
-            // Exit on End tag
-            Event::End(e) => {
-                if e.name() == Self::start_bytes().to_end().name() {
-                    return Some(BioSourceOrigin::Unknown);
-                }
-            }
-            _ => (),
-        }
-
-        Some(BioSourceOrigin::Unknown) // Default fallback
+        Self::from_u8(read_int(reader).unwrap())
     }
 }
 
