@@ -54,7 +54,7 @@
 
 use crate::biblio::{PubMedId, DOI};
 use crate::general::{DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing::{read_vec_node, read_int, read_node, read_string, read_vec_str_unchecked, UnexpectedTags, read_bool_attribute};
+use crate::parsing::{read_vec_node, read_int, read_vec_int_unchecked, read_node, read_string, read_vec_str_unchecked, UnexpectedTags, read_bool_attribute};
 use crate::r#pub::PubSet;
 use crate::seq::{Heterogen, Numbering, PubDesc, SeqLiteral};
 use crate::seqloc::{GiimportId, SeqId, SeqLoc};
@@ -808,6 +808,12 @@ pub enum GeneticCodeOpt {
     SNcbiStdAa(Vec<u8>),
 }
 
+/// Not in standard.
+impl Default for GeneticCodeOpt {
+    fn default() -> Self {
+        Self::Name(String::new())
+    }
+}
 impl XmlNode for GeneticCodeOpt {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Genetic-code_E")
@@ -816,13 +822,13 @@ impl XmlNode for GeneticCodeOpt {
     fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
         // variant tags
         let id_tag = BytesStart::new("Genetic-code_E_id");
-        let name_tag = BytesStart::new("Genetic-code_E_name");
-        let ncbieaa_tag = BytesStart::new("Genetic-code_E_ncbieaa");
-        let ncbi8aa_tag = BytesStart::new("Genetic-code_E_ncbi8aa");
-        let ncbistdaa_tag = BytesStart::new("Genetic-code_E_ncbistdaa");
-        let sncbieaa_tag = BytesStart::new("Genetic-code_E_sncbieaa");
-        let sncbi8aa_tag = BytesStart::new("Genetic-code_E_sncbi8aa");
-        let sncbistdaa_tag = BytesStart::new("Genetic-code_E_sncbistdaa");
+        let _name_tag = BytesStart::new("Genetic-code_E_name");
+        let _ncbieaa_tag = BytesStart::new("Genetic-code_E_ncbieaa");
+        let _ncbi8aa_tag = BytesStart::new("Genetic-code_E_ncbi8aa");
+        let _ncbistdaa_tag = BytesStart::new("Genetic-code_E_ncbistdaa");
+        let _sncbieaa_tag = BytesStart::new("Genetic-code_E_sncbieaa");
+        let _sncbi8aa_tag = BytesStart::new("Genetic-code_E_sncbi8aa");
+        let _sncbistdaa_tag = BytesStart::new("Genetic-code_E_sncbistdaa");
 
         loop {
             match reader.read_event().unwrap() {
@@ -874,7 +880,7 @@ pub struct CodeBreak {
 /// table of genetic codes
 pub type GeneticCodeTable = Vec<GeneticCode>;
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// Features imported from other databases
 pub struct ImpFeat {
     pub key: String,
@@ -931,40 +937,47 @@ impl XmlNode for GbQual {
 }
 impl XmlVecNode for GbQual {}
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-/// Internal representation of placement method for [`CloneRef`]
-///
-/// # Note
-///
-/// Original implementation lists this as `INTEGER`, therefore it is assumed that
-/// serialized representation is an integer.
-pub enum CloneRefPlacementMethod {
-    /// clone placed by end sequence
-    EndSeq,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    /// Internal representation of placement method for [`CloneRef`]
+    ///
+    /// # Note
+    ///
+    /// Original implementation lists this as `INTEGER`, therefore it is assumed that
+    /// serialized representation is an integer.
+    pub enum CloneRefPlacementMethod {
+        /// clone placed by end sequence
+        EndSeq,
 
-    /// clone placed by insert alignment
-    InsertAlignment,
+        /// clone placed by insert alignment
+        InsertAlignment,
 
-    /// clone placed by STS
-    STS,
+        /// clone placed by STS
+        STS,
 
-    Fish,
-    Fingerprint,
+        Fish,
+        Fingerprint,
 
-    /// combined end-seq and insert align
-    EndSeqInsertAlignment,
+        /// combined end-seq and insert align
+        EndSeqInsertAlignment,
 
-    /// placement provided externally
-    External = 253,
+        /// placement provided externally
+        External = 253,
 
-    /// human placed or approved
-    Curated = 254,
+        /// human placed or approved
+        Curated = 254,
 
-    Other = 255,
+        #[default]
+        Other = 255,
+    }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+fn default_false() -> bool {
+    false
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 /// Specification of clone features
 pub struct CloneRef {
@@ -974,91 +987,101 @@ pub struct CloneRef {
     /// library name
     pub library: Option<String>,
 
-    pub concordant: bool, // TODO: default to false
-    pub unique: bool,     // TODO: default to false
+    #[serde(default="default_false")]
+    pub concordant: bool,
+    #[serde(default="default_false")]
+    pub unique: bool,
     pub placement_method: Option<CloneRefPlacementMethod>,
     pub clone_seq: Option<CloneSeqSet>,
 }
 
 pub type CloneSeqSet = Vec<CloneSeq>;
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-/// Internal representation of clone sequence type for [`CloneSeq`]
-///
-/// # Note
-///
-/// Original implementation lists this as `INTEGER`, therefore it is assumed that
-/// serialized representation is an integer.
-pub enum CloneSeqType {
-    Insert,
-    End,
-    Other = 255,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    /// Internal representation of clone sequence type for [`CloneSeq`]
+    ///
+    /// # Note
+    ///
+    /// Original implementation lists this as `INTEGER`, therefore it is assumed that
+    /// serialized representation is an integer.
+    pub enum CloneSeqType {
+        Insert,
+        End,
+        #[default]
+        Other = 255,
+    }
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-/// Internal representation of clone confidence for [`CloneSeq`]
-///
-/// # Note
-///
-/// Original implementation lists this as `INTEGER`, therefore it is assumed that
-/// serialized representation is an integer.
-pub enum CloneSeqConfidence {
-    /// multiple hits
-    Multiple,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    /// Internal representation of clone confidence for [`CloneSeq`]
+    ///
+    /// # Note
+    ///
+    /// Original implementation lists this as `INTEGER`, therefore it is assumed that
+    /// serialized representation is an integer.
+    pub enum CloneSeqConfidence {
+        /// multiple hits
+        Multiple,
 
-    /// unspecified
-    Na,
+        /// unspecified
+        #[default]
+        Na,
 
-    /// no hits, end flagged repetitive
-    NoHitRep,
+        /// no hits, end flagged repetitive
+        NoHitRep,
 
-    /// no hits, end not flagged repetitive
-    NoHitNoRep,
+        /// no hits, end not flagged repetitive
+        NoHitNoRep,
 
-    /// hit on different chromosome
-    OtherChrm,
+        /// hit on different chromosome
+        OtherChrm,
 
-    Unique,
+        Unique,
 
-    /// virtual (hasn't been sequenced)
-    Virtual,
+        /// virtual (hasn't been sequenced)
+        Virtual,
 
-    /// multiple hits, end flagged repetitive
-    MultipleRep,
+        /// multiple hits, end flagged repetitive
+        MultipleRep,
 
-    /// multiple hits, end not flagged repetitive
-    MultipleNoRep,
+        /// multiple hits, end not flagged repetitive
+        MultipleNoRep,
 
-    /// no hits
-    NoHit,
+        /// no hits
+        NoHit,
 
-    Other = 255,
+        Other = 255,
+    }
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-///
-/// # Note
-///
-/// Original implementation lists this as `INTEGER`, therefore it is assumed that
-/// serialized representation is an integer.
-pub enum CloneSeqSupport {
-    /// sequence used to place clone
-    Prototype,
+enum_from_primitive! {
+    ///
+    /// # Note
+    ///
+    /// Original implementation lists this as `INTEGER`, therefore it is assumed that
+    /// serialized representation is an integer.
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+    #[repr(u8)]
+    pub enum CloneSeqSupport {
+        /// sequence used to place clone
+        Prototype,
 
-    /// sequence supports placement
-    Supporting,
+        /// sequence supports placement
+        Supporting,
 
-    /// supports a different placement
-    SupportsOther,
+        /// supports a different placement
+        SupportsOther,
 
-    /// dose not support any placement
-    NonSupporting,
+        /// dose not support any placement
+        NonSupporting,
+    }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 pub struct CloneSeq {
     #[serde(rename = "type")]
@@ -1193,18 +1216,22 @@ bitflags! {
     }
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-/// captures specificity of placement
-///
-/// # Note
-///
-/// This is *NOT* a bitfield
-pub enum VariantMapWeight {
-    IsUniquelyPlaced = 1,
-    PlacedTwiceOnSameChrom = 2,
-    PlacedTypeOnDiffChrom = 3,
-    ManyPlacements = 10,
+enum_from_primitive! {
+    /// captures specificity of placement
+    ///
+    /// # Note
+    ///
+    /// This is *NOT* a bitfield
+
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    pub enum VariantMapWeight {
+        IsUniquelyPlaced = 1,
+        PlacedTwiceOnSameChrom = 2,
+        PlacedTypeOnDiffChrom = 3,
+        #[default] // added
+        ManyPlacements = 10,
+    }
 }
 
 bitflags! {
@@ -1265,12 +1292,15 @@ bitflags! {
     }
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-pub enum VariantConfidence {
-    Unknown,
-    LikelyArtifact,
-    Other = 255,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    pub enum VariantConfidence {
+        #[default]
+        Unknown,
+        LikelyArtifact,
+        Other = 255,
+    }
 }
 
 bitflags! {
@@ -1299,21 +1329,24 @@ bitflags! {
     }
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-/// observed allele state, if known
-///
-/// NOTE this field is not a bitflag
-pub enum VariantAlleleState {
-    Unknown,
-    Homosygous,
-    Heterozygous,
-    Hemizygous,
-    Nullizygous,
-    Other = 255,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    /// observed allele state, if known
+    ///
+    /// NOTE this field is not a bitflag
+    pub enum VariantAlleleState {
+        #[default]
+        Unknown,
+        Homosygous,
+        Heterozygous,
+        Hemizygous,
+        Nullizygous,
+        Other = 255,
+    }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 /// Specification of variation features
 ///
@@ -1373,22 +1406,25 @@ pub struct VariantProperties {
     pub is_ancestral_allele: Option<bool>,
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-/// does this variant have known clinical significance?
-pub enum PhenotypeClinicalSignificance {
-    Unknown,
-    Untested,
-    NonPathogenic,
-    ProbableNonPathogenic,
-    ProbablePathogenic,
-    Pathogenic,
-    DrugResponse,
-    Histocompatibility,
-    Other = 255,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    /// does this variant have known clinical significance?
+    pub enum PhenotypeClinicalSignificance {
+        #[default]
+        Unknown,
+        Untested,
+        NonPathogenic,
+        ProbableNonPathogenic,
+        ProbablePathogenic,
+        Pathogenic,
+        DrugResponse,
+        Histocompatibility,
+        Other = 255,
+    }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 pub struct Phenotype {
     pub source: Option<String>,
@@ -1409,7 +1445,7 @@ bitflags! {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 pub struct PopulationData {
     /// assayed population (eg: HAPMAP-CEU)
@@ -1421,61 +1457,67 @@ pub struct PopulationData {
     pub flags: Option<PopulationDataFlags>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct ExtLoc {
     pub id: ObjectId,
     pub location: SeqLoc,
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-pub enum VariantRefMethod {
-    Unknown,
-    BacAcgh,
-    Computational,
-    Curated,
-    DigitalArray,
-    ExpressionArray,
-    Fish,
-    FlankingSequence,
-    Maph,
-    McdAnalysis,
-    Mlpa,
-    OeaAssembly,
-    OligoAcgh,
-    PairedEnd,
-    Pcr,
-    Qpcr,
-    ReadDepth,
-    Roma,
-    RtPcr,
-    Sage,
-    SequenceAlignment,
-    Sequencing,
-    SnpArray,
-    Southern,
-    Western,
-    OpticalMapping,
-    Other = 255,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    pub enum VariantRefMethod {
+        #[default] /// added
+        Unknown,
+        BacAcgh,
+        Computational,
+        Curated,
+        DigitalArray,
+        ExpressionArray,
+        Fish,
+        FlankingSequence,
+        Maph,
+        McdAnalysis,
+        Mlpa,
+        OeaAssembly,
+        OligoAcgh,
+        PairedEnd,
+        Pcr,
+        Qpcr,
+        ReadDepth,
+        Roma,
+        RtPcr,
+        Sage,
+        SequenceAlignment,
+        Sequencing,
+        SnpArray,
+        Southern,
+        Western,
+        OpticalMapping,
+        Other = 255,
+    }
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-pub enum VariationRefDataSetType {
-    Unknown,
-    Compound,
-    Products,
-    Haplotype,
-    Genotype,
-    Mosaic,
-    Individual,
-    Population,
-    Alleles,
-    Package,
-    Other = 255,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    pub enum VariationRefDataSetType {
+        #[default]
+        Unknown,
+        Compound,
+        Products,
+        Haplotype,
+        Genotype,
+        Mosaic,
+        Individual,
+        Population,
+        Alleles,
+        Package,
+        Other = 255,
+    }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct VariationRefDataSet {
     #[serde(rename = "type")]
     pub r#type: VariationRefDataSetType,
@@ -1483,9 +1525,10 @@ pub struct VariationRefDataSet {
     pub name: Option<String>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 pub enum VariationRefData {
+    #[default]
     Unknown,
 
     /// free-form
@@ -1568,7 +1611,7 @@ pub struct VariationSomaticOrigin {
     pub condition: Option<SomaticOriginCondition>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 /// reference to SNP
 ///
@@ -1621,28 +1664,30 @@ pub enum DeltaSeq {
     This,
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
-#[repr(u8)]
-pub enum DeltaAction {
-    #[default]
-    /// replace len(seq) positions starting with location.start with seq
-    Morph,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    pub enum DeltaAction {
+        #[default]
+        /// replace len(seq) positions starting with location.start with seq
+        Morph,
 
-    /// go downstream by distance specified by multiplier (upstream if < 0)
-    /// in genomic context
-    Offset,
+        /// go downstream by distance specified by multiplier (upstream if < 0)
+        /// in genomic context
+        Offset,
 
-    /// excise sequence at location
-    ///
-    /// if multiplier is specified, delete len(location)*multiplier
-    /// positions downstream
-    DelAt,
+        /// excise sequence at location
+        ///
+        /// if multiplier is specified, delete len(location)*multiplier
+        /// positions downstream
+        DelAt,
 
-    ///  insert seq before the location.start
-    InsBefore,
+        ///  insert seq before the location.start
+        InsBefore,
+    }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 pub struct DeltaItem {
     pub seq: Option<DeltaSeq>,
@@ -1657,103 +1702,108 @@ pub struct DeltaItem {
     pub action: DeltaAction,
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-pub enum VariationInstType {
-    /// `delta=None`
-    Unknown,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    pub enum VariationInstType {
+        /// `delta=None`
+        #[default]
+        Unknown,
 
-    /// `delta=None`
-    Identity,
+        /// `delta=None`
+        Identity,
 
-    /// `delta=[del, ins.seq=RevComp(variation-location)]`
-    Inv,
+        /// `delta=[del, ins.seq=RevComp(variation-location)]`
+        Inv,
 
-    /// `delta=[morph of length 1]`
-    ///
-    /// NOTE: this is snV not snP; the latter requires frequency-based
-    /// validation to be established in [`VariantProperties`]. The strict
-    /// definition of SNP is an SNV with an established population frequency
-    /// of at least 1% in at least 1 population.
-    Snv,
+        /// `delta=[morph of length 1]`
+        ///
+        /// NOTE: this is snV not snP; the latter requires frequency-based
+        /// validation to be established in [`VariantProperties`]. The strict
+        /// definition of SNP is an SNV with an established population frequency
+        /// of at least 1% in at least 1 population.
+        Snv,
 
-    /// `delta=[morph of length >1]`
-    Mnp,
+        /// `delta=[morph of length >1]`
+        Mnp,
 
-    #[serde(rename = "delins")]
-    /// `delta=[del, ins]`
-    DelIns,
+        #[serde(rename = "delins")]
+        /// `delta=[del, ins]`
+        DelIns,
 
-    /// `delta=[del]`
-    Del,
+        /// `delta=[del]`
+        Del,
 
-    /// `delta=[ins]`
-    Ins,
+        /// `delta=[ins]`
+        Ins,
 
-    /// `delta=[del, ins.seq=repeat-unit with fuzzy multiplier]`
-    ///
-    /// `variation_location` is the microsat expansion on the sequence
-    Microsatellite,
+        /// `delta=[del, ins.seq=repeat-unit with fuzzy multiplier]`
+        ///
+        /// `variation_location` is the microsat expansion on the sequence
+        Microsatellite,
 
-    /// `delta=[del, ins.seq= known donor or 'this']`
-    ///
-    /// `variation_location` is equiv of transposon locations
-    Transposon,
+        /// `delta=[del, ins.seq= known donor or 'this']`
+        ///
+        /// `variation_location` is equiv of transposon locations
+        Transposon,
 
-    /// `delta=[del, ins= 'this' with fuzzy multiplier]`
-    Cnv,
+        /// `delta=[del, ins= 'this' with fuzzy multiplier]`
+        Cnv,
 
-    /// `delta=[ins.seq= upstream location on the same strand]`
-    DirectCopy,
+        /// `delta=[ins.seq= upstream location on the same strand]`
+        DirectCopy,
 
-    /// `delta=[ins.seq= downstream location on the same strand]`
-    RevDirectCopy,
+        /// `delta=[ins.seq= downstream location on the same strand]`
+        RevDirectCopy,
 
-    /// `delta=[ins.seq= upstream location on the same opposite strand]`
-    InvertedCopy,
+        /// `delta=[ins.seq= upstream location on the same opposite strand]`
+        InvertedCopy,
 
-    /// `delta=[ins.seq= downstream location on the same opposite strand]`
-    EvertedCopy,
+        /// `delta=[ins.seq= downstream location on the same opposite strand]`
+        EvertedCopy,
 
-    /// delta = like [`Self::DelIns`]
-    Translocation,
+        /// delta = like [`Self::DelIns`]
+        Translocation,
 
-    /// `delta=[morph of length 1]`
-    ProtMissense,
+        /// `delta=[morph of length 1]`
+        ProtMissense,
 
-    /// `delta=[del]`
-    ///
-    /// `variation_location` is the tail of the protein being truncated
-    ProtNonsense,
+        /// `delta=[del]`
+        ///
+        /// `variation_location` is the tail of the protein being truncated
+        ProtNonsense,
 
-    /// `delta=[morph of length 1]`
-    ProtNeutral,
+        /// `delta=[morph of length 1]`
+        ProtNeutral,
 
-    /// `delta=[morph of length 1, same AA as at variation-location]`
-    ProtSilent,
+        /// `delta=[morph of length 1, same AA as at variation-location]`
+        ProtSilent,
 
-    /// delta=any
-    ProtOther,
+        /// delta=any
+        ProtOther,
 
-    /// delta=any
-    Other = 255,
+        /// delta=any
+        Other = 255,
+    }
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-/// Used to label items in a [`VariationRef`] package
-pub enum VariationInstObservation {
-    /// represents the asserted base at a position
-    Asserted = 1,
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+    #[repr(u8)]
+    /// Used to label items in a [`VariationRef`] package
+    pub enum VariationInstObservation {
+        /// represents the asserted base at a position
+        Asserted = 1,
 
-    /// represents the reference base at the position
-    Reference = 2,
+        /// represents the reference base at the position
+        Reference = 2,
 
-    /// represent the observed variant at a given position
-    Variant = 4,
+        /// represent the observed variant at a given position
+        Variant = 4,
+    }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct VariationInst {
     #[serde(rename = "type")]
     pub r#type: VariationInstType,
@@ -1777,35 +1827,50 @@ pub enum RSiteRef {
     DB(DbTag),
 }
 
-#[allow(non_camel_case_types)]
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
-#[repr(u8)]
-/// Represents RNA feature types
-pub enum RnaRefType {
-    #[default]
-    Unknown,
-    PreMsg,
-    mRNA,
-    tRNA,
-    rRNA,
+enum_from_primitive! {
+    #[allow(non_camel_case_types)]
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    /// Represents RNA feature types
+    pub enum RnaRefType {
+        #[default]
+        Unknown,
+        PreMsg,
+        mRNA,
+        tRNA,
+        rRNA,
 
-    /// ### Original Comment:
-    /// will become ncRNA, with RNAGen.class = snRNA
-    snRNA,
+        /// ### Original Comment:
+        /// will become ncRNA, with RNAGen.class = snRNA
+        snRNA,
 
-    /// ### Original Comment:
-    /// will become ncRNA, with RNAGen.class = snRNA
-    scRNA,
+        /// ### Original Comment:
+        /// will become ncRNA, with RNAGen.class = snRNA
+        scRNA,
 
-    /// ### Original Comment:
-    /// will become ncRNA, with RNAGen.class = snRNA
-    snoRNA,
+        /// ### Original Comment:
+        /// will become ncRNA, with RNAGen.class = snRNA
+        snoRNA,
 
-    /// non-coding RNA; subsumes `snRNA`, `scRNA` and `snoRNA`
-    ncRNA,
-    tmRNA,
-    MiscRNA,
-    Other = 255,
+        /// non-coding RNA; subsumes `snRNA`, `scRNA` and `snoRNA`
+        ncRNA,
+        tmRNA,
+        MiscRNA,
+        Other = 255,
+    }
+}
+
+impl XmlNode for RnaRefType {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Rna-ref_type")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        match read_int(reader) {
+            Some(x) => Self::from_u8(x),
+            None => None,
+        }
+    }
 }
 
 #[allow(non_camel_case_types)]
@@ -1822,13 +1887,96 @@ pub enum RnaRefExt {
     Gen(RnaGen),
 }
 
+impl Default for RnaRefExt {
+    fn default() -> Self {
+        Self::Name(String::new())
+    }
+}
+
+impl XmlNode for RnaRefExt {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Rna-ref_ext")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variant tags
+        let name_tag = BytesStart::new("Rna-ref_ext_name");
+        let trna_tag = BytesStart::new("Rna-ref_ext_trna");
+        let gen_tag = BytesStart::new("Rna-ref_ext_gen");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == name_tag.name() {
+                        return Self::Name(read_string(reader).unwrap()).into();
+                    } else if name == trna_tag.name() {
+                        return Self::tRNA(read_node(reader).unwrap()).into();
+                    } else if name == gen_tag.name() {
+                        return Self::Gen(read_node(reader).unwrap()).into();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None;
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
+fn default_some_false() -> Option<bool> {
+    Some(false)
+}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct RnaRef {
     #[serde(rename = "type")]
     pub r#type: RnaRefType,
+    #[serde(default="default_some_false")]
     pub pseudo: Option<bool>,
     pub ext: Option<RnaRefExt>,
 }
+
+impl XmlNode for RnaRef {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Rna-ref")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut rna_ref = RnaRef::default();
+
+        // Field tags
+        let type_tag = BytesStart::new("Rna-ref_type");
+        let pseudo_tag = BytesStart::new("Rna-ref_pseudo");
+        let ext_tag = BytesStart::new("Rna-ref_ext");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == type_tag.name() {
+                        rna_ref.r#type = read_node(reader)?; // Return None if read fails
+                    } else if name == ext_tag.name() {
+                        rna_ref.ext = read_node(reader);
+                    }
+                }
+                Event::Empty(e) if e.name() == pseudo_tag.name() => {
+                    rna_ref.pseudo = read_bool_attribute(&e);
+                }
+                Event::End(e) if e.name() == Self::start_bytes().to_end().name() => {
+                    return Some(rna_ref);
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "lowercase")]
@@ -1839,7 +1987,52 @@ pub enum TRnaExtAa {
     NCBIStdAa(u64),
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+/// Default to IUPAC not in standard
+impl Default for TRnaExtAa {
+    fn default() -> Self {
+        Self::IUPACAa(0)
+    }
+}
+
+impl XmlNode for TRnaExtAa {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("tRNA-ext_aa")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        // variant tags
+        let iupacaa_tag = BytesStart::new("tRNA-ext_aa_iupacaa");
+        let ncbieaa_tag = BytesStart::new("tRNA-ext_aa_ncbieaa");
+        let ncbi8aa_tag = BytesStart::new("tRNA-ext_aa_ncbi8aa");
+        let ncbistdaa_tag = BytesStart::new("tRNA-ext_aa_ncbistdaa");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == iupacaa_tag.name() {
+                        return Self::IUPACAa(read_int(reader).unwrap()).into();
+                    } else if name == ncbieaa_tag.name() {
+                        return Self::NCBIEaa(read_int(reader).unwrap()).into();
+                    } else if name == ncbi8aa_tag.name() {
+                        return Self::NCBI8aa(read_int(reader).unwrap()).into();
+                    } else if name == ncbistdaa_tag.name() {
+                        return Self::NCBIStdAa(read_int(reader).unwrap()).into();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None;
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// tRNA feature extensions
 pub struct TRnaExt {
     /// transported amino acid
@@ -1852,7 +2045,50 @@ pub struct TRnaExt {
     pub anticodon: Option<SeqLoc>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+impl XmlNode for TRnaExt {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("tRNA-ext")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut trna_ext = Self::default();
+
+        // field tags
+        let aa_tag = BytesStart::new("tRNA-ext_aa");
+        let codon_tag = BytesStart::new("tRNA-ext_codon");
+        let anticodon_tag = BytesStart::new("tRNA-ext_anticodon");
+
+        let forbidden = UnexpectedTags(&[]);
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+                    let end = e.to_end();
+
+                    if name == aa_tag.name() {
+                        trna_ext.aa = read_node(reader).unwrap();
+                    } else if name == codon_tag.name() {
+                        trna_ext.codon = Some(read_vec_int_unchecked(reader, &end));
+                    } else if name == anticodon_tag.name() {
+                        trna_ext.anticodon = read_node(reader);
+                    } else if name != Self::start_bytes().name() {
+                        forbidden.check(&name);
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return trna_ext.into();
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct RnaGen {
     /// for ncRNA's, the class of non-coding RNA
     ///
@@ -1865,11 +2101,91 @@ pub struct RnaGen {
     pub quals: Option<RnaQualSet>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+impl XmlNode for RnaGen {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Rna-gen")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut rna_gen = Self::default();
+
+        // field tags
+        let class_tag = BytesStart::new("Rna-gen_class");
+        let product_tag = BytesStart::new("Rna-gen_product");
+        let quals_tag = BytesStart::new("Rna-gen_quals");
+
+        let forbidden = UnexpectedTags(&[]);
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == class_tag.name() {
+                        rna_gen.class = read_string(reader);
+                    } else if name == product_tag.name() {
+                        rna_gen.product = read_string(reader);
+                    } else if name == quals_tag.name() {
+                        rna_gen.quals = Some(read_vec_node(reader, quals_tag.to_end()));
+                    } else if name != Self::start_bytes().name() {
+                        forbidden.check(&name);
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return rna_gen.into();
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 pub struct RnaQual {
     pub qual: String,
     pub val: String,
 }
+
+impl XmlNode for RnaQual {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Rna-qual")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> where Self: Sized {
+        let mut rna_qual = Self::default();
+
+        // field tags
+        let qual_tag = BytesStart::new("Rna-qual_qual");
+        let val_tag = BytesStart::new("Rna-qual_val");
+
+        let forbidden = UnexpectedTags(&[]);
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == qual_tag.name() {
+                        rna_qual.qual = read_string(reader).unwrap();
+                    } else if name == val_tag.name() {
+                        rna_qual.val = read_string(reader).unwrap();
+                    } else {
+                        forbidden.check(&name);
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return rna_qual.into();
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+impl XmlVecNode for RnaQual {}
 
 pub type RnaQualSet = Vec<RnaQual>;
 

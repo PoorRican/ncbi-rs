@@ -3,9 +3,11 @@
 //! The majority of these definitions may be found here: https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects
 
 pub mod biblio;
+pub mod blast;
 pub mod general;
 pub mod medline;
 pub mod r#pub;
+pub mod scoremat;
 pub mod seq;
 pub mod seqalign;
 pub mod seqblock;

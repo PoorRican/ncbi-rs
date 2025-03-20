@@ -198,6 +198,8 @@ impl XmlNode for ObjectId {
     }
 }
 
+impl XmlVecNode for ObjectId {}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// Generalized for tagging
 pub struct DbTag {

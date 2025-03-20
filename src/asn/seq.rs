@@ -5,7 +5,8 @@
 //! Adapted from ["seq.asn"](https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/lxr/source/src/objects/seq/seq.asn)
 
 use crate::general::{Date, DbTag, IntFuzz, ObjectId, UserObject};
-use crate::parsing::{read_vec_node, read_attributes, read_int, read_node, read_string, UnexpectedTags, attribute_value};
+use crate::parsing::{read_vec_node, read_attributes, read_vec_int_unchecked, read_int, read_node, read_string, UnexpectedTags, attribute_value};
+use crate::parsing::{XmlNode, XmlVecNode, XmlValue};
 use crate::r#pub::PubEquiv;
 use crate::seqalign::SeqAlign;
 use crate::seqblock::{EMBLBlock, GBBlock, PDBBlock, PIRBlock, PRFBlock, SPBlock};
@@ -13,7 +14,6 @@ use crate::seqfeat::{BioSource, ModelEvidenceSupport, OrgRef, SeqFeat};
 use crate::seqloc::{SeqId, SeqLoc};
 use crate::seqres::SeqGraph;
 use crate::seqtable::SeqTable;
-use crate::parsing::{XmlNode, XmlVecNode, XmlValue};
 use enum_primitive::FromPrimitive;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::events::attributes::Attributes;
@@ -91,6 +91,10 @@ impl XmlNode for BioSeq {
         }
     }
 }
+
+impl XmlVecNode for BioSeq {}
+
+//pub type BioseqSet = Vec<BioSeq>; // FIXME: Inconsistency in case: BioSeq -> BioseqSeq
 
 pub type SeqDescr = Vec<SeqDesc>;
 
@@ -1134,45 +1138,148 @@ pub enum SeqData {
     Gap(SeqGap),
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-/// internal structure for `type` field in [`SeqGap`]
-///
-/// # Note
-///
-/// Original implementation lists this as `INTEGER`, therefore it is assumed that
-/// serialized representation is an integer
-pub enum SeqGapType {
-    Unknown,
-    #[deprecated]
-    /// used only for AGP 1.1
-    Fragment,
-    #[deprecated]
-    /// used only for AGP 1.1
-    Clone,
-    ShortArm,
-    Heterochromatin,
-    Centromere,
-    Telomere,
-    Repeat,
-    Contig,
-    Scaffold,
-    Contamination,
-    Other = 255,
+/// FIXME: Providing default for SeqData - which is the Gap.
+impl Default for SeqData {
+    fn default() -> Self {
+        SeqData::Gap(SeqGap {
+            r#type: SeqGapType::Unknown,
+            linkage: None,
+            linkage_evidence: None,
+        })
+    }
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-/// Internal representation for linkage status for [`SeqGap`]
-///
-/// # Note
-///
-/// Original implementation lists this as `INTEGER`, therefore it is assumed that
-/// serialized representation is an integer
-pub enum SeqGapLinkage {
-    Unlinked,
-    Linked,
-    Other = 255,
+impl XmlNode for SeqData {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-data")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        // variant tags
+        let ina_tag = BytesStart::new("Seq-data_iupacna");
+        let iaa_tag = BytesStart::new("Seq-data_iupacaa");
+        let n2na_tag = BytesStart::new("Seq-data_ncbi2na");
+        let n4na_tag = BytesStart::new("Seq-data_ncbi4na");
+        let n8na_tag = BytesStart::new("Seq-data_ncbi8na");
+        let npna_tag = BytesStart::new("Seq-data_ncbipna");
+        let n8aa_tag = BytesStart::new("Seq-data_ncbi8aa");
+        let neaa_tag = BytesStart::new("Seq-data_ncbieaa");
+        let npaa_tag = BytesStart::new("Seq-data_ncbipaa");
+        let nstd_aa_tag = BytesStart::new("Seq-data_ncbistdaa");
+        let gap_tag = BytesStart::new("Seq-data_gap");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == ina_tag.name() {
+                        return Self::Ina(read_string(reader).unwrap()).into();
+                    } else if name == iaa_tag.name() {
+                        return Self::Iaa(read_string(reader).unwrap()).into();
+                    } else if name == n2na_tag.name() {
+                        let end_tag= n2na_tag.to_end();
+                        return Self::N2na(read_vec_int_unchecked(reader,&end_tag)).into();
+                    } else if name == n4na_tag.name() {
+                        let end_tag= n4na_tag.to_end();
+                        return Self::N4na(read_vec_int_unchecked(reader,&end_tag)).into();
+                    } else if name == n8na_tag.name() {
+                        let end_tag= n8na_tag.to_end();
+                        return Self::N8na(read_vec_int_unchecked(reader,&end_tag)).into();
+                    } else if name == npna_tag.name() {
+                        let end_tag= npna_tag.to_end();
+                        return Self::NPna(read_vec_int_unchecked(reader,&end_tag)).into();
+                    } else if name == n8aa_tag.name() {
+                        let end_tag = n8aa_tag.to_end();
+                        return Self::N8aa(read_vec_int_unchecked(reader,&end_tag)).into();
+                    } else if name == neaa_tag.name() {
+                        return Self::NEaa(read_string(reader).unwrap()).into();
+                    } else if name == npaa_tag.name() {
+                        let end_tag = npaa_tag.to_end();
+                        return Self::NPaa(read_vec_int_unchecked(reader, &end_tag)).into();
+                    } else if name == nstd_aa_tag.name() {
+                        let end_tag = nstd_aa_tag.to_end();
+                        return Self::NStdAAs(read_vec_int_unchecked(reader, &end_tag)).into();
+                    } else if name == gap_tag.name() {
+                        return Self::Gap(read_node(reader).unwrap()).into();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return None;
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
+
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+    #[repr(u8)]
+    /// internal structure for `type` field in [`SeqGap`]
+    ///
+    /// # Note
+    ///
+    /// Original implementation lists this as `INTEGER`, therefore it is assumed that
+    /// serialized representation is an integer
+    pub enum SeqGapType {
+        Unknown,
+        #[deprecated]
+        /// used only for AGP 1.1
+        Fragment,
+        #[deprecated]
+        /// used only for AGP 1.1
+        Clone,
+        ShortArm,
+        Heterochromatin,
+        Centromere,
+        Telomere,
+        Repeat,
+        Contig,
+        Scaffold,
+        Contamination,
+        Other = 255,
+    }
+}
+
+impl XmlNode for SeqGapType {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-gap_type")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        SeqGapType::from_u8(read_int::<u8>(reader).unwrap())
+    }
+}
+
+enum_from_primitive! {
+    #[repr(u8)]
+    /// Internal representation for linkage status for [`SeqGap`]
+    ///
+    /// # Note
+    ///
+    /// Original implementation lists this as `INTEGER`, therefore it is assumed that
+    /// serialized representation is an integer
+
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+    pub enum SeqGapLinkage {
+        Unlinked,
+        Linked,
+        Other = 255,
+    }
+}
+
+impl XmlNode for SeqGapLinkage {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-gap_linkage")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        SeqGapLinkage::from_u8(read_int::<u8>(reader).unwrap())
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -1183,29 +1290,119 @@ pub struct SeqGap {
     pub linkage_evidence: Option<Vec<LinkageEvidence>>,
 }
 
-#[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
-/// internal representation for `type` in [`LinkageEvidence`]
-pub enum LinkageEvidenceType {
-    PairedEnds,
-    AlignGenus,
-    AlignXGenus,
-    AlignTrans,
-    WithinClone,
-    CloneContig,
-    Map,
-    Strobe,
-    Unspecified,
-    PCR,
-    ProximityLigation,
-    Other = 255,
+impl XmlNode for SeqGap {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Seq-gap")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut gap = Self {
+            r#type: SeqGapType::Unknown,
+            linkage: None,
+            linkage_evidence: None,
+        };
+
+        let type_element = BytesStart::new("Seq-gap_type");
+        let linkage_element = BytesStart::new("Seq-gap_linkage");
+        let linkage_evidence_element = BytesStart::new("Seq-gap_linkage-evidence");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == type_element.name() {
+                        gap.r#type = read_node(reader).unwrap();
+                    } else if name == linkage_element.name() {
+                        gap.linkage = read_node(reader);
+                    } else if name == linkage_evidence_element.name() {
+                        gap.linkage_evidence = Some(read_vec_node(reader,e.to_end()));
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return gap.into();
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
 }
+
+enum_from_primitive! {
+    #[derive(Clone, Serialize_repr, Deserialize_repr, PartialEq, Debug, Default)]
+    #[repr(u8)]
+    /// internal representation for `type` in [`LinkageEvidence`]
+    pub enum LinkageEvidenceType {
+        PairedEnds,
+        AlignGenus,
+        AlignXGenus,
+        AlignTrans,
+        WithinClone,
+        CloneContig,
+        Map,
+        Strobe,
+        #[default]
+        Unspecified,
+        PCR,
+        ProximityLigation,
+        Other = 255,
+    }
+}
+
+impl XmlNode for LinkageEvidenceType {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Linkage-evidence_type")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        LinkageEvidenceType::from_u8(read_int::<u8>(reader).unwrap())
+    }
+}
+
+impl XmlVecNode for LinkageEvidenceType {}
+
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct LinkageEvidence {
     pub r#type: LinkageEvidenceType,
 }
+
+impl XmlNode for LinkageEvidence {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Linkage-evidence")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        let mut evidence = Self {
+            r#type: LinkageEvidenceType::Other,
+        };
+
+        let type_element = BytesStart::new("Linkage-evidence_type");
+
+        loop {
+            match reader.read_event().unwrap() {
+                Event::Start(e) => {
+                    let name = e.name();
+
+                    if name == type_element.name() {
+                        evidence.r#type = read_node(reader).unwrap();
+                    }
+                }
+                Event::End(e) => {
+                    if Self::is_end(&e) {
+                        return evidence.into();
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+}
+
+impl XmlVecNode for LinkageEvidence {}
 
 /// IUPAC 1 letter codes, no spaces
 pub type IUPACna = String;

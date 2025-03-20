@@ -69,6 +69,13 @@ pub enum SeqId {
     NamedAnnotTrack(TextseqId),
 }
 
+/// FIXME: Providing a default implementation of SeqID as a local ID
+impl Default for SeqId {
+    fn default() -> Self {
+        SeqId::Local(ObjectId::default())
+    }
+}
+
 impl XmlNode for SeqId {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Seq-id")
@@ -179,7 +186,7 @@ pub struct PDBSeqId {
 /// name of mol, should be 4 chars
 pub type PDBMolId = String;
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 /// Defines a location on a [`BioSeq`].
 ///
@@ -198,6 +205,7 @@ pub type PDBMolId = String;
 ///   model.
 pub enum SeqLoc {
     /// not placed
+    #[default]
     Null,
     /// to NULL one [`SeqId`] in a collection
     Empty(SeqId),
@@ -216,13 +224,6 @@ pub enum SeqLoc {
     Feat(FeatId),
 }
 
-impl SeqLoc {
-    /// default not originally in spec
-    pub fn default() -> Self {
-        Self::Null
-    }
-}
-
 impl XmlNode for SeqLoc {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Seq-loc")
@@ -237,7 +238,8 @@ impl XmlNode for SeqLoc {
         let packed_int_variant = BytesStart::new("Seq-loc_packed-int");
         let pnt_variant = BytesStart::new("Seq-loc_pnt");
         let packed_pnt_variant = BytesStart::new("Seq-loc_packed_pnt");
-        let mix_variant = BytesStart::new("Seq-loc_mix");
+        let mix_variant_underscore = BytesStart::new("Seq-loc_mix");
+        let mix_variant_dash = BytesStart::new("Seq-loc-mix");
         let equiv_variant = BytesStart::new("Seq-loc_equiv");
         let bond_variant = BytesStart::new("Seq-loc_bond");
         let feat_variant = BytesStart::new("Seq-loc_feat");
@@ -248,7 +250,8 @@ impl XmlNode for SeqLoc {
             packed_int_variant,
             pnt_variant,
             packed_pnt_variant,
-            mix_variant,
+            mix_variant_dash,
+            mix_variant_underscore,
             equiv_variant,
             bond_variant,
             feat_variant
@@ -278,6 +281,8 @@ impl XmlNode for SeqLoc {
         }
     }
 }
+
+impl XmlVecNode for SeqLoc {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "kebab-case")]
@@ -332,7 +337,7 @@ impl XmlNode for SeqInterval {
                     }
                 }
                 Event::Empty(e) => {
-                    if e.name() == NaStrand::start_bytes().name() {
+                    if e.name() == <NaStrand as XmlNode>::start_bytes().name() {
                         interval.strand = read_attributes(&e);
                     }
                 }
@@ -346,6 +351,8 @@ impl XmlNode for SeqInterval {
         }
     }
 }
+
+impl XmlVecNode for SeqInterval {}
 
 pub type PackedSeqInt = Vec<SeqInterval>;
 
@@ -366,9 +373,10 @@ pub struct PackedSeqPnt {
     pub points: Vec<i64>,
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug, Default)]
 /// Strand of nucleic acid
 pub enum NaStrand {
+    #[default]
     Unknown,
     Plus,
     Minus,
@@ -383,7 +391,6 @@ impl XmlValue for NaStrand {
     fn start_bytes() -> BytesStart<'static> {
         BytesStart::new("Na-strand")
     }
-
     fn from_attributes(attributes: Attributes) -> Option<Self> {
         if let Some(attributes) = attribute_value(attributes) {
             match attributes.as_str() {
@@ -399,6 +406,21 @@ impl XmlValue for NaStrand {
         }
     }
 }
+
+impl XmlNode for NaStrand {
+    fn start_bytes() -> BytesStart<'static> {
+        BytesStart::new("Na-strand")
+    }
+
+    fn from_reader(reader: &mut Reader<&[u8]>) -> Option<Self> {
+        if let Event::Start(e) = reader.read_event().unwrap() {
+            return Self::from_attributes(e.attributes()).into();
+        }
+        None
+    }
+}
+
+impl XmlVecNode for NaStrand {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 /// bond between residues

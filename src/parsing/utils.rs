@@ -1,6 +1,7 @@
 use quick_xml::Reader;
 use quick_xml::events::{BytesEnd, BytesStart, Event};
 use atoi::FromRadix10SignedChecked;
+use atoi::atoi;
 use std::ops::Deref;
 use quick_xml::events::attributes::Attributes;
 use crate::parsing::{XmlNode, XmlValue, XmlVecNode};
@@ -20,6 +21,48 @@ where
     T: FromRadix10SignedChecked,
 {
     atoi::atoi::<T>(text.as_ref()).expect("Conversion error")
+}
+
+/// Parse the given bytes into an `f32`
+///
+/// # Panics
+///
+/// Panics when parsing fails.
+pub fn bytes_to_float(text: &[u8]) -> f32 {
+    std::str::from_utf8(text)
+        .expect("Invalid UTF-8")
+        .parse::<f32>()
+        .expect("Conversion to f32 failed")
+}
+
+/// Parse the given bytes into an `f64`
+///
+/// # Panics
+///
+/// Panics when parsing fails.
+pub fn bytes_to_double(text: &[u8]) -> f64 {
+    std::str::from_utf8(text)
+        .expect("Invalid UTF-8")
+        .parse::<f64>()
+        .expect("Conversion to f64 failed")
+}
+
+/// Parse the given bytes into a `bool`
+///
+/// # Rules:
+/// - `"true"`, `"1"` → `true`
+/// - `"false"`, `"0"` → `false`
+/// - Any other value causes a panic.
+///
+/// # Panics
+///
+/// Panics when the input is invalid.
+pub fn bytes_to_bool(text: &[u8]) -> bool {
+    match std::str::from_utf8(text).expect("Invalid UTF-8").trim() {
+        "true" | "1" => true,
+        "false" | "0" => false,
+        _ => panic!("Invalid boolean value"),
+    }
 }
 
 /// Parse the given bytes into a [`String`]
@@ -65,6 +108,28 @@ where
 {
     if let Event::Text(text) = reader.read_event().unwrap() {
         Some(bytes_to_int(text.deref()))
+    } else {
+        None
+    }
+}
+
+/// Parses the next [`Event::Text`] as a floating point number (f64)
+pub fn read_double(reader: &mut XmlReader) -> Option<f64> {
+    if let Event::Text(text) = reader.read_event().unwrap() {
+        std::str::from_utf8(text.deref())
+            .ok()
+            .and_then(|s| s.trim().parse::<f64>().ok())
+    } else {
+        None
+    }
+}
+
+/// Parses the next [`Event::Text`] as a boolean (`bool`)
+pub fn read_bool(reader: &mut XmlReader) -> Option<bool> {
+    if let Event::Text(text) = reader.read_event().unwrap() {
+        std::str::from_utf8(text.deref())
+            .ok()
+            .map(|s| bytes_to_bool(s.trim().as_bytes()))
     } else {
         None
     }
@@ -170,6 +235,92 @@ where
             Event::End(e) => {
                 if e.name() == end.name() {
                     return nums;
+                }
+            }
+            _ => (),
+        }
+    }
+}
+/// Parse each [`BytesText`] within the enclosed element as a floating point number (f32)
+///
+/// # Parameters
+/// - `reader`: [`XmlReader`]
+/// - `end`: denotes end of container
+///
+/// # Returns
+/// Floating point numbers (f32) contained by `end`
+pub fn read_vec_float_unchecked(reader: &mut Reader<&[u8]>, end: &BytesEnd) -> Vec<f32> {
+    let mut nums = Vec::new();
+    loop {
+        match reader.read_event().unwrap() {
+            Event::Text(text) => {
+                let string = text.deref().escape_ascii().to_string();
+                let string = string.trim();
+                if !string.is_empty() {
+                    nums.push(bytes_to_float(string.as_bytes()));
+                }
+            }
+            Event::End(e) => {
+                if e.name() == end.name() {
+                    return nums;
+                }
+            }
+            _ => (),
+        }
+    }
+}
+
+/// Parse each [`BytesText`] within the enclosed element as a floating point number (f64)
+///
+/// # Parameters
+/// - `reader`: [`XmlReader`]
+/// - `end`: denotes end of container
+///
+/// # Returns
+/// Floating point numbers (f64) contained by `end`
+pub fn read_vec_double_unchecked(reader: &mut Reader<&[u8]>, end: &BytesEnd) -> Vec<f64> {
+    let mut nums = Vec::new();
+    loop {
+        match reader.read_event().unwrap() {
+            Event::Text(text) => {
+                let string = text.deref().escape_ascii().to_string();
+                let string = string.trim();
+                if !string.is_empty() {
+                    nums.push(bytes_to_double(string.as_bytes()));
+                }
+            }
+            Event::End(e) => {
+                if e.name() == end.name() {
+                    return nums;
+                }
+            }
+            _ => (),
+        }
+    }
+}
+
+/// Parse each [`BytesText`] within the enclosed element as a boolean
+///
+/// # Parameters
+/// - `reader`: [`XmlReader`]
+/// - `end`: denotes end of container
+///
+/// # Returns
+/// Boolean values contained by `end`
+pub fn read_vec_bool_unchecked(reader: &mut Reader<&[u8]>, end: &BytesEnd) -> Vec<bool> {
+    let mut bools = Vec::new();
+    loop {
+        match reader.read_event().unwrap() {
+            Event::Text(text) => {
+                let string = text.deref().escape_ascii().to_string();
+                let string = string.trim();
+                if !string.is_empty() {
+                    bools.push(bytes_to_bool(string.as_bytes()));
+                }
+            }
+            Event::End(e) => {
+                if e.name() == end.name() {
+                    return bools;
                 }
             }
             _ => (),

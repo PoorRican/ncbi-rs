@@ -1,11 +1,11 @@
-//! Helper functions that deal with Entrez eUtils
+
 
 use crate::seqset::BioSeqSet;
+use crate::entrezgene::{EntrezgeneSet,Entrezgene};
 use crate::parsing::XmlNode;
 use quick_xml::events::Event;
 use quick_xml::Reader;
 use std::fs;
-use crate::entrezgene::EntrezGeneSet;
 
 const BASE: &str = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/";
 
@@ -100,43 +100,68 @@ pub fn build_fetch_url(db: EntrezDb, id: &str, r#type: &str, mode: &str) -> Stri
     url_str
 }
 
+//FIXME: Please a comment what this is about
+#[derive(Debug)]
 pub enum DataType {
     BioSeqSet(BioSeqSet),
-    EntrezGeneSet(EntrezGeneSet),
+    EntrezgeneSet(EntrezgeneSet),
+    Entrezgene(Entrezgene),
     /// placeholder for other types
     EtAl,
 }
 
-pub fn parse_xml(response: &str) -> Result<DataType, ()> {
+pub fn parse_xml(response: &str) -> Result<DataType, String> {
     let mut reader = Reader::from_str(response);
+    reader.trim_text(true);
+
+    let mut buf = Vec::new();
+
     loop {
-        match reader.read_event().unwrap() {
-            Event::Start(e) => {
-                let bio_seq_bytes = BioSeqSet::start_bytes();
-                let entrez_gene_bytes = EntrezGeneSet::start_bytes();
-                // TODO: start bytes should be constant literals
-                match e.name() {
-                    name if name == bio_seq_bytes.name() => {
-                        let set = BioSeqSet::from_reader(&mut reader).unwrap();
-                        return Ok(DataType::BioSeqSet(set));
-                    },
-                    name if name == entrez_gene_bytes.name() => {
-                        let set = EntrezGeneSet::from_reader(&mut reader).unwrap();
-                        return Ok(DataType::EntrezGeneSet(set));
-                    },
-                    _ => (),
+        match reader.read_event_into(&mut buf) {
+            Ok(Event::Start(ref e)) => {
+                let tag_name = e.name().into_inner(); // Extract the inner byte slice
+                if let Ok(tag_str) = std::str::from_utf8(tag_name) {
+                    println!("Found XML tag: {}", tag_str); // Debugging output
+                } else {
+                    println!("Found XML tag (invalid UTF-8): {:?}", tag_name);
+                }
+
+                if tag_name == b"Bioseq-set" {
+                    println!("Matched Bioseq-Set, attempting to parse...");
+                    return BioSeqSet::from_reader(&mut reader)
+                        .map(|set| DataType::BioSeqSet(set))
+                        .ok_or("Failed to parse BioSeqSet.".to_string());
+                }
+                if tag_name == b"Entrezgene-Set" {
+                    println!("Matched Entrezgene-Set, attempting to parse...");
+                    return EntrezgeneSet::from_reader(&mut reader)
+                        .map(|set| DataType::EntrezgeneSet(set))
+                        .ok_or("Failed to parse EntrezgeneSet.".to_string());
+                }
+                if tag_name == b"Entrezgene" {
+                    println!("Matched Entrezgene, attempting to parse...");
+                    return Entrezgene::from_reader(&mut reader)
+                        .map(|set| DataType::Entrezgene(set))
+                        .ok_or("Failed to parse Entrezgene.".to_string());
                 }
             }
-            Event::Eof => break,
+            Ok(Event::Eof) => break,
+            Err(e) => {
+                return Err(format!("XML parsing error: {:?}", e));
+            }
             _ => (),
         }
+        buf.clear();
     }
-    return Err(());
+
+    Err("No recognizable XML root tag found.".to_string())
 }
 
 pub fn get_local_xml(path: &str) -> String {
-    let file = fs::read(path);
-    return file.unwrap().escape_ascii().to_string();
+    match fs::read(path) {
+        Ok(file) => file.escape_ascii().to_string(),
+        Err(e) => panic!("Failed to read file '{}': {}", path, e),
+    }
 }
 
 pub fn fetch_data(db: EntrezDb, id: &str, r#type: &str, mode: &str) -> DataType {
@@ -166,6 +191,14 @@ mod tests {
         match parse_xml(data.as_str()).unwrap() {
             DataType::BioSeqSet(_) => (),
             _ => assert!(false),
+        }
+        let data = get_local_xml("tests/data/entrezgene.xml");
+        let result = parse_xml(data.as_str());
+        println!("Parse result: {:?}", result);
+        match result {
+            Ok(DataType::EntrezgeneSet(_)) => (),
+            Ok(_) => assert!(false, "Parsed unexpected data type."),
+            Err(e) => panic!("Error while parsing XML: {:?}", e),
         }
     }
 
